@@ -1,5 +1,6 @@
 import type { AnalysisReport, ModuleResult, RetentionAnalysis } from '../api'
 import * as fmt from '../format'
+import { requestPrint } from '../print'
 import { Busy } from './Busy'
 import { DiagnosisSection, LimitationsSection } from './DiagnosisSection'
 import { HydroSection, SatelliteSection, SoilSection } from './FieldSections'
@@ -110,6 +111,16 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
           Raport: {report.crop.name}, {fmt.longDate(report.analysis_date)}
         </h2>
         <p className="muted">Wygenerowano {fmt.dateTime(report.generated_at)}</p>
+        <p className="print-only">
+          Działka {report.parcel.number}, obręb {report.parcel.region}, gm.{' '}
+          {report.parcel.commune}, {report.parcel.county}, woj. {report.parcel.voivodeship},{' '}
+          {fmt.ha(report.parcel.area_ha)}. Identyfikator: {report.parcel.id}.
+          <br />
+          Raport online: {window.location.href}
+        </p>
+        <button type="button" className="no-print" onClick={requestPrint}>
+          Drukuj / zapisz jako PDF
+        </button>
       </header>
       <DiagnosisSection diagnosis={report.diagnosis} />
       <RecommendationsSection

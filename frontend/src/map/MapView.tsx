@@ -6,8 +6,9 @@ import {
   type LngLatBoundsLike,
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { DitchWeirs, Geometry, Parcel, RetentionSite } from '../api'
+import { PRINT_EVENT } from '../print'
 import { DITCHES_SOURCE, mapStyle, PARCEL_SOURCE, SITES_FILL_LAYER, SITES_SOURCE } from './style'
 
 interface Props {
@@ -47,6 +48,8 @@ export function MapView({ parcel, sites, ditches, selectedSiteId, onPick, onSele
       center: POLAND_CENTER,
       zoom: 6,
       maxZoom: 19,
+      // Keeps the last frame readable, so the map can be copied into the printed report.
+      canvasContextAttributes: { preserveDrawingBuffer: true },
     })
     mapRef.current = map
     loaded.current = new Promise((resolve) => map.once('load', () => resolve()))
@@ -70,6 +73,33 @@ export function MapView({ parcel, sites, ditches, selectedSiteId, onPick, onSele
     map.on('mouseleave', SITES_FILL_LAYER, () => (map.getCanvas().style.cursor = ''))
 
     return () => map.remove()
+  }, [])
+
+  // Printing: frame the parcel, wait for tiles, snapshot the canvas, then print.
+  const [snapshot, setSnapshot] = useState<string | null>(null)
+  const printParcel = useRef(parcel)
+  useLayoutEffect(() => {
+    printParcel.current = parcel
+  })
+  useEffect(() => {
+    const map = mapRef.current!
+    const capture = () => setSnapshot(map.getCanvas().toDataURL('image/png'))
+    const onPrint = () => {
+      const target = printParcel.current
+      if (target) map.fitBounds(bounds(target.geometry), { padding: 40, maxZoom: 18, duration: 0 })
+      map.once('idle', () => {
+        capture()
+        // Let React swap in the snapshot before the print dialog freezes the page.
+        window.setTimeout(() => window.print(), 100)
+      })
+      map.triggerRepaint()
+    }
+    window.addEventListener(PRINT_EVENT, onPrint)
+    window.addEventListener('beforeprint', capture) // Ctrl+P: current view
+    return () => {
+      window.removeEventListener(PRINT_EVENT, onPrint)
+      window.removeEventListener('beforeprint', capture)
+    }
   }, [])
 
   useEffect(() => {
@@ -124,5 +154,18 @@ export function MapView({ parcel, sites, ditches, selectedSiteId, onPick, onSele
     })
   }, [selectedSiteId, sites])
 
-  return <div ref={container} className="map" aria-label="Mapa działek" role="region" />
+  return (
+    <>
+      <div ref={container} className="map" aria-label="Mapa działek" role="region" />
+      {snapshot && (
+        <figure className="print-map">
+          <img src={snapshot} alt="Mapa działki z miejscami retencji, rowami i zastawkami" />
+          <figcaption>
+            Granica działki (żółta), miejsca zatrzymania wody (niebieskie), rowy (turkusowe
+            przerywane), proponowane zastawki (czerwone punkty). Podkład: ortofotomapa GUGiK.
+          </figcaption>
+        </figure>
+      )}
+    </>
+  )
 }

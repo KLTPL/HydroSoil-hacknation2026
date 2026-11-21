@@ -624,3 +624,112 @@ ol.recs {
   margin-inline-end: 4px;
   padding: 2px 10px;
 }
+
+/* Printed report (A4); also used for "save as PDF". */
+.print-only,
+.print-map {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 12mm;
+  }
+
+  :root {
+    --bg: #ffffff !important;
+    --surface: #ffffff !important;
+    --text: #000000 !important;
+    --muted: #444444 !important;
+    --border: #bbbbbb !important;
+    --accent: #1d4f9c !important;
+    --error: #8b1a14 !important;
+
+    color-scheme: light;
+    font-size: 10.5pt;
+  }
+
+  html,
+  body,
+  #root,
+  .app {
+    display: block;
+    height: auto;
+    background: #fff;
+  }
+
+  .map,
+  .search,
+  .analysis-form,
+  .no-print,
+  .rec-sites,
+  .busy progress {
+    display: none !important;
+  }
+
+  .panel {
+    overflow: visible;
+    padding: 0;
+    border: 0;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  .print-map {
+    display: block;
+    margin: 0 0 8mm;
+    break-inside: avoid;
+  }
+
+  .print-map img {
+    display: block;
+    width: 100%;
+    max-height: 120mm;
+    object-fit: contain;
+    border: 1px solid #999;
+  }
+
+  .print-map figcaption {
+    margin-top: 2mm;
+    font-size: 8.5pt;
+    color: #444;
+  }
+
+  .report-section {
+    break-inside: auto;
+  }
+
+  .rec,
+  .site-card,
+  .year-bars,
+  .facts,
+  .risk-calendar,
+  .causes li,
+  .warnings li {
+    break-inside: avoid;
+  }
+
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+
+  .level,
+  .cause-bar,
+  .year-bars .bar,
+  .risk-cell,
+  .rec,
+  .site-card {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .sources a::after {
+    content: ' (' attr(href) ')';
+    word-break: break-all;
+  }
+}

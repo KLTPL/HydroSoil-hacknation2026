@@ -4,8 +4,9 @@ records which data sources were used, when, and under what licence."""
 import asyncio
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from datetime import UTC, date, datetime
-from typing import Literal
+from typing import Any, Literal
 
 import httpx
 from shapely.geometry import mapping
@@ -117,32 +118,49 @@ def _missing(modules: dict[str, ModuleResult]) -> list[str]:
     ]
 
 
+type ModuleListener = Callable[[str, ModuleResult[Any]], None]
+
+
 async def build_report(
     parcel: Parcel,
     geom: BaseGeometry,
     crop: Crop,
     analysis_date: date,
     budget_s: float | None = None,
+    on_module: ModuleListener | None = None,
 ) -> AnalysisReport:
     """Runs all modules concurrently. `budget_s` limits slow modules (terrain, satellite);
-    a short budget is used by polling requests that only collect finished results."""
+    a short budget is used by polling requests that only collect finished results.
+    `on_module` is told about each module as soon as it finishes (live progress)."""
     budget = TERRAIN_TIME_BUDGET_S if budget_s is None else budget_s
     params = CROP_PARAMS[crop.id]
     geom_wgs84 = geometry_to_wgs84(geom)
     centre = geom_wgs84.representative_point()
 
+    async def report[T](name: str, run: Awaitable[ModuleResult[T]]) -> ModuleResult[T]:
+        result = await run
+        if on_module is not None:
+            on_module(name, result)
+        return result
+
     async def soil_and_water() -> tuple[ModuleResult[SoilProfile], ModuleResult[WaterBalance]]:
-        soil = await soil_module(geom_wgs84.bounds)
+        soil = await report("soil", soil_module(geom_wgs84.bounds))
         awc = (soil.data or DEFAULT_PROFILE).awc_mm_per_m
-        water = await water_module(centre.y, centre.x, params, analysis_date, awc, HISTORY_YEARS)
+        water = await report(
+            "water",
+            water_module(centre.y, centre.x, params, analysis_date, awc, HISTORY_YEARS),
+        )
         return soil, water
 
     (soil, water), satellite, hydro, land, terrain = await asyncio.gather(
         soil_and_water(),
-        satellite_module(parcel.id, mapping(geom_wgs84), analysis_date, HISTORY_YEARS, budget),
-        hydro_module(parcel.voivodeship, analysis_date),
-        land_module(parcel.id, mapping(geom_wgs84)),
-        terrain_module(parcel.id, geom, budget),
+        report(
+            "satellite",
+            satellite_module(parcel.id, mapping(geom_wgs84), analysis_date, HISTORY_YEARS, budget),
+        ),
+        report("hydro", hydro_module(parcel.voivodeship, analysis_date)),
+        report("land", land_module(parcel.id, mapping(geom_wgs84))),
+        report("terrain", terrain_module(parcel.id, geom, budget)),
     )
     diagnosis = diagnose(
         params,

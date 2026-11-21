@@ -135,15 +135,16 @@
   <h2>Ile wody brakuje i dlaczego, w milimetrach</h2>
   <div class="cols-wide">
     <div>
-      <p><span class="tag" style="background:var(--orange)">Woda: niedobór</span></p>
+      <p><span class="tag" style="background:var(--orange)">Woda: silny niedobór</span></p>
       <ul style="font-size:26px">
         <li>Woda w strefie korzeni na tle 10 lat</li>
         <li>Klimatyczny bilans wodny (metoda IUNG)</li>
         <li>Wilgotność gleby z reanalizy ERA5-Land</li>
         <li>Uwodnienie roślin z Sentinel-2</li>
         <li>Ostrzeżenia IMGW o suszy hydrologicznej</li>
+        <li><b>Kryterium suszy rolniczej IUNG (SMSR)</b>: próg z rozporządzenia MRiRW, od 2020 r. oficjalny wynik dla gminy</li>
       </ul>
-      <p style="font-size:26px">Źródła się sprawdzają nawzajem: zgodność podnosi wiarygodność oceny.</p>
+      <p style="font-size:26px">Źródła głosują osobno, „mokro” znosi „sucho”. Gdy IUNG nie stwierdził suszy, ocena kończy się na „uwadze”. Dla kontroli: Europejskie Obserwatorium Suszy.</p>
     </div>
     <img class="shot-crop" src="img/diagnosis.png" alt="Ocena sytuacji wodnej w raporcie" style="object-position: 100% 0;">
   </div>
@@ -156,11 +157,14 @@
   <h2>Każde zalecenie: ile m³, dlaczego, kiedy, za ile</h2>
   <div class="cols-wide">
     <div>
+      <div style="display:flex;flex-wrap:wrap;gap:0 4px">
       <p class="pill">Zastawki na rowach</p><p class="pill">Oczka i podmokłe łąki</p>
-      <p class="pill">Próchnica</p><p class="pill">Mulcz, bez orki</p>
-      <p class="pill">Odmiana i termin siewu</p><p class="pill">Dawka nawadniania</p>
-      <p class="pill">Co jeśli: 30 dni bez deszczu, sucho, mokro</p>
-      <p style="font-size:26px;margin-top:24px">Z formalnościami (zgłoszenie wodnoprawne, zarządca rowu) i dopłatami (ekoschemat „Rolnictwo węglowe”).</p>
+      <p class="pill">Zadrzewienia śródpolne</p><p class="pill">Pas trawy przy rowie</p>
+      <p class="pill">Miedze w poprzek stoku</p><p class="pill">Próchnica, mulcz, międzyplon</p>
+      <p class="pill">Nawadnianie: m³, koszt, limit 5 m³/dobę</p>
+      <p class="pill">Łąki, pastwiska, sady</p>
+      </div>
+      <p style="font-size:26px;margin-top:20px">Dopasowane do działki: wąski pas na stoku dostaje miedze co 30 m, nie oczko. Z formalnościami (Prawo wodne, zarządca rowu) i dopłatami.</p>
     </div>
     <img class="shot-crop" src="img/recs.png" alt="Zalecenia w raporcie" style="object-position: 100% 0;">
   </div>
@@ -169,25 +173,42 @@
 
 <!-- 8 -->
 <section class="slide">
-  <div class="kicker">Dane i wiarygodność</div>
-  <h2>11 publicznych źródeł, liczone na żywo</h2>
+  <div class="kicker">Podstawy naukowe</div>
+  <h2>Opisane metody, sprawdzone na trudnych działkach</h2>
   <table>
-    <tr><th>Dane</th><th>Źródło</th><th>Szczegółowość</th></tr>
-    <tr><td>Działki, teren LIDAR, ortofotomapa</td><td>GUGiK: ULDK, NMT, KIEG</td><td>1 m</td></tr>
-    <tr><td>Pogoda i ET0, 10 lat</td><td>Open-Meteo (ERA5), zapasowo NASA POWER</td><td>dziennie</td></tr>
-    <tr><td>Stan roślin NDVI/NDMI</td><td>Copernicus Sentinel-2</td><td>10–20 m, od 2017</td></tr>
-    <tr><td>Gleba</td><td>ISRIC SoilGrids</td><td>250 m, 0–100 cm</td></tr>
-    <tr><td>Susza hydrologiczna</td><td>IMGW-PIB</td><td>bieżące ostrzeżenia</td></tr>
-    <tr><td>Pokrycie terenu (czy to pole?)</td><td>ESA WorldCover</td><td>10 m</td></tr>
-    <tr><td>Porównanie: wskaźnik suszy CDI</td><td>Europejskie Obserwatorium Suszy (Copernicus)</td><td>5 km, co dekadę</td></tr>
+    <tr><th>Co liczymy</th><th>Metoda i źródło</th></tr>
+    <tr><td>Susza rolnicza</td><td>Kryterium SMSR IUNG-PIB: KBW sześciu dekad wobec progów z rozp. MRiRW (Dz.U. 2019 poz. 739)</td></tr>
+    <tr><td>Woda w strefie korzeni</td><td>FAO-56 (Allen i in. 1998): Kc i p dla 16 upraw, współczynnik stresu Ks</td></tr>
+    <tr><td>Gleba</td><td>Mapa kategorii glebowych IUNG; pojemność wodna: Saxton i Rawls (2006)</td></tr>
+    <tr><td>Zagłębienia i spływ</td><td>NMT LIDAR 1 m, wypełnianie zagłębień (priority-flood) i kierunki spływu</td></tr>
+    <tr><td>Działania</td><td>Kolejność KOWR „Podstawy naukowe”: retencja → agrotechnika → nawadnianie</td></tr>
   </table>
-  <p style="font-size:26px;margin-top:28px">W raporcie każde źródło ma licencję i datę pobrania. Brakujące dane są nazwane wprost, nic nie jest zgadywane. Wynik liczy się bez AI: deterministyczne, opisane metody (FAO-56, IUNG).</p>
+  <p style="font-size:26px;margin-top:24px">Test na 26 nietypowych działkach: góry, torfy, piaski, wąskie pasy, sady, las, 175 ha, 0,05 ha. Znalezione błędy poprawione; opis i ściąga do obrony w <code>docs/metody-i-walidacja.md</code>.</p>
   <div class="num">8</div>
 </section>
 
 <!-- 9 -->
 <section class="slide">
-  <div class="kicker">Prototyp</div>
+  <div class="kicker">Dane i wiarygodność</div>
+  <h2>13 publicznych źródeł, liczone na żywo</h2>
+  <table>
+    <tr><th>Dane</th><th>Źródło</th><th>Szczegółowość</th></tr>
+    <tr><td>Działki, teren LIDAR, ortofotomapa</td><td>GUGiK: ULDK, NMT, KIEG</td><td>1 m</td></tr>
+    <tr><td>Pogoda i ET0, 10 lat</td><td>Open-Meteo (ERA5), zapasowo NASA POWER</td><td>dziennie</td></tr>
+    <tr><td>Stan roślin NDVI/NDMI</td><td>Copernicus Sentinel-2</td><td>10–20 m, od 2017</td></tr>
+    <tr><td>Gleba</td><td>ISRIC SoilGrids; kategorie gleb IUNG</td><td>250 m, 0–100 cm</td></tr>
+    <tr><td>Susza rolnicza</td><td>SMSR IUNG-PIB: progi i tabele gmin</td><td>gmina, co dekadę</td></tr>
+    <tr><td>Susza hydrologiczna</td><td>IMGW-PIB</td><td>bieżące ostrzeżenia</td></tr>
+    <tr><td>Pokrycie terenu (czy to pole?)</td><td>ESA WorldCover</td><td>10 m</td></tr>
+    <tr><td>Porównanie: wskaźnik suszy CDI</td><td>Europejskie Obserwatorium Suszy (Copernicus)</td><td>5 km, co dekadę</td></tr>
+  </table>
+  <p style="font-size:26px;margin-top:28px">W raporcie każde źródło ma licencję i datę pobrania. Brakujące dane są nazwane wprost, nic nie jest zgadywane. Wynik liczy się bez AI: deterministyczne, opisane metody (FAO-56, IUNG).</p>
+  <div class="num">9</div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="kicker">Prototyp · splyw.kodlab.pl</div>
   <h2>Działa dla każdej działki w Polsce</h2>
   <div class="cols">
     <div>
@@ -197,29 +218,12 @@
     <ul>
       <li>Awaria źródła nie psuje raportu: zapasowe źródła pogody i rowów, czytelny komunikat.</li>
       <li>Cache danych: szybko i bez przekraczania limitów darmowych API.</li>
-      <li>69 testów automatycznych, HTTPS, bez danych osobowych.</li>
-      <li>Skala kraju: teren liczony z góry dla wszystkich pól, bilans wody na siatce raz dziennie.</li>
+      <li>Opcjonalne konto: moje działki, analiza zbiorcza, archiwum raportów.</li>
+      <li>125 testów automatycznych, HTTPS; bez konta żadnych danych osobowych.</li>
+      <li>Dla KOWR: własny serwer za 0 zł; przy dużym ruchu płatny plan Open-Meteo lub własna kopia ERA5.</li>
     </ul>
   </div>
-  <div class="num">9</div>
-</section>
-
-<!-- 10 -->
-<section class="slide">
-  <div class="kicker">Wartość dla rolnika</div>
-  <h2>Z monitoringu suszy do decyzji na własnym polu</h2>
-  <p class="quote">„Na Twoim polu cztery zastawki zatrzymają 2–6 tys. m³ wody na sezon, a zagłębienia przy każdej ulewie do 700 m³. Zamknij je pod koniec marca.”</p>
-  <p class="muted" style="margin-top:40px">Konkretne miejsce, ilość wody i termin, uzasadnione danymi, a nie ogólna porada.</p>
   <div class="num">10</div>
-</section>
-
-<!-- 11 -->
-<section class="slide title-slide">
-  <div class="kicker" style="color:#cfe3ff">Sprawdź sami</div>
-  <h1 style="font-size:84px">splyw.kodlab.pl</h1>
-  <p>Wpisz numer działki, wybierz uprawę i datę. Raport w 30 sekund, do druku lub PDF.</p>
-  <p style="font-size:30px;margin-top:40px;color:#cfe3ff">Dalej: kalibracja z danymi IUNG, scenariusze „co jeśli”, eksport do wniosków o dofinansowanie.</p>
-  <div class="num" style="color:#cfe3ff">11</div>
 </section>
 
 </body>

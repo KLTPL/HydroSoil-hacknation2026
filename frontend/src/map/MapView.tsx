@@ -9,18 +9,22 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 // The production bundle does not emit MapLibre's worker by itself; ship it as an asset.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { Place } from '../geocode'
 import type { Parcel, RetentionAnalysis } from '../model'
 import { PRINT_EVENT } from '../print'
 import { bounds, viewPadding } from './geometry'
 import { LayerSwitch, Legend, type BaseLayer } from './MapChrome'
 import { RainControl } from './RainControl'
-import { mapStyle, PARCEL_SOURCE, SITES_FILL_LAYER } from './style'
+import { mapStyle, PARCEL_SOURCE, PARCELS_MIN_ZOOM, SITES_FILL_LAYER } from './style'
+import { useOrthoLoading } from './useOrthoLoading'
 import { useTerrainLayers } from './useTerrainLayers'
 
 interface Props {
   parcel: Parcel | null
   terrain: RetentionAnalysis | null
   selectedSiteId: number | null
+  /** A searched town or address; each new object flies the map there. */
+  place: Place | null
   onPick: (lon: number, lat: number) => void
   onSelectSite: (id: number) => void
 }
@@ -44,7 +48,7 @@ const LOCALE = {
   'LogoControl.Title': 'Logo MapLibre',
 }
 
-export function MapView({ parcel, terrain, selectedSiteId, onPick, onSelectSite }: Props) {
+export function MapView({ parcel, terrain, selectedSiteId, place, onPick, onSelectSite }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<MapLibreMap | null>(null)
   const [base, setBase] = useState<BaseLayer>('photo')
@@ -78,6 +82,9 @@ export function MapView({ parcel, terrain, selectedSiteId, onPick, onSelectSite 
     instance.on('click', (event) => {
       const hit = instance.queryRenderedFeatures(event.point, { layers: [SITES_FILL_LAYER] })[0]
       if (hit?.id != null) handlers.current.onSelectSite(Number(hit.id))
+      // Zoomed out, a click cannot aim at one parcel: zoom in until parcel borders show.
+      else if (instance.getZoom() < PARCELS_MIN_ZOOM)
+        instance.flyTo({ center: event.lngLat, zoom: PARCELS_MIN_ZOOM + 1 })
       else handlers.current.onPick(event.lngLat.lng, event.lngLat.lat)
     })
     instance.on('mouseenter', SITES_FILL_LAYER, () => (instance.getCanvas().style.cursor = 'pointer'))
@@ -122,6 +129,11 @@ export function MapView({ parcel, terrain, selectedSiteId, onPick, onSelectSite 
     if (parcel) map.fitBounds(bounds(parcel.geometry), { padding: viewPadding(), maxZoom: 17 })
   }, [map, parcel])
 
+  useEffect(() => {
+    if (!map || !place) return
+    map.flyTo({ center: [place.lon, place.lat], zoom: place.zoom, padding: viewPadding() })
+  }, [map, place])
+
   // Once terrain results arrive, reframe the parcel clear of the rain card.
   const hasTerrain = terrain !== null
   useEffect(() => {
@@ -133,10 +145,16 @@ export function MapView({ parcel, terrain, selectedSiteId, onPick, onSelectSite 
   }, [map, hasTerrain])
 
   useTerrainLayers(map, terrain, selectedSiteId, base, raining, onSelectSite)
+  const orthoLoading = useOrthoLoading(map)
 
   return (
     <div className="map-stage">
       <div ref={container} className="map" aria-label="Mapa działek" role="region" />
+      {orthoLoading && (
+        <p className="map-loading glass" role="status">
+          Ładowanie…
+        </p>
+      )}
       {terrain && parcel && (
         <div className="map-overlay">
           <LayerSwitch value={base} onChange={setBase} hasRelief={terrain.relief !== null} />

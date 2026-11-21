@@ -24,6 +24,25 @@
   }
 }
 
+/* Centered over the visible map, i.e. left of the panel (above the sheet on phones) */
+.map-loading {
+  position: absolute;
+  z-index: 1;
+  top: var(--gap);
+  left: calc((100% - var(--panel-w) - 2 * var(--gap)) / 2);
+  translate: -50% 0;
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  pointer-events: none;
+
+  @media (width < 720px) {
+    left: 50%;
+  }
+}
+
 .glass {
   background: var(--glass);
   backdrop-filter: blur(20px) saturate(170%);

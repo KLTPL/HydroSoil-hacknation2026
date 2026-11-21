@@ -1,5 +1,7 @@
+import httpx
 import pytest
 
+from retencja_api.parcel import uldk
 from retencja_api.parcel.uldk import ParcelNotFound, UldkError, parse_response
 
 ROW = (
@@ -37,3 +39,16 @@ def test_no_results_raises_not_found():
 def test_other_error_raises_uldk_error():
     with pytest.raises(UldkError):
         parse_response("-1 błąd zapytania\n")
+
+
+async def test_query_retries_empty_uldk_response(monkeypatch):
+    bodies = iter(["", f"1\n{ROW}\n"])
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, text=next(bodies)))
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(
+        uldk.httpx, "AsyncClient", lambda **kwargs: real_client(transport=transport, **kwargs)
+    )
+
+    [parcel] = await uldk.search_parcels("Pęchery 14/108")
+
+    assert parcel.id == "141804_5.0029.14/108"

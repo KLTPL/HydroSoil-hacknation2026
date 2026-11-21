@@ -1,5 +1,6 @@
 """API response models (shared contract with the frontend)."""
 
+from datetime import date, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel
@@ -56,6 +57,41 @@ class Assumptions(BaseModel):
 
 class RetentionAnalysis(BaseModel):
     parcel_id: str
+    computed_at: datetime  # when the terrain data was downloaded and analysed
     summary: RetentionSummary
     sites: list[RetentionSite]
     assumptions: Assumptions
+
+
+class Crop(BaseModel):
+    id: str
+    name: str
+
+
+class DataSource(BaseModel):
+    name: str
+    url: str
+    license: str
+    retrieved: Literal["live", "cached"]
+    retrieved_at: datetime
+
+
+ModuleStatus = Literal["ok", "pending", "unavailable"]
+
+
+class ModuleResult[T](BaseModel):
+    """One analysis step. Missing data is reported, never silently filled in."""
+
+    status: ModuleStatus
+    message: str | None = None  # why data is pending or unavailable (shown to the farmer)
+    data: T | None = None
+    sources: list[DataSource] = []
+    duration_ms: int
+
+
+class AnalysisReport(BaseModel):
+    parcel: Parcel
+    crop: Crop
+    analysis_date: date
+    generated_at: datetime
+    terrain: ModuleResult[RetentionAnalysis]

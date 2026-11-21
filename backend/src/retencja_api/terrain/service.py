@@ -1,6 +1,7 @@
 """Parcel retention analysis: DEM loading, site detection, response assembly, caching."""
 
 import asyncio
+from datetime import UTC, datetime
 
 from shapely.geometry import mapping
 from shapely.geometry.base import BaseGeometry
@@ -42,12 +43,17 @@ def _to_model(index: int, site: Site) -> RetentionSite:
     )
 
 
-async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> RetentionAnalysis:
-    key = f"{parcel_id}@v{ANALYSIS_VERSION}"
-    cached = cache.read_json("retention", key)
-    if cached is not None:
-        return RetentionAnalysis.model_validate(cached)
+def _cache_key(parcel_id: str) -> str:
+    return f"{parcel_id}@v{ANALYSIS_VERSION}"
 
+
+def cached_analysis(parcel_id: str) -> RetentionAnalysis | None:
+    cached = cache.read_json("retention", _cache_key(parcel_id))
+    return None if cached is None else RetentionAnalysis.model_validate(cached)
+
+
+async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> RetentionAnalysis:
+    """Download terrain, find retention sites and cache the result."""
     bounds = parcel_geom.buffer(PARCEL_BUFFER_M).bounds
     dem = await load_dem(bounds, ANALYSIS_RESOLUTION_M)
     sites = await asyncio.to_thread(find_sites, dem, parcel_geom)
@@ -55,6 +61,7 @@ async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> Retention
 
     result = RetentionAnalysis(
         parcel_id=parcel_id,
+        computed_at=datetime.now(UTC),
         summary=RetentionSummary(
             site_count=len(models),
             storage_m3=sum(m.storage_m3 for m in models),
@@ -73,5 +80,5 @@ async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> Retention
             min_area_m2=MIN_DEPRESSION_AREA_M2,
         ),
     )
-    cache.write_json("retention", key, result.model_dump())
+    cache.write_json("retention", _cache_key(parcel_id), result.model_dump(mode="json"))
     return result

@@ -1,36 +1,35 @@
-"""Pre-download DEM tiles for demo areas so the live demo answers in seconds.
+"""Pre-compute terrain analyses for demo parcels so a live demo answers instantly.
 
-Usage: uv run python -m retencja_api.warm_cache [area ...]
+Usage: uv run python -m retencja_api.warm_cache [parcel_id ...]
 """
 
 import asyncio
 import sys
 import time
 
-from retencja_api.geo import lonlat_to_metric
-from retencja_api.terrain.nmt import ensure_tiles, tiles_for_bbox
+from retencja_api.parcel.uldk import get_parcel_by_id
+from retencja_api.terrain.service import analyze_parcel, cached_analysis
 
-# Drought-prone farmland (lon, lat centre), side length in metres.
-DEMO_AREAS: dict[str, tuple[float, float, float]] = {
-    "kujawy-kruszwica": (18.36, 52.70, 3000),
-    "wielkopolska-wrzesnia": (17.60, 52.30, 3000),
-}
+DEMO_PARCELS = [
+    "040706_5.0016.51/1",  # Kujawy, gm. Kruszwica
+    "141804_5.0029.14/108",  # Mazowsze, gm. Piaseczno
+]
 
 
-async def warm(name: str) -> None:
-    lon, lat, side = DEMO_AREAS[name]
-    x, y = lonlat_to_metric(lon, lat)
-    half = side / 2
-    tiles = tiles_for_bbox(x - half, y - half, x + half, y + half)
+async def warm(parcel_id: str) -> None:
+    if cached_analysis(parcel_id) is not None:
+        print(f"{parcel_id}: already cached", flush=True)
+        return
     start = time.monotonic()
-    print(f"{name}: fetching {len(tiles)} tiles…", flush=True)
-    await ensure_tiles(tiles)
-    print(f"{name}: done in {time.monotonic() - start:.0f} s", flush=True)
+    _, geom = await get_parcel_by_id(parcel_id)
+    result = await analyze_parcel(parcel_id, geom)
+    took = time.monotonic() - start
+    print(f"{parcel_id}: {result.summary.site_count} sites in {took:.0f} s", flush=True)
 
 
-async def _main(names: list[str]) -> None:
-    for name in names or DEMO_AREAS:
-        await warm(name)
+async def _main(parcel_ids: list[str]) -> None:
+    for parcel_id in parcel_ids or DEMO_PARCELS:
+        await warm(parcel_id)
 
 
 if __name__ == "__main__":

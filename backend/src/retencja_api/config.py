@@ -15,8 +15,8 @@ CRS_WGS84 = 4326
 
 CACHE_DIR = Path(os.environ.get("RETENCJA_CACHE_DIR", Path(__file__).parents[2] / ".cache"))
 
-# DEM tiles are fetched on an aligned grid so neighbouring parcels share the cache.
-DEM_TILE_SIZE_M = 500
+# WCS time grows with requested area; larger areas are split into concurrent strips.
+DEM_STRIP_MAX_M2 = 250_000
 DEM_FETCH_CONCURRENCY = 4
 DEM_FETCH_ATTEMPTS = 4
 DEM_FETCH_TIMEOUT_S = 180.0
@@ -24,7 +24,14 @@ DEM_FETCH_TIMEOUT_S = 180.0
 # Analysis grid: 1 m LIDAR is block-averaged to this resolution (speed, less noise).
 ANALYSIS_RESOLUTION_M = 2
 # Terrain around the parcel included so upslope runoff and spill paths are visible.
-PARCEL_BUFFER_M = 150
+PARCEL_BUFFER_M = 60
+
+# Terrain results later than this are reported as pending; the download keeps
+# running in the background and fills the cache for the next request.
+TERRAIN_TIME_BUDGET_S = 25.0
+
+# Analysis dates accepted: today and up to this many years back.
+HISTORY_YEARS = 10
 
 # Depressions smaller than this are treated as LIDAR noise or micro-relief.
 MIN_DEPRESSION_DEPTH_M = 0.15
@@ -37,4 +44,4 @@ DESIGN_RAIN_MM = 30.0
 RUNOFF_COEFF_RANGE = (0.05, 0.25)
 
 # Bump when analysis logic changes so cached results are recomputed.
-ANALYSIS_VERSION = 2
+ANALYSIS_VERSION = 3

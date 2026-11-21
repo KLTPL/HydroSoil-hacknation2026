@@ -47,6 +47,14 @@ function SoilTank({ pct, threshold, normal }: { pct: number; threshold: number; 
   )
 }
 
+// The IUNG criterion is a threshold, not a comparison with earlier years.
+const CRITERION: Record<SourceSignal['verdict'], string> = {
+  dry: 'susza',
+  normal: 'bez suszy',
+  wet: 'bez suszy',
+  missing: 'brak danych',
+}
+
 function SourceVotes({ signals }: { signals: SourceSignal[] }) {
   return (
     <ul className="votes" aria-label="Co mówią źródła danych na tle 10 lat">
@@ -54,7 +62,9 @@ function SourceVotes({ signals }: { signals: SourceSignal[] }) {
         <li key={s.key} className={`vote vote-${s.verdict}`}>
           <span className="vote-dot" aria-hidden="true" />
           <span className="vote-source">{s.source}</span>
-          <span className="vote-verdict">{VERDICT[s.verdict]}</span>
+          <span className="vote-verdict">
+            {s.key === 'smsr' ? CRITERION[s.verdict] : VERDICT[s.verdict]}
+          </span>
           {s.verdict !== 'missing' && (
             <span className="vote-detail">
               {s.value}

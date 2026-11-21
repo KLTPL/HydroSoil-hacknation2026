@@ -2,13 +2,7 @@ import { useId } from 'react'
 import * as fmt from '../format'
 import type { Diagnosis, SourceSignal, WaterBalance } from '../model'
 import { useCountUp } from '../useCountUp'
-
-const LEVEL = {
-  none: { label: 'Wody wystarcza', tone: 'ok' },
-  watch: { label: 'Uwaga na wodę', tone: 'watch' },
-  moderate: { label: 'Niedobór wody', tone: 'moderate' },
-  severe: { label: 'Silny niedobór wody', tone: 'severe' },
-} as const
+import { LEVEL } from './levels'
 
 const CONFIDENCE = {
   high: 'Pewność oceny: wysoka. Źródła są zgodne.',

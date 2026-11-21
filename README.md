@@ -88,6 +88,7 @@ cd backend && uv run python -m retencja_api.warm_cache [id_działki ...]
 | Porównanie z EDO | Klasa wskaźnika CDI Europejskiego Obserwatorium Suszy dla tego miejsca i dekady oraz informacja, czy zgadza się z naszą oceną. |
 | Kalendarz ryzyka | W ilu z ostatnich 10 lat uprawa miała co najmniej 15 dni silnego stresu wodnego, osobno dla każdego miesiąca od kwietnia do września. |
 | Raport | Druk i zapis do PDF (A4, mapa działki, źródła z adresami); link do udostępnienia. |
+| Konto (opcjonalne) | Analiza działa bez logowania. Po założeniu konta (tylko nazwa i hasło) rolnik ma: **Moje działki** (zapis działki z uprawą i własną nazwą, zmiana nazwy, usuwanie, otwarcie analizy jednym kliknięciem), **Analizę zbiorczą** (tabela wszystkich działek na wybrany dzień: werdykt, % wody w glebie, najważniejsze działanie; wiersze pojawiają się na bieżąco, najpilniejsze na górze) i **Archiwum raportów** (każda analiza zapisana jako migawka, otwierana tylko do odczytu, z porównaniem z poprzednią analizą tej działki: ocena i % wody wtedy i teraz). |
 | Rzetelność | Każde źródło z licencją i datą pobrania; brakujące dane opisane wprost; ostrzeżenie, gdy działka nie jest rolna (ESA WorldCover). |
 
 ## 3. Architektura
@@ -106,7 +107,8 @@ Przeglądarka (React + MapLibre)  ──HTTPS──>  Caddy  ──>  nginx (sta
                                                                 │   EDO       CDI (WCS Copernicus EMS) → niezależne porównanie
                                                                 │   teren     NMT WCS (LIDAR) → zagłębienia, zlewnie, rowy, zastawki
                                                                 ├─ diagnoza i zalecenia (czyste funkcje na wynikach modułów)
-                                                                └─ pamięć podręczna w plikach (odpowiedzi i analizy)
+                                                                ├─ pamięć podręczna w plikach (odpowiedzi i analizy)
+                                                                └─ konta (opcjonalne): SQLite na wolumenie Dockera
 ```
 
 - Każdy moduł zwraca stan `ok | pending | unavailable` z wyjaśnieniem dla rolnika, źródłami
@@ -115,10 +117,14 @@ Przeglądarka (React + MapLibre)  ──HTTPS──>  Caddy  ──>  nginx (sta
 - Wolne moduły (teren, satelita) mają 25 s. Jeśli nie zdążą, raport i tak się pojawia, a sekcja
   jest oznaczona „w toku”. Obliczenie trwa dalej w tle, a przeglądarka sama pobiera wynik, gdy
   jest gotowy.
-- Bez bazy danych i bez kont użytkowników; wyniki są zapisywane w plikach.
+- Wyniki analiz są zapisywane w plikach. Opcjonalne konta (`accounts/`) trzymają użytkowników,
+  sesje, zapisane działki i archiwum raportów w jednym pliku SQLite (`RETENCJA_DB_PATH`,
+  w Dockerze wolumen `accounts_data`, który przetrwa przebudowę obrazu). Analiza zbiorcza
+  używa tego samego budowania raportu, liczy najwyżej 2 działki naraz i wysyła wiersze
+  strumieniem SSE.
 
 Kod: `backend/src/retencja_api/` (`api.py`, `report.py`, `modules.py`, `assessment/`,
-`meteo/`, `soil/`, `satellite/`, `hydro/`, `landcover/`, `terrain/`) oraz `frontend/src/`.
+`meteo/`, `soil/`, `satellite/`, `hydro/`, `landcover/`, `terrain/`, `accounts/`) oraz `frontend/src/`.
 
 ### Metody
 
@@ -189,6 +195,8 @@ Działki demonstracyjne przygotowano 21.11.2026 skryptem `warm_cache` (tylko ana
 | Shapely | 2.2 | BSD-3-Clause | geometria |
 | pyproj (z PROJ) | 3.8 | MIT | transformacje współrzędnych |
 | affine | 3.0 | BSD-3-Clause | transformacje rastrów |
+| argon2-cffi | 25.1 | MIT | skróty haseł (Argon2id) |
+| SQLite (moduł `sqlite3` Pythona) | 3 | domena publiczna | konta, zapisane działki, archiwum |
 | pytest, pytest-asyncio, Ruff | 9.2, 1.5, 0.17 | MIT | testy, lint (tylko w trakcie tworzenia) |
 | React, React DOM | 19.3 | MIT | interfejs |
 | MapLibre GL JS | 6.19 | BSD-3-Clause | mapa |
@@ -253,6 +261,9 @@ powtarzalne i możliwe do wyjaśnienia.
   ostrożność przy jego interpretacji od połowy maja 2025 r. (niepewne dane o wilgotności gleby);
   raport to zaznacza.
 - **Pokrycie terenu** (sprawdzenie, czy działka jest rolna) pochodzi z 2021 roku.
+- **Konta nie mają odzyskiwania hasła**: nie zbieramy e-maila, więc zapomniane hasło oznacza
+  nowe konto. Limit prób logowania jest trzymany w pamięci serwera (zeruje się po restarcie).
+  Analiza zbiorcza wielu nowych działek może trwać kilka minut (pobieranie terenu z GUGiK).
 - **Formalności** w zaleceniach (zgłoszenie wodnoprawne, zarządca rowu) to ogólne wskazówki, a nie
   porada prawna.
 
@@ -275,7 +286,7 @@ powtarzalne i możliwe do wyjaśnienia.
   - działka z Kujaw w lipcu 2019 daje „silny niedobór”;
   - próba na 10 działkach z różnych regionów, upraw i dat (2019–2026): wszystkie raporty
     kompletne, pierwsza odpowiedź w 4–13 s.
-- **Testy automatyczne** (`cd backend && uv run pytest`, 69 testów):
+- **Testy automatyczne** (`cd backend && uv run pytest`, 94 testy):
   - promieniowanie FAO-56 sprawdzone na przykładzie z podręcznika FAO;
   - wiarygodność wyników Penmana-Monteitha;
   - zachowanie bilansu wody w glebie;
@@ -285,7 +296,10 @@ powtarzalne i możliwe do wyjaśnienia.
   - wykrywanie rowów i odstępy zastawek na sztucznym terenie;
   - zalecenia i scenariusze „co jeśli”;
   - pamięć podręczna i limit Open-Meteo;
-  - działanie raportu przy awarii źródeł.
+  - działanie raportu przy awarii źródeł;
+  - konta: rejestracja, logowanie, wylogowanie, wygasanie sesji, limit prób, ochrona CSRF,
+    izolacja danych (użytkownik nigdy nie widzi działek ani raportów innego), zapisane działki,
+    archiwum i analiza zbiorcza (z podstawionym budowaniem raportu i limitem równoległości).
 - **Identyfikowalność.** Każde źródło jest w raporcie podlinkowane z licencją i datą pobrania,
   więc każde dane wejściowe można sprawdzić ręcznie.
 
@@ -320,7 +334,16 @@ cd frontend && pnpm build && pnpm lint
 
 ## Bezpieczeństwo i prywatność
 
-- Bez kont i bez zbierania danych osobowych; numer działki to publiczna informacja ewidencyjna.
+- Konto jest opcjonalne i nie wymaga danych osobowych: tylko nazwa użytkownika (3–32 znaki)
+  i hasło (8–128 znaków), bez e-maila. Numer działki to publiczna informacja ewidencyjna.
+  Analizy bez logowania nie są nigdzie zapisywane.
+- Hasła: Argon2id (argon2-cffi); przy nieznanej nazwie też liczony jest skrót, więc czas
+  odpowiedzi nie zdradza, czy konto istnieje. Sesja: losowy token w ciasteczku `HttpOnly`,
+  `SameSite=Lax`, `Secure` w produkcji, ważny 30 dni; w bazie tylko jego skrót SHA-256;
+  wylogowanie usuwa sesję na serwerze. Zapisy wymagają nagłówka `X-Splyw` i zgodnego
+  nagłówka `Origin` (ochrona CSRF). Limit: 5 błędnych haseł na konto w 15 min, 100 na
+  serwer na minutę, 30 nowych kont na godzinę. Wszystkie zapytania SQL są parametryzowane
+  i ograniczone do właściciela danych.
 - Tylko HTTPS (HTTP przekierowuje na HTTPS). Dane wejściowe są sprawdzane (długość
   identyfikatora, zakres dat, znane uprawy), a wywołania usług zewnętrznych tylko odczytują dane.
 - Przeglądarka pyta o lokalizację tylko po kliknięciu przycisku GPS. Pozycja służy wyłącznie do

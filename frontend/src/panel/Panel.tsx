@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import * as fmt from '../format'
 import type { Parcel } from '../model'
 import type { Lookup, ReportState } from '../useParcelReport'
@@ -19,9 +20,14 @@ interface Props {
   onDateChange: (date: string) => void
   onAnalyze: () => void
   onSelectSite: (id: number) => void
+  /** Optional account slots: header control, parcel card action, and a view that
+   * temporarily replaces the analysis (account pages, archived report). */
+  headerAction?: ReactNode
+  parcelAction?: ReactNode
+  replacement?: ReactNode
 }
 
-function Brand() {
+function Brand({ action }: { action?: ReactNode }) {
   return (
     <header className="brand">
       <svg className="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
@@ -32,17 +38,25 @@ function Brand() {
         <h1>Spływ</h1>
         <p>Zobacz, dokąd ucieka woda z Twojej działki, i zatrzymaj ją</p>
       </div>
+      {action}
     </header>
   )
 }
 
 export function Panel(props: Props) {
-  const { parcel, lookup, report } = props
   return (
     <aside className="panel" aria-label="Analiza działki">
       <div className="sheet-grabber" aria-hidden="true" />
-      <Brand />
+      <Brand action={props.headerAction} />
+      {props.replacement ?? <Analysis {...props} />}
+    </aside>
+  )
+}
 
+function Analysis(props: Props) {
+  const { parcel, lookup, report } = props
+  return (
+    <>
       <ParcelSearch onChoose={props.onChooseParcel} />
       <div aria-live="polite">
         {lookup.status === 'loading' && <Busy label="Szukam działki…" />}
@@ -71,6 +85,7 @@ export function Panel(props: Props) {
             onDateChange={props.onDateChange}
             onSubmit={props.onAnalyze}
           />
+          {props.parcelAction}
         </section>
       )}
 
@@ -102,6 +117,6 @@ export function Panel(props: Props) {
           </ol>
         </section>
       )}
-    </aside>
+    </>
   )
 }

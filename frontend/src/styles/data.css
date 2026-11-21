@@ -156,12 +156,16 @@
   margin: 0;
   font-size: 0.8rem;
 
-  dt {
+  /* label above value, one column per stat */
+  > span {
+    display: grid;
+  }
+
+  .site-stat-label {
     color: var(--muted);
   }
 
-  dd {
-    margin: 0;
+  .site-stat-value {
     font-variant-numeric: tabular-nums;
   }
 }

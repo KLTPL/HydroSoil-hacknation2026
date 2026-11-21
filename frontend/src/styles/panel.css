@@ -40,17 +40,64 @@
   }
 }
 
+.panel:focus {
+  outline: none; /* focused only by the skip link; the panel itself is not a control */
+}
+
+.panel.collapsed {
+  @media (width < 720px) {
+    height: auto;
+    max-height: 58dvh;
+    overflow: hidden;
+
+    > :not(.sheet-grabber, .brand) {
+      display: none;
+    }
+  }
+}
+
+/* Tap target for collapsing the phone sheet; the visible bar is the ::before. */
 .sheet-grabber {
   display: none;
 
   @media (width < 720px) {
-    display: block;
+    display: grid;
+    place-items: center;
     flex: none;
-    width: 40px;
-    height: 5px;
-    margin: 2px auto 4px;
-    background: var(--hairline);
-    border-radius: 3px;
+    width: 100%;
+    min-height: 24px;
+    margin: -4px 0 0;
+    padding: 0;
+    background: transparent;
+
+    &::before {
+      content: '';
+      width: 40px;
+      height: 5px;
+      background: var(--hairline);
+      border-radius: 3px;
+    }
+
+    &:hover {
+      background: transparent;
+    }
+  }
+}
+
+.skip-link {
+  position: absolute;
+  z-index: 10;
+  inset-block-start: 8px;
+  inset-inline-start: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-radius: 12px;
+  translate: 0 -200%;
+
+  &:focus-visible {
+    translate: 0;
   }
 }
 

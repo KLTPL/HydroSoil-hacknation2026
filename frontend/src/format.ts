@@ -27,6 +27,7 @@ export const mmSigned = (value: number) => `${signed.format(value)} mm`
 export const pct = (value: number) => `${integer.format(value)} %`
 export const index = (value: number) => twoDecimals.format(value)
 export const num = (value: number) => decimal.format(value)
+export const coord = (value: number) => twoDecimals.format(value)
 
 const dateShort = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short' })
 const dateLong = new Intl.DateTimeFormat('pl-PL', { dateStyle: 'long' })

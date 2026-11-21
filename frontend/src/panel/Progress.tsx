@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react'
+import * as fmt from '../format'
 import type { ModuleName, ModuleProgress, Parcel } from '../model'
 
 const STEPS: { module: ModuleName; label: string; source: string }[] = [
@@ -50,7 +51,7 @@ export function Progress({
           <span className="step-icon" aria-hidden="true" />
           <span className="step-text">
             <span className="step-label">Granice działki</span>
-            <span className="step-fact">{parcel.region}, {parcel.area_ha.toFixed(1).replace('.', ',')} ha · ULDK GUGiK</span>
+            <span className="step-fact">{parcel.region}, {fmt.ha(parcel.area_ha)} · ULDK GUGiK</span>
           </span>
         </li>
         {STEPS.map((step) => {

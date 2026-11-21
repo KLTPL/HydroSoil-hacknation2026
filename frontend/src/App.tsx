@@ -40,6 +40,18 @@ export default function App() {
 
   return (
     <div className="app">
+      {/* The map comes first in the DOM (print order); keyboard users jump past its controls.
+          No href="#panel": the hash carries the share link. */}
+      <a
+        className="skip-link"
+        href="#"
+        onClick={(event) => {
+          event.preventDefault()
+          document.getElementById('panel')?.focus()
+        }}
+      >
+        Przejdź do analizy
+      </a>
       <MapView
         parcel={account.archived?.parcel ?? parcel}
         terrain={terrain}

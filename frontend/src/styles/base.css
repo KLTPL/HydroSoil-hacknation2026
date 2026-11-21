@@ -108,6 +108,8 @@ button {
   border: 0;
   border-radius: 12px;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: scale 0.12s var(--ease-out), background-color 0.15s;
 
   &:hover {
@@ -137,6 +139,10 @@ button.primary {
 
 button.quiet {
   background: transparent;
+
+  &:hover:not(:disabled) {
+    background: var(--card-strong);
+  }
 }
 
 button.chip {
@@ -147,9 +153,22 @@ button.chip {
   background: color-mix(in oklab, var(--water) 14%, transparent);
   border-radius: 999px;
 
+  &:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--water) 24%, transparent);
+  }
+
   @media (prefers-color-scheme: dark) {
     color: var(--water);
   }
+}
+
+/* Disabled because there is nothing to do, not because something is wrong: keep it readable. */
+button.primary.is-current:disabled {
+  color: var(--text);
+  background: var(--card-strong);
+  box-shadow: none;
+  opacity: 1;
+  cursor: default;
 }
 
 :is(input, select, button, summary, a):focus-visible {

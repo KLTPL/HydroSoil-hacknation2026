@@ -138,6 +138,10 @@ button.back {
   input {
     flex: 1 1 160px;
   }
+
+  > div {
+    flex-basis: 100%;
+  }
 }
 
 .save-parcel {

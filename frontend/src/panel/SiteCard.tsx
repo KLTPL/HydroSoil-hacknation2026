@@ -39,24 +39,24 @@ export function SiteCard({ site, rainMm, selected, onSelect }: Props) {
         <span className="site-headline">
           {fmt.m3Range(site.retained_m3)} <small>z deszczu {rainMm} mm</small>
         </span>
-        <dl className="site-stats">
-          <div>
-            <dt>Pojemność</dt>
-            <dd>{fmt.m3(site.storage_m3)}</dd>
-          </div>
-          <div>
-            <dt>Powierzchnia</dt>
-            <dd>{fmt.m2(site.area_m2)}</dd>
-          </div>
-          <div>
-            <dt>Głębokość</dt>
-            <dd>do {fmt.meters(site.max_depth_m)}</dd>
-          </div>
-          <div>
-            <dt>Zlewnia</dt>
-            <dd>{fmt.ha(site.catchment_ha)}</dd>
-          </div>
-        </dl>
+        <span className="site-stats">
+          <span>
+            <span className="site-stat-label">Pojemność</span>{' '}
+            <span className="site-stat-value">{fmt.m3(site.storage_m3)}</span>
+          </span>
+          <span>
+            <span className="site-stat-label">Powierzchnia</span>{' '}
+            <span className="site-stat-value">{fmt.m2(site.area_m2)}</span>
+          </span>
+          <span>
+            <span className="site-stat-label">Głębokość</span>{' '}
+            <span className="site-stat-value">do {fmt.meters(site.max_depth_m)}</span>
+          </span>
+          <span>
+            <span className="site-stat-label">Zlewnia</span>{' '}
+            <span className="site-stat-value">{fmt.ha(site.catchment_ha)}</span>
+          </span>
+        </span>
         {selected && <span className="site-advice">{copy.advice}</span>}
         {site.parcel_share < 0.95 && (
           <span className="site-note">

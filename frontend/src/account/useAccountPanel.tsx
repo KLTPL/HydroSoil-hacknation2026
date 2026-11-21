@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Parcel } from '../model'
 import { errorMessage } from '../useParcelReport'
 import { fetchArchived, type ArchivedReport, type SavedParcel } from './accountApi'
 import { AccountButton, SaveParcelButton } from './AccountControls'
 import { AccountView } from './AccountView'
 import { ArchivedView } from './ArchivedView'
+import { readTab, writeTab } from './tabHash'
 import { useAccount } from './useAccount'
 
 type View = { kind: 'analysis' } | { kind: 'account' } | { kind: 'archived'; archived: ArchivedReport }
@@ -24,8 +25,12 @@ interface Options {
  * Logged out, it is just the small "Zaloguj się" button. */
 export function useAccountPanel(options: Options) {
   const account = useAccount()
-  const [view, setView] = useState<View>({ kind: 'analysis' })
+  // A link with `t=<tab>` opens the account on that tab.
+  const [view, setView] = useState<View>(() => (readTab() ? { kind: 'account' } : { kind: 'analysis' }))
   const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    if (view.kind !== 'account') writeTab(null)
+  }, [view.kind])
 
   const openAccount = () => {
     setError(null)

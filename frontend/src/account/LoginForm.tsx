@@ -10,6 +10,7 @@ export function LoginForm({ account }: { account: Account }) {
   const [error, setError] = useState<string | null>(null)
   const userId = useId()
   const passId = useId()
+  const userHintId = useId()
   const registering = mode === 'register'
 
   async function submit(event: FormEvent) {
@@ -37,9 +38,12 @@ export function LoginForm({ account }: { account: Account }) {
           <label htmlFor={userId}>Nazwa użytkownika</label>
           <input
             id={userId}
+            name="username"
             value={username}
             autoComplete="username"
             autoCapitalize="none"
+            spellCheck={false}
+            aria-describedby={registering ? userHintId : undefined}
             minLength={3}
             maxLength={32}
             pattern="[A-Za-z0-9._\-]+"
@@ -47,11 +51,17 @@ export function LoginForm({ account }: { account: Account }) {
             required
             onChange={(e) => setUsername(e.target.value)}
           />
+          {registering && (
+            <p id={userHintId} className="muted fine">
+              3–32 znaki: litery bez polskich znaków, cyfry, kropka, podkreślnik lub myślnik.
+            </p>
+          )}
         </div>
         <div className="field">
           <label htmlFor={passId}>Hasło {registering && <span className="muted">(min. 8 znaków)</span>}</label>
           <input
             id={passId}
+            name="password"
             type="password"
             value={password}
             autoComplete={registering ? 'new-password' : 'current-password'}
@@ -68,7 +78,7 @@ export function LoginForm({ account }: { account: Account }) {
         )}
         <div aria-live="polite">{error && <p className="error">{error}</p>}</div>
         <button type="submit" className="primary" disabled={busy}>
-          {busy ? 'Chwileczkę…' : registering ? 'Załóż konto' : 'Zaloguj się'}
+          {busy ? (registering ? 'Zakładam konto…' : 'Loguję…') : registering ? 'Załóż konto' : 'Zaloguj się'}
         </button>
       </form>
       <button

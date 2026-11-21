@@ -1,5 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { searchParcels, type Parcel } from '../api'
+import { plural } from '../format'
 import { errorMessage } from '../useParcelReport'
 
 type SearchState =
@@ -39,10 +40,13 @@ export function ParcelSearch({ onChoose }: { onChoose: (parcel: Parcel) => void 
       <div className="search-row">
         <input
           id={inputId}
+          name="parcel"
+          type="search"
+          enterKeyHint="search"
           aria-describedby={hintId}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="np. 040706_5.0016.51/1 lub Karczyn 51/1"
+          placeholder="np. 040706_5.0016.51/1 lub Karczyn 51/1…"
           autoComplete="off"
           spellCheck={false}
         />
@@ -54,7 +58,15 @@ export function ParcelSearch({ onChoose }: { onChoose: (parcel: Parcel) => void 
         Pełny identyfikator albo nazwa obrębu i numer. Możesz też kliknąć działkę na mapie lub
         użyć lokalizacji (◎).
       </p>
-      {state.status === 'error' && <p className="error">{state.message}</p>}
+      <div aria-live="polite">
+        {state.status === 'error' && <p className="error">{state.message}</p>}
+        {state.status === 'results' && (
+          <p className="visually-hidden">
+            Znaleziono {state.parcels.length}{' '}
+            {plural(state.parcels.length, 'działkę', 'działki', 'działek')}. Wybierz jedną z listy.
+          </p>
+        )}
+      </div>
       {state.status === 'results' && (
         <ul className="search-results" aria-label="Znalezione działki">
           {state.parcels.map((p) => (

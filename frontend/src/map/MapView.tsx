@@ -31,6 +31,19 @@ setWorkerUrl(workerUrl)
 
 const POLAND_CENTER: [number, number] = [19.3, 52.1]
 
+// MapLibre labels its controls in English by default.
+const LOCALE = {
+  'Map.Title': 'Mapa',
+  'NavigationControl.ZoomIn': 'Przybliż',
+  'NavigationControl.ZoomOut': 'Oddal',
+  'NavigationControl.ResetBearing': 'Obróć mapę na północ',
+  'GeolocateControl.FindMyLocation': 'Pokaż moją lokalizację i wybierz działkę',
+  'GeolocateControl.LocationNotAvailable': 'Lokalizacja niedostępna',
+  'AttributionControl.ToggleAttribution': 'Pokaż lub ukryj źródła mapy',
+  'AttributionControl.MapFeedback': 'Zgłoś błąd mapy',
+  'LogoControl.Title': 'Logo MapLibre',
+}
+
 export function MapView({ parcel, terrain, selectedSiteId, onPick, onSelectSite }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<MapLibreMap | null>(null)
@@ -49,6 +62,7 @@ export function MapView({ parcel, terrain, selectedSiteId, onPick, onSelectSite 
       center: POLAND_CENTER,
       zoom: 6,
       maxZoom: 19,
+      locale: LOCALE,
       // Keeps the last frame readable, so the map can be copied into the printed report.
       canvasContextAttributes: { preserveDrawingBuffer: true },
     })
@@ -142,7 +156,7 @@ export function MapView({ parcel, terrain, selectedSiteId, onPick, onSelectSite 
           <img src={snapshot} alt="Mapa działki z miejscami retencji, rowami i zastawkami" />
           <figcaption>
             Granica działki (żółta), miejsca zatrzymania wody (niebieskie), rowy (turkusowe
-            przerywane), proponowane zastawki (czerwone punkty). Podkład: ortofotomapa GUGiK.
+            przerywane), proponowane zastawki (różowe punkty). Podkład: ortofotomapa GUGiK.
           </figcaption>
         </figure>
       )}

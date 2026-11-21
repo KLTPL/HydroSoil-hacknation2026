@@ -55,7 +55,7 @@
     pointer-events: none;
   }
 
-  span {
+  label > span {
     display: block;
     padding: 7px 14px;
     font-size: 0.86rem;
@@ -71,11 +71,11 @@
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
   }
 
-  label:has(input:focus-visible) span {
+  label:has(input:focus-visible) > span {
     outline: 3px solid var(--accent);
   }
 
-  &.small span {
+  &.small label > span {
     padding: 5px 10px;
     font-size: 0.8rem;
   }

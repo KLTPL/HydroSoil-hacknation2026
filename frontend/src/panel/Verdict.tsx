@@ -83,7 +83,7 @@ export function Verdict({ diagnosis, water }: { diagnosis: Diagnosis; water: Wat
   return (
     <section className={`verdict tone-${level.tone}`} aria-labelledby="verdict-heading">
       {diagnosis.warnings.map((warning) => (
-        <p key={warning} className="warning" role="alert">
+        <p key={warning} className="warning" role="note">
           {warning}
         </p>
       ))}

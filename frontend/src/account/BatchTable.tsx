@@ -122,7 +122,16 @@ export function BatchTable({ account, date, minDate, maxDate, onDateChange, onOp
           potrwać kilka minut. Wyniki pojawiają się na bieżąco, najpilniejsze na górze.
         </p>
       )}
-      <div aria-live="polite">{error && <p className="error">{error}</p>}</div>
+      <div aria-live="polite">
+        {error && <p className="error">{error}</p>}
+        {status !== 'idle' && (
+          <p className="visually-hidden">
+            {status === 'running'
+              ? `Przeanalizowano ${done} z ${account.saved.length}.`
+              : `Gotowe: ${done} z ${account.saved.length}. Najpilniejsze działki są na górze tabeli.`}
+          </p>
+        )}
+      </div>
       {status !== 'idle' && (
         <div className="batch-scroll">
           <table className="batch-table">

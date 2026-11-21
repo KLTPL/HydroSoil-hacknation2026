@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import * as fmt from '../format'
 import type { Parcel } from '../model'
 import type { Lookup, ReportState } from '../useParcelReport'
@@ -44,12 +44,20 @@ function Brand({ action }: { action?: ReactNode }) {
 }
 
 export function Panel(props: Props) {
+  // Phone: the sheet can be lowered to uncover the map.
+  const [collapsed, setCollapsed] = useState(false)
   return (
-    <aside className="panel" aria-label="Analiza działki">
-      <div className="sheet-grabber" aria-hidden="true" />
+    <main id="panel" tabIndex={-1} className={collapsed ? 'panel collapsed' : 'panel'} aria-label="Analiza działki">
+      <button
+        type="button"
+        className="sheet-grabber"
+        aria-expanded={!collapsed}
+        aria-label={collapsed ? 'Rozwiń panel analizy' : 'Zwiń panel, aby zobaczyć mapę'}
+        onClick={() => setCollapsed(!collapsed)}
+      />
       <Brand action={props.headerAction} />
       {props.replacement ?? <Analysis {...props} />}
-    </aside>
+    </main>
   )
 }
 

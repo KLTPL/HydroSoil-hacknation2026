@@ -135,6 +135,13 @@ export function RainControl({ map, terrain, areaHa, onRainingChange }: Props) {
           : 'Bez zmian woda stoi w zastoiskach, gdzie uprawa wymaka, albo odpływa rowami poza działkę.'}
       </p>
 
+      <p className="visually-hidden" role="status">
+        {phase === 'done' &&
+          (mode === 'plan'
+            ? `Po ulewie ${rain} mm z planem na działce zostaje ${fmt.m3Range(kept)} wody.`
+            : `Po ulewie ${rain} mm bez zmian woda spływa po powierzchni: ${fmt.m3Range({ low: fallen * coeff.low, high: fallen * coeff.high })}.`)}
+      </p>
+
       <div className="rain-actions">
         {phase === 'raining' ? (
           <button type="button" onClick={stop}>

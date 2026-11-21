@@ -11,7 +11,7 @@ interface Props {
   onOpen: (saved: SavedParcel) => void
 }
 
-function Rename({ saved, onDone }: { saved: SavedParcel; onDone: () => void }) {
+function Rename({ saved, onDone, onCancel }: { saved: SavedParcel; onDone: () => void; onCancel: () => void }) {
   const [name, setName] = useState(saved.name ?? '')
   const [error, setError] = useState<string | null>(null)
 
@@ -26,20 +26,32 @@ function Rename({ saved, onDone }: { saved: SavedParcel; onDone: () => void }) {
   }
 
   return (
-    <form className="rename" onSubmit={submit}>
+    <form
+      className="rename"
+      onSubmit={submit}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') onCancel()
+      }}
+    >
       <label className="visually-hidden" htmlFor={`rename-${saved.id}`}>
-        Nazwa działki
+        Nowa nazwa działki {parcelLabel(saved)}
       </label>
       <input
         id={`rename-${saved.id}`}
+        name="parcel-name"
         value={name}
         maxLength={60}
-        placeholder="np. Pole za stodołą"
+        placeholder="np. Pole za stodołą…"
+        autoComplete="off"
+        // Opened by the user's own click on "Zmień nazwę": typing can start right away.
         autoFocus
         onChange={(e) => setName(e.target.value)}
       />
       <button type="submit">Zapisz</button>
-      {error && <p className="error">{error}</p>}
+      <button type="button" className="quiet" onClick={onCancel}>
+        Anuluj
+      </button>
+      <div aria-live="polite">{error && <p className="error">{error}</p>}</div>
     </form>
   )
 }
@@ -70,7 +82,7 @@ export function MyParcels({ account, cropName, onOpen }: Props) {
 
   return (
     <>
-      {error && <p className="error">{error}</p>}
+      <div aria-live="polite">{error && <p className="error">{error}</p>}</div>
       <ul className="saved-list">
         {account.saved.map((saved) => (
           <li key={saved.id} className="saved-item">
@@ -84,18 +96,29 @@ export function MyParcels({ account, cropName, onOpen }: Props) {
               </span>
             </div>
             <div className="saved-actions">
-              <button type="button" className="chip" onClick={() => onOpen(saved)}>
+              <button
+                type="button"
+                className="chip"
+                aria-label={`Otwórz analizę: ${parcelLabel(saved)}`}
+                onClick={() => onOpen(saved)}
+              >
                 Otwórz analizę
               </button>
               <button
                 type="button"
                 className="quiet small"
                 aria-expanded={editing === saved.id}
+                aria-label={`Zmień nazwę: ${parcelLabel(saved)}`}
                 onClick={() => setEditing(editing === saved.id ? null : saved.id)}
               >
                 Zmień nazwę
               </button>
-              <button type="button" className="quiet small" onClick={() => void remove(saved)}>
+              <button
+                type="button"
+                className="quiet small"
+                aria-label={`Usuń: ${parcelLabel(saved)}`}
+                onClick={() => void remove(saved)}
+              >
                 Usuń
               </button>
             </div>
@@ -106,6 +129,7 @@ export function MyParcels({ account, cropName, onOpen }: Props) {
                   setEditing(null)
                   void account.refreshSaved()
                 }}
+                onCancel={() => setEditing(null)}
               />
             )}
           </li>

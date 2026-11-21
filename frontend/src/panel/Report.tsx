@@ -122,7 +122,7 @@ function PrintButton() {
         requestPrint()
       }}
     >
-      {preparing && <progress className="loading-spinner" aria-label="Przygotowuję PDF" />}
+      {preparing && <progress className="loading-spinner" aria-hidden="true" />}
       {preparing ? 'Przygotowuję PDF…' : 'Zapisz PDF'}
     </button>
   )

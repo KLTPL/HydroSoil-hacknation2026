@@ -33,7 +33,10 @@ export function LayerSwitch({
             checked={value === o.value}
             onChange={() => onChange(o.value)}
           />
-          <span>{o.label}</span>
+          <span>
+            {o.label}
+            <span className="visually-hidden">: {o.hint}</span>
+          </span>
         </label>
       ))}
     </fieldset>
@@ -46,26 +49,26 @@ export function Legend({ terrain, base }: { terrain: RetentionAnalysis; base: Ba
     <aside className="glass legend" aria-label="Legenda mapy">
       <ul>
         <li>
-          <span className="swatch swatch-parcel" /> Twoja działka
+          <span className="swatch swatch-parcel" aria-hidden="true" /> Twoja działka
         </li>
         {terrain.sites.length > 0 && (
           <li>
-            <span className="swatch swatch-site" /> Miejsca na wodę ({terrain.sites.length})
+            <span className="swatch swatch-site" aria-hidden="true" /> Miejsca na wodę ({terrain.sites.length})
           </li>
         )}
         {terrain.ditches.length > 0 && (
           <li>
-            <span className="swatch swatch-ditch" /> Rowy ({terrain.ditches.length})
+            <span className="swatch swatch-ditch" aria-hidden="true" /> Rowy ({terrain.ditches.length})
           </li>
         )}
         {weirs > 0 && (
           <li>
-            <span className="swatch swatch-weir" /> Proponowane zastawki ({weirs})
+            <span className="swatch swatch-weir" aria-hidden="true" /> Proponowane zastawki ({weirs})
           </li>
         )}
         {base === 'relief' && terrain.flow.length > 0 && (
           <li>
-            <span className="swatch swatch-flow" /> Drogi spływu wody
+            <span className="swatch swatch-flow" aria-hidden="true" /> Drogi spływu wody
           </li>
         )}
       </ul>

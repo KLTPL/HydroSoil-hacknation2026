@@ -100,7 +100,7 @@ export function WaterSection({ water, year }: { water: ModuleResult<WaterBalance
             {w.in_season
               ? ` Współczynnik uprawowy Kc dziś: ${fmt.num(w.kc)}.`
               : ' Uprawa jest poza sezonem wegetacji.'}{' '}
-            Komórka siatki pogodowej: {w.grid_lat.toFixed(2)}° N, {w.grid_lon.toFixed(2)}° E.
+            Komórka siatki pogodowej: {fmt.coord(w.grid_lat)}° N, {fmt.coord(w.grid_lon)}° E.
           </p>
           <RiskCalendar months={w.risk_calendar} stage={w.critical_stage} />
         </>

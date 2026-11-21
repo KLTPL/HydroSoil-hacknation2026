@@ -1,7 +1,7 @@
 import { useEffect, useId, useState, type FormEvent } from 'react'
 import { fetchCrops, type Crop } from '../api'
 import { earliestIso } from '../dates'
-import { todayIso } from '../useParcelReport'
+import { errorMessage, todayIso } from '../useParcelReport'
 
 interface Props {
   crop: string
@@ -18,10 +18,13 @@ export function AnalysisForm({ crop, date, busy, current, onCropChange, onDateCh
   const cropId = useId()
   const dateId = useId()
   const [crops, setCrops] = useState<Crop[]>([])
+  const [cropsError, setCropsError] = useState<string | null>(null)
   const today = todayIso()
 
   useEffect(() => {
-    void fetchCrops().then(setCrops)
+    fetchCrops().then(setCrops, (err: unknown) =>
+      setCropsError(`Nie udało się wczytać listy upraw. ${errorMessage(err)}`),
+    )
   }, [])
 
   function submit(event: FormEvent) {
@@ -43,6 +46,7 @@ export function AnalysisForm({ crop, date, busy, current, onCropChange, onDateCh
             </option>
           ))}
         </select>
+        {cropsError && <p className="error fine" role="alert">{cropsError}</p>}
       </div>
       <div className="field">
         <label htmlFor={dateId}>Data analizy</label>
@@ -56,8 +60,8 @@ export function AnalysisForm({ crop, date, busy, current, onCropChange, onDateCh
           onChange={(e) => onDateChange(e.target.value)}
         />
       </div>
-      <button type="submit" className="primary" disabled={busy || current || !crop}>
-        {busy ? 'Analizuję…' : current ? 'Raport poniżej jest aktualny' : 'Analizuj działkę'}
+      <button type="submit" className={current ? 'primary is-current' : 'primary'} disabled={busy || current}>
+        {busy ? 'Analizuję…' : current ? '✓ Raport poniżej jest aktualny' : 'Analizuj działkę'}
       </button>
     </form>
   )

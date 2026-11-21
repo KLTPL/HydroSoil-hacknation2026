@@ -2,12 +2,12 @@
 (ERA5 / ERA5-Land reanalysis blended with recent high-resolution model data)."""
 
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import httpx
 import numpy as np
 
-from retencja_api.cache import read_json, write_json
+from retencja_api.cache import cached_at, read_json, write_json
 
 ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 DAILY_VARS = (
@@ -54,11 +54,14 @@ async def _request(lat: float, lon: float, start: date, end: date) -> dict:
         return response.json()
 
 
-async def fetch_daily(lat: float, lon: float, start: date, end: date) -> DailyWeather:
+async def fetch_daily(
+    lat: float, lon: float, start: date, end: date
+) -> tuple[DailyWeather, datetime | None]:
     """Daily series for the 0.1° grid cell containing the point.
 
     The long history is fetched once per cell and cached for good (the free API counts
     long requests as many calls); only the last, still-revised days are fetched each time.
+    Returns the series and, if nothing had to be downloaded now, when it was downloaded.
     """
     lat, lon = round(lat, 1), round(lon, 1)
     # History ends on a month boundary, so its cache entry is reused for a whole month.
@@ -66,15 +69,16 @@ async def fetch_daily(lat: float, lon: float, start: date, end: date) -> DailyWe
     final_end = min(end, settled.replace(day=1) - timedelta(days=1))
     key = f"{lat:.1f},{lon:.1f}:{start}:{final_end}"
     history = read_json("open-meteo", key)
+    downloaded = cached_at("open-meteo", key)
     if history is None:
         history = await _request(lat, lon, start, final_end)
         write_json("open-meteo", key, history)
     if final_end >= end:
-        return parse_daily(history)
+        return parse_daily(history), downloaded
     recent = await _request(lat, lon, final_end + timedelta(days=1), end)
     merged = dict(history)
     merged["daily"] = {k: history["daily"][k] + recent["daily"][k] for k in history["daily"]}
-    return parse_daily(merged)
+    return parse_daily(merged), None
 
 
 def parse_daily(payload: dict) -> DailyWeather:

@@ -3,6 +3,7 @@ Cloud-Optimized GeoTIFF window from Microsoft Planetary Computer. Used to warn w
 parcel is not farmland (built-up, forest, water), where crop results make little sense."""
 
 import asyncio
+from datetime import datetime
 
 import httpx
 import numpy as np
@@ -11,7 +12,7 @@ from rasterio.features import geometry_mask
 from rasterio.windows import from_bounds
 from shapely.geometry import shape
 
-from retencja_api.cache import read_json, write_json
+from retencja_api.cache import cached_at, read_json, write_json
 from retencja_api.models import LandCover, LandCoverShare
 
 STAC_URL = "https://planetarycomputer.microsoft.com/api/stac/v1/search"
@@ -83,11 +84,12 @@ def summarize(counts: dict[int, int]) -> LandCover:
     )
 
 
-async def land_cover(parcel_id: str, geometry_wgs84: dict) -> LandCover:
+async def land_cover(parcel_id: str, geometry_wgs84: dict) -> tuple[LandCover, datetime | None]:
     cached = read_json("worldcover", parcel_id)
+    downloaded = cached_at("worldcover", parcel_id)
     if cached is None:
         href = await _asset_href(geometry_wgs84)
         counts = await asyncio.to_thread(class_counts, href, geometry_wgs84)
         cached = {str(k): v for k, v in counts.items()}
         write_json("worldcover", parcel_id, cached)
-    return summarize({int(k): v for k, v in cached.items()})
+    return summarize({int(k): v for k, v in cached.items()}), downloaded

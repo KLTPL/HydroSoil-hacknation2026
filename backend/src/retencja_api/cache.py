@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -27,3 +28,11 @@ def write_json(namespace: str, key: str, value: Any) -> None:
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(value))
     tmp.replace(path)
+
+
+def cached_at(namespace: str, key: str) -> datetime | None:
+    """When a cached response was written (= when the data was downloaded), if cached."""
+    path = cache_path(namespace, key, ".json")
+    if not path.exists():
+        return None
+    return datetime.fromtimestamp(path.stat().st_mtime, UTC)

@@ -2,13 +2,14 @@
 plant-available water capacity (Saxton & Rawls 2006) and the IUNG soil category."""
 
 import asyncio
+from datetime import datetime
 from io import BytesIO
 
 import httpx
 import numpy as np
 import rasterio
 
-from retencja_api.cache import read_json, write_json
+from retencja_api.cache import cached_at, read_json, write_json
 from retencja_api.models import SoilLayer, SoilProfile
 
 WCS_URL = "https://maps.isric.org/mapserv"
@@ -50,12 +51,13 @@ async def _coverage_mean(client: httpx.AsyncClient, prop: str, depth: str, b: Bo
     return float(valid.mean())
 
 
-async def fetch_raw(bounds: Bounds) -> dict[str, list[float]]:
-    """Raw SoilGrids values per property and depth (clay/sand g/kg, soc dg/kg)."""
+async def fetch_raw(bounds: Bounds) -> tuple[dict[str, list[float]], datetime | None]:
+    """Raw SoilGrids values per property and depth (clay/sand g/kg, soc dg/kg), and when
+    they were downloaded if they came from the cache."""
     key = ",".join(f"{v:.4f}" for v in bounds)
     cached = read_json("soilgrids", key)
     if cached is not None:
-        return cached
+        return cached, cached_at("soilgrids", key)
     semaphore = asyncio.Semaphore(_CONCURRENCY)
 
     async def one(client: httpx.AsyncClient, prop: str, depth: str) -> float:
@@ -68,7 +70,7 @@ async def fetch_raw(bounds: Bounds) -> dict[str, list[float]]:
         }
         results = {prop: await asyncio.gather(*coros) for prop, coros in jobs.items()}
     write_json("soilgrids", key, results)
-    return results
+    return results, None
 
 
 def available_water(sand: float, clay: float, organic_matter_pct: float) -> float:

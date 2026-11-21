@@ -64,10 +64,15 @@ SOIL_BUDGET_S = 12.0
 HYDRO_CURRENT_DAYS = 2  # IMGW serves only warnings in force now
 
 
-def _source(name: str) -> DataSource:
+def _source(name: str, cached_at: datetime | None = None) -> DataSource:
+    """Source entry; `cached_at` is when cached data was originally downloaded."""
     title, url, licence = SOURCES[name]
     return DataSource(
-        name=title, url=url, license=licence, retrieved="live", retrieved_at=datetime.now(UTC)
+        name=title,
+        url=url,
+        license=licence,
+        retrieved="live" if cached_at is None else "cached",
+        retrieved_at=cached_at or datetime.now(UTC),
     )
 
 
@@ -83,7 +88,7 @@ async def soil_module(bounds_wgs84: tuple[float, float, float, float]) -> Module
     timer = _Timer()
     key = "soil:" + ",".join(f"{v:.4f}" for v in bounds_wgs84)
     try:
-        raw = await run_within(key, lambda: fetch_raw(bounds_wgs84), SOIL_BUDGET_S)
+        raw, downloaded = await run_within(key, lambda: fetch_raw(bounds_wgs84), SOIL_BUDGET_S)
     except (TimeoutError, httpx.HTTPError, SoilDataMissing) as exc:
         log.warning("Soil unavailable: %r", exc)
         return ModuleResult(
@@ -92,7 +97,10 @@ async def soil_module(bounds_wgs84: tuple[float, float, float, float]) -> Module
             duration_ms=timer.ms(),
         )
     return ModuleResult(
-        status="ok", data=build_profile(raw), sources=[_source("soil")], duration_ms=timer.ms()
+        status="ok",
+        data=build_profile(raw),
+        sources=[_source("soil", downloaded)],
+        duration_ms=timer.ms(),
     )
 
 
@@ -110,12 +118,12 @@ async def water_module(
     start, end = weather_period(effective, years)
     source = "meteo"
     try:
-        weather = await fetch_daily(lat, lon, start, end)
+        weather, downloaded = await fetch_daily(lat, lon, start, end)
     except httpx.HTTPError as exc:
         log.warning("Open-Meteo unavailable, falling back to NASA POWER: %r", exc)
         source = "power"
         try:
-            weather = await fetch_daily_power(lat, lon, start, end)
+            weather, downloaded = await fetch_daily_power(lat, lon, start, end)
         except httpx.HTTPError as exc2:
             log.warning("NASA POWER unavailable: %r", exc2)
             return ModuleResult(
@@ -131,7 +139,11 @@ async def water_module(
         else None
     )
     return ModuleResult(
-        status="ok", message=message, data=data, sources=[_source(source)], duration_ms=timer.ms()
+        status="ok",
+        message=message,
+        data=data,
+        sources=[_source(source, downloaded)],
+        duration_ms=timer.ms(),
     )
 
 
@@ -204,7 +216,7 @@ LAND_BUDGET_S = 10.0
 async def land_module(parcel_id: str, geometry_wgs84: dict) -> ModuleResult[LandCover]:
     timer = _Timer()
     try:
-        data = await run_within(
+        data, downloaded = await run_within(
             f"land:{parcel_id}", lambda: land_cover(parcel_id, geometry_wgs84), LAND_BUDGET_S
         )
     except (TimeoutError, httpx.HTTPError) as exc:
@@ -214,4 +226,6 @@ async def land_module(parcel_id: str, geometry_wgs84: dict) -> ModuleResult[Land
             message="Nie udało się sprawdzić pokrycia terenu (ESA WorldCover).",
             duration_ms=timer.ms(),
         )
-    return ModuleResult(status="ok", data=data, sources=[_source("land")], duration_ms=timer.ms())
+    return ModuleResult(
+        status="ok", data=data, sources=[_source("land", downloaded)], duration_ms=timer.ms()
+    )

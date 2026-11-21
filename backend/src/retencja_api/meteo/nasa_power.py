@@ -2,12 +2,12 @@
 Open-Meteo is unavailable or over its free quota. ET0 is computed here with the FAO-56
 Penman-Monteith equation (Hargreaves where solar radiation is not yet published)."""
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import httpx
 import numpy as np
 
-from retencja_api.cache import read_json, write_json
+from retencja_api.cache import cached_at, read_json, write_json
 from retencja_api.meteo.openmeteo import DailyWeather
 
 POWER_URL = "https://power.larc.nasa.gov/api/temporal/daily/point"
@@ -33,19 +33,23 @@ async def _request(lat: float, lon: float, start: date, end: date) -> dict:
         return response.json()
 
 
-async def fetch_daily_power(lat: float, lon: float, start: date, end: date) -> DailyWeather:
+async def fetch_daily_power(
+    lat: float, lon: float, start: date, end: date
+) -> tuple[DailyWeather, datetime | None]:
     lat, lon = round(lat, 1), round(lon, 1)
     settled = date.today() - timedelta(days=_SETTLED_DAYS)
     final_end = min(end, settled.replace(day=1) - timedelta(days=1))
     key = f"{lat:.1f},{lon:.1f}:{start}:{final_end}"
     history = read_json("nasa-power", key)
+    downloaded = cached_at("nasa-power", key)
     if history is None:
         history = await _request(lat, lon, start, final_end)
         write_json("nasa-power", key, history)
     payloads = [history]
     if final_end < end:
         payloads.append(await _request(lat, lon, final_end + timedelta(days=1), end))
-    return parse_power(payloads)
+        downloaded = None
+    return parse_power(payloads), downloaded
 
 
 def parse_power(payloads: list[dict]) -> DailyWeather:

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import * as fmt from '../format'
 import type { AnalysisReport, ModuleResult, RetentionAnalysis } from '../model'
 import { requestPrint } from '../print'
@@ -103,6 +103,31 @@ function TerrainResults({
   )
 }
 
+/** Framing the map and waiting for its tiles takes a few seconds before the print dialog. */
+function PrintButton() {
+  const [preparing, setPreparing] = useState(false)
+  useEffect(() => {
+    const done = () => setPreparing(false)
+    window.addEventListener('afterprint', done)
+    return () => window.removeEventListener('afterprint', done)
+  }, [])
+  return (
+    <button
+      type="button"
+      className="print-button no-print"
+      aria-busy={preparing}
+      onClick={() => {
+        if (preparing) return
+        setPreparing(true)
+        requestPrint()
+      }}
+    >
+      {preparing && <progress className="loading-spinner" aria-label="Przygotowuję PDF" />}
+      {preparing ? 'Przygotowuję PDF…' : 'Zapisz PDF'}
+    </button>
+  )
+}
+
 export function Report({ report, selectedSiteId, onSelectSite }: Props) {
   const year = Number(report.analysis_date.slice(0, 4))
   const { diagnosis, terrain } = report
@@ -117,9 +142,7 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
           </h2>
           <p className="muted fine">Wygenerowano {fmt.dateTime(report.generated_at)}</p>
         </div>
-        <button type="button" className="no-print" onClick={requestPrint}>
-          Zapisz PDF
-        </button>
+        <PrintButton />
         <p className="print-only">
           Działka {report.parcel.number}, obręb {report.parcel.region}, gm.{' '}
           {report.parcel.commune}, {report.parcel.county}, woj. {report.parcel.voivodeship},{' '}

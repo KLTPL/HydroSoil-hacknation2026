@@ -81,6 +81,12 @@ function Analysis(props: Props) {
             crop={props.crop}
             date={props.date}
             busy={report.status === 'loading'}
+            current={
+              report.status === 'done' &&
+              report.report.parcel.id === parcel.id &&
+              report.report.crop.id === props.crop &&
+              report.report.analysis_date === props.date
+            }
             onCropChange={props.onCropChange}
             onDateChange={props.onDateChange}
             onSubmit={props.onAnalyze}

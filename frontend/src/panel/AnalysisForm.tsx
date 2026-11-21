@@ -7,12 +7,14 @@ interface Props {
   crop: string
   date: string
   busy: boolean
+  /** The report below is for exactly this crop and date: nothing to rerun. */
+  current: boolean
   onCropChange: (crop: string) => void
   onDateChange: (date: string) => void
   onSubmit: () => void
 }
 
-export function AnalysisForm({ crop, date, busy, onCropChange, onDateChange, onSubmit }: Props) {
+export function AnalysisForm({ crop, date, busy, current, onCropChange, onDateChange, onSubmit }: Props) {
   const cropId = useId()
   const dateId = useId()
   const [crops, setCrops] = useState<Crop[]>([])
@@ -54,8 +56,8 @@ export function AnalysisForm({ crop, date, busy, onCropChange, onDateChange, onS
           onChange={(e) => onDateChange(e.target.value)}
         />
       </div>
-      <button type="submit" className="primary" disabled={busy || !crop}>
-        {busy ? 'Analizuję…' : 'Analizuj działkę'}
+      <button type="submit" className="primary" disabled={busy || current || !crop}>
+        {busy ? 'Analizuję…' : current ? 'Raport poniżej jest aktualny' : 'Analizuj działkę'}
       </button>
     </form>
   )

@@ -504,3 +504,19 @@ details:not([open])::details-content {
     color: inherit;
   }
 }
+
+.print-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+
+  &[aria-busy='true'] {
+    cursor: progress;
+  }
+
+  .loading-spinner:indeterminate {
+    --size: 16px;
+    --thickness: 2px;
+  }
+}

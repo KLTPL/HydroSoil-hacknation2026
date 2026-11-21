@@ -5,7 +5,7 @@ import httpx
 import pytest
 from shapely.geometry import box
 
-from retencja_api import report
+from retencja_api import background, report
 from retencja_api.api import earliest_analysis_date
 from retencja_api.crops import CROPS_BY_ID
 from retencja_api.models import (
@@ -51,6 +51,9 @@ def _analysis() -> RetentionAnalysis:
 @pytest.fixture(autouse=True)
 def no_cache(monkeypatch):
     monkeypatch.setattr(report, "cached_analysis", lambda _id: None)
+    # Background results and failures are process-wide; each test starts clean.
+    monkeypatch.setattr(background, "_results", {})
+    monkeypatch.setattr(background, "_errors", {})
 
 
 @pytest.fixture(autouse=True)
@@ -111,6 +114,21 @@ async def test_upstream_failure_is_reported_as_unavailable(monkeypatch):
     assert result.terrain.message
 
 
+async def test_failed_terrain_is_not_retried_on_every_poll(monkeypatch):
+    calls = 0
+
+    async def broken(_id, _geom):
+        nonlocal calls
+        calls += 1
+        raise httpx.ReadTimeout("GUGiK")
+
+    monkeypatch.setattr(report, "analyze_parcel", broken)
+    first = await report.terrain_module(PARCEL.id, GEOM, 1.0)
+    second = await report.terrain_module(PARCEL.id, GEOM, 1.0)
+    assert first.status == second.status == "unavailable"
+    assert calls == 1
+
+
 async def test_missing_modules_are_listed_and_lower_confidence(monkeypatch):
     async def fast(_id, _geom):
         return _analysis()
@@ -138,4 +156,4 @@ async def test_huge_parcel_skips_terrain(monkeypatch):
     result = await report.terrain_module(PARCEL.id, box(0, 0, 2000, 2000), 1.0)  # 400 ha
 
     assert result.status == "unavailable"
-    assert "400 ha" in result.message
+    assert "449 ha" in result.message  # the downloaded extent: parcel plus 60 m on each side

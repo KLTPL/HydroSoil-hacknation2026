@@ -153,7 +153,8 @@ def test_grassland_ndmi_drop_without_dry_soil_is_read_as_mowing():
     obs = VegetationObservation(year=2025, date=date(2025, 6, 15), ndvi=0.5, ndmi=0.1,
                                 clear_pct=98)
     cmp = Comparison(value=0.1, normal=0.3, rank=1, years=11, history=[])
-    veg = VegetationState(current=obs, history=[], ndvi=cmp, ndmi=cmp, window_days=20,
+    green = Comparison(value=0.5, normal=0.6, rank=2, years=11, history=[])
+    veg = VegetationState(current=obs, history=[], ndvi=green, ndmi=cmp, window_days=20,
                           missing_years=[])
     meadow = diagnose(CROP_PARAMS["laki"], 5, _water(80), None, veg, None, None, [])
     sat = next(s for s in meadow.signals if s.key == "satellite")

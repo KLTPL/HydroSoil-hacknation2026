@@ -1,5 +1,7 @@
 """Crop choice and management, and irrigation as the last resort."""
 
+import math
+
 from retencja_api.assessment.crop_params import CROP_PARAMS
 from retencja_api.assessment.recs_common import MONTHS, MONTHS_IN, ParcelContext, m3
 from retencja_api.models import IrrigationEstimate, Range, Recommendation, WaterBalance
@@ -101,6 +103,20 @@ def irrigation_estimate(dose_mm: float, area_ha: float) -> IrrigationEstimate:
     )
 
 
+IRRIGATION_DOSE_MM = 25.0  # a single overhead dose the topsoil can take in
+FULL_PROFILE_DOSE_MM = 60.0
+
+
+def _doses(dose_mm: float) -> str:
+    n = max(1, math.ceil(dose_mm / IRRIGATION_DOSE_MM))
+    split = (f" Podaj ją w {n} dawkach po ok. {dose_mm / n:.0f} mm" if n > 1
+             else " Podaj ją jednorazowo")
+    note = (" To uzupełnienie całej strefy korzeni; w praktyce wystarczy podlewać tak, "
+            "żeby zapas nie spadał poniżej progu stresu." if dose_mm > FULL_PROFILE_DOSE_MM
+            else "")
+    return f"{split}, wieczorem lub w nocy.{note}"
+
+
 def irrigation(ctx: ParcelContext) -> Recommendation | None:
     water, crop = ctx.water, ctx.crop
     if water is None:
@@ -116,7 +132,7 @@ def irrigation(ctx: ParcelContext) -> Recommendation | None:
     method = {
         "orchard": " Najoszczędniej kroplowo, pod rzędami.",
         "grassland": " Na łące nawadnianie zwykle opłaca się tylko po pokosie, na glebie lekkiej.",
-    }.get(crop.group, " Podaj ją w 2–3 dawkach po 20–30 mm, wieczorem lub w nocy.")
+    }.get(crop.group, _doses(dose_mm))
     return Recommendation(
         key="irrigation",
         category="irrigation",

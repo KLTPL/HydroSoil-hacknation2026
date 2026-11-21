@@ -7,6 +7,7 @@ from collections.abc import Callable
 from retencja_api.assessment import recs_crop, recs_landscape, recs_retention, recs_soil
 from retencja_api.assessment.crop_params import CropParams
 from retencja_api.assessment.recs_common import ParcelContext, plural
+from retencja_api.landcover.worldcover import is_farmland
 from retencja_api.models import (
     HydroStatus,
     LandCover,
@@ -53,6 +54,9 @@ def recommend(
 ) -> list[Recommendation]:
     ctx = ParcelContext(crop, area_ha, water, soil, hydro, terrain, shape, land)
     present = [r for rule in RULES if (r := rule(ctx)) is not None]
+    if not is_farmland(land, crop.group):
+        # Forest, roads or built-up land: farming advice makes no sense, keeping water does.
+        present = [r for r in present if r.category == "retention"]
     # Stable sort: within a category by effect, rules without a number keep their order.
     return sorted(
         present,

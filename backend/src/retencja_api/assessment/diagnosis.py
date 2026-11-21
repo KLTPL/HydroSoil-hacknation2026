@@ -3,6 +3,7 @@ Each statement names the numbers it is based on; missing inputs lower the confid
 
 from retencja_api.assessment.crop_params import CropParams
 from retencja_api.assessment.signals import SATELLITE_LIMITATIONS, dry_signals, source_signals
+from retencja_api.landcover.worldcover import farmland_share, is_farmland
 from retencja_api.models import (
     Cause,
     Diagnosis,
@@ -31,16 +32,19 @@ LIMITATIONS = [
 ]
 
 
-def _level(water: WaterBalance, crop: CropParams, signals: list[str]) -> DroughtLevel:
-    """Absolute crop stress from the soil water balance, graded by how unusual it is."""
+def _level(water: WaterBalance, crop: CropParams, readings: list[SourceSignal]) -> DroughtLevel:
+    """Absolute crop stress from the soil water balance, graded by how unusual it is.
+    Sources saying "wetter than usual" cancel those saying "drier"."""
     stressed = water.available_pct.value < 100 * (1 - crop.depletion_p)
+    compared = [r for r in readings if r.key != "hydro"]
+    net = sum(r.verdict == "dry" for r in compared) - sum(r.verdict == "wet" for r in compared)
     if not water.in_season:
-        return "watch" if len(signals) >= 2 else "none"
-    if stressed and len(signals) >= 2:
+        return "watch" if net >= 2 else "none"
+    if stressed and net >= 2:
         return "severe"
-    if (stressed and signals) or len(signals) >= 2:
+    if (stressed and net >= 1) or net >= 2:
         return "moderate"
-    if stressed or signals:
+    if stressed or net >= 1:
         return "watch"
     return "none"
 
@@ -235,7 +239,7 @@ def diagnose(
         )
     readings = source_signals(water, vegetation, hydro, crop)
     signals = dry_signals(readings)
-    level = _level(water, crop, signals)
+    level = _level(water, crop, readings)
     causes = _weather_causes(water)
     if soil is not None:
         causes += _soil_causes(soil, crop, water.taw_mm)
@@ -275,13 +279,15 @@ def diagnose(
     )
 
 
-def land_warnings(land: LandCover | None) -> list[str]:
+def land_warnings(land: LandCover | None, crop: CropParams) -> list[str]:
     """Warn when the parcel is mostly not farmland: crop results would be misleading."""
-    if land is None or land.is_agricultural:
+    if land is None or is_farmland(land, crop.group):
         return []
     main = ", ".join(f"{c.name} {100 * c.share:.0f} %" for c in land.classes[:3])
+    share = farmland_share(land, crop.group)
     return [
         f"Ta działka nie wygląda na rolniczą (mapa pokrycia terenu ESA WorldCover "
-        f"{land.year}: {main}; grunty orne i łąki tylko {100 * land.agricultural_share:.0f} %). "
-        "Ocena dla uprawy i zalecenia mają tu ograniczony sens. Sprawdź numer działki."
+        f"{land.year}: {main}; użytki rolne tylko {100 * share:.0f} %). "
+        "Ocena dla uprawy ma tu ograniczony sens, a zalecenia ograniczono do zatrzymania wody. "
+        "Sprawdź numer działki."
     ]

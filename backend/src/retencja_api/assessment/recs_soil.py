@@ -27,13 +27,21 @@ _OM_ACTION = {
 }
 
 
+ORGANIC_SOIL_SOC_PCT = 3.5
+MIN_HUMUS_GAIN_MM = 1.0
+
+
 def organic_matter(ctx: ParcelContext) -> Recommendation | None:
     soil = ctx.soil
     if soil is None or not soil.layers:
         return None
     if soil.organic_carbon_pct >= TARGET_SOC_PCT and soil.category in ("III", "IV"):
         return None
+    if soil.organic_carbon_pct >= ORGANIC_SOIL_SOC_PCT:
+        return None  # already humus-rich or organic: more humus barely adds water
     mm = humus_water_gain_mm(soil)
+    if mm < MIN_HUMUS_GAIN_MM:
+        return None
     return Recommendation(
         key="organic_matter",
         category="soil",

@@ -16,8 +16,13 @@ from retencja_api.assessment.crop_params import CROP_PARAMS
 from retencja_api.assessment.diagnosis import diagnose, land_warnings
 from retencja_api.assessment.parcel_shape import parcel_shape
 from retencja_api.assessment.recommendations import recommend
-from retencja_api.background import shared_task
-from retencja_api.config import HISTORY_YEARS, TERRAIN_MAX_AREA_HA, TERRAIN_TIME_BUDGET_S
+from retencja_api.background import recent_error, shared_task
+from retencja_api.config import (
+    HISTORY_YEARS,
+    PARCEL_BUFFER_M,
+    TERRAIN_MAX_AREA_HA,
+    TERRAIN_TIME_BUDGET_S,
+)
 from retencja_api.geo import geometry_to_wgs84
 from retencja_api.models import (
     AnalysisReport,
@@ -60,18 +65,23 @@ async def terrain_module(
     cached = cached_analysis(parcel_id)
     if cached is not None:
         return _terrain_ok(cached, "cached", elapsed())
-    area_ha = geom.area / 10_000
-    if area_ha > TERRAIN_MAX_AREA_HA:
+    # The download covers the buffered bounding box, so a long diagonal strip costs as much
+    # as a large parcel.
+    extent_ha = geom.buffer(PARCEL_BUFFER_M).envelope.area / 10_000
+    if extent_ha > TERRAIN_MAX_AREA_HA:
         return ModuleResult(
             status="unavailable",
             message=(
-                f"Działka ma {area_ha:.0f} ha; analiza terenu z LIDAR działa dla działek do "
-                f"{TERRAIN_MAX_AREA_HA:.0f} ha (czas pobierania danych GUGiK)."
+                f"Model terenu dla tej działki obejmuje {extent_ha:.0f} ha; analiza z LIDAR "
+                f"działa do {TERRAIN_MAX_AREA_HA:.0f} ha (czas pobierania danych GUGiK)."
             ),
             duration_ms=elapsed(),
         )
 
-    task = shared_task(f"terrain:{parcel_id}", lambda: analyze_parcel(parcel_id, geom))
+    key = f"terrain:{parcel_id}"
+    if recent_error(key) is not None:
+        return _terrain_failed(elapsed())
+    task = shared_task(key, lambda: analyze_parcel(parcel_id, geom))
     try:
         data = await asyncio.wait_for(asyncio.shield(task), budget_s)
     except TimeoutError:
@@ -85,13 +95,17 @@ async def terrain_module(
         )
     except (httpx.HTTPError, RuntimeError) as exc:
         log.warning("Terrain unavailable for %s: %s", parcel_id, exc)
-        return ModuleResult(
-            status="unavailable",
-            message="Nie udało się pobrać modelu terenu z GUGiK. Spróbuj ponownie później.",
-            duration_ms=elapsed(),
-        )
+        return _terrain_failed(elapsed())
 
     return _terrain_ok(data, "live", elapsed())
+
+
+def _terrain_failed(duration_ms: int) -> ModuleResult[RetentionAnalysis]:
+    return ModuleResult(
+        status="unavailable",
+        message="Nie udało się pobrać modelu terenu z GUGiK. Spróbuj ponownie za kilka minut.",
+        duration_ms=duration_ms,
+    )
 
 
 def _terrain_ok(
@@ -181,7 +195,7 @@ async def build_report(
              "land": land, "terrain": terrain}
         ),
     )
-    if warnings := land_warnings(land.data):
+    if warnings := land_warnings(land.data, params):
         diagnosis = diagnosis.model_copy(update={"warnings": warnings, "confidence": "low"})
     shape = parcel_shape(geom)
     if edo.data is not None:

@@ -28,14 +28,17 @@ def same_date(day: date, year: int) -> date:
 
 
 def compare(values: dict[int, float], year: int) -> Comparison:
-    """Rank `values[year]` among all years with data (1 = lowest)."""
+    """Rank `values[year]` among all years with data (1 = lowest). Ties take the middle
+    rank, so a full soil profile in every year is typical, not the driest."""
     earlier = {y: v for y, v in values.items() if y < year and np.isfinite(v)}
     current = values[year]
     ordered = sorted([current, *earlier.values()])
+    below = sum(v < current for v in ordered)
+    equal = sum(v == current for v in ordered)
     return Comparison(
         value=round(current, 2),
         normal=round(float(np.mean(list(earlier.values()))), 2) if earlier else current,
-        rank=ordered.index(current) + 1,
+        rank=below + (equal + 1) // 2,
         years=len(ordered),
         history=[YearValue(year=y, value=round(v, 2)) for y, v in sorted(earlier.items())],
     )

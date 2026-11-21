@@ -74,14 +74,26 @@ def test_warnings_for_matches_voivodeship():
 
 
 def test_land_cover_flags_built_up_parcel():
+    from retencja_api.assessment.crop_params import CROP_PARAMS
     from retencja_api.assessment.diagnosis import land_warnings
     from retencja_api.landcover.worldcover import summarize
 
+    wheat = CROP_PARAMS["zboza_ozime"]
     arena = summarize({50: 70, 30: 20, 10: 10})
     assert not arena.is_agricultural
     assert arena.classes[0].name == "zabudowa"
-    assert "nie wygląda na rolniczą" in land_warnings(arena)[0]
+    assert "nie wygląda na rolniczą" in land_warnings(arena, wheat)[0]
 
     field = summarize({40: 90, 30: 5, 50: 5})
     assert field.is_agricultural and field.agricultural_share == 0.95
-    assert land_warnings(field) == []
+    assert land_warnings(field, wheat) == []
+
+
+def test_orchard_mapped_as_trees_is_farmland_for_fruit_crops_only():
+    from retencja_api.assessment.crop_params import CROP_PARAMS
+    from retencja_api.assessment.diagnosis import land_warnings
+    from retencja_api.landcover.worldcover import summarize
+
+    orchard = summarize({10: 70, 30: 30})
+    assert land_warnings(orchard, CROP_PARAMS["drzewa_owocowe"]) == []
+    assert land_warnings(orchard, CROP_PARAMS["zboza_ozime"]) != []

@@ -66,7 +66,7 @@ def test_missing_sources_are_listed_not_hidden():
 
 
 def test_disagreeing_sources_lower_confidence():
-    wet_model = _water(22, rank=11, reanalysis_rank=1)  # wettest in the model, driest in ERA5
+    wet_model = _water(40, rank=11, reanalysis_rank=1)  # wettest in the model, driest in ERA5
     d = diagnose(CROP, 10, wet_model, None, None, None, None, [])
     assert "nie są zgodne" in d.headline
     assert d.confidence == "medium"

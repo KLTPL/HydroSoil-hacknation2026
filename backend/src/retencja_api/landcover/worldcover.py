@@ -32,6 +32,8 @@ CLASSES = {
     100: "mchy i porosty",
 }
 AGRICULTURAL = (30, 40)
+# WorldCover maps orchards and fruit bushes as tree cover or shrubland.
+ORCHARD_FARMLAND = (10, 20, 30, 40)
 MIN_AGRICULTURAL_SHARE = 0.5
 _GDAL_ENV = {"GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR", "GDAL_HTTP_TIMEOUT": "10"}
 
@@ -82,6 +84,17 @@ def summarize(counts: dict[int, int]) -> LandCover:
         agricultural_share=round(agricultural, 3),
         is_agricultural=agricultural >= MIN_AGRICULTURAL_SHARE,
     )
+
+
+def farmland_share(land: LandCover, crop_group: str) -> float:
+    """Share of the parcel that can carry the selected crop."""
+    codes = ORCHARD_FARMLAND if crop_group == "orchard" else AGRICULTURAL
+    return sum(c.share for c in land.classes if c.code in codes)
+
+
+def is_farmland(land: LandCover | None, crop_group: str) -> bool:
+    """True also when land cover is unknown: never hide advice for lack of data."""
+    return land is None or farmland_share(land, crop_group) >= MIN_AGRICULTURAL_SHARE
 
 
 async def land_cover(parcel_id: str, geometry_wgs84: dict) -> tuple[LandCover, datetime | None]:

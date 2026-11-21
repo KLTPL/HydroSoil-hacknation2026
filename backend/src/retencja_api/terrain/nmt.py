@@ -69,16 +69,23 @@ def split_strips(bounds: tuple[int, int, int, int], resolution: int) -> list[tup
     return strips
 
 
-async def _get_with_retry(client: httpx.AsyncClient, params: _Params) -> httpx.Response:
-    """The WCS drops connections and returns 5xx under load; back off and retry those."""
+async def get_with_retry(
+    client: httpx.AsyncClient,
+    url: str,
+    params: _Params | None = None,
+    headers: dict[str, str] | None = None,
+) -> httpx.Response:
+    """GUGiK drops connections and returns 5xx under load; back off and retry those."""
     for attempt in range(1, DEM_FETCH_ATTEMPTS + 1):
         try:
-            response = await client.get(NMT_WCS_URL, params=params)
+            response = await client.get(url, params=params, headers=headers)
             if response.status_code < 500:
                 response.raise_for_status()
                 return response
             error: Exception = httpx.HTTPStatusError(
-                f"NMT WCS {response.status_code}", request=response.request, response=response
+                f"GUGiK {response.status_code} for {url}",
+                request=response.request,
+                response=response,
             )
         except (httpx.TransportError, httpx.TimeoutException) as exc:
             error = exc
@@ -107,7 +114,7 @@ async def _fetch_strip(
         ("SCALEFACTOR", str(_NATIVE_RES_M / resolution)),
     ]
     async with sem:
-        response = await _get_with_retry(client, params)
+        response = await get_with_retry(client, NMT_WCS_URL, params)
     if not response.content.startswith((b"II*\x00", b"MM\x00*")):
         raise RuntimeError(f"NMT WCS returned non-TIFF for {strip}: {response.text[:200]}")
     tmp = path.with_suffix(".part")

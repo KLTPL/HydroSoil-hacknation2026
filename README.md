@@ -106,7 +106,7 @@ Przeglądarka (React + MapLibre)  ──HTTPS──>  Caddy  ──>  nginx (sta
                                                                 │   hydro     API ostrzeżeń IMGW
                                                                 │   pokrycie  ESA WorldCover → czy to grunt rolny
                                                                 │   EDO       CDI (WCS Copernicus EMS) → niezależne porównanie
-                                                                │   teren     NMT WCS (LIDAR) → zagłębienia, zlewnie, rowy, zastawki
+                                                                │   teren     arkusze NMT (LIDAR) → zagłębienia, zlewnie, rowy, zastawki
                                                                 ├─ diagnoza i zalecenia (czyste funkcje na wynikach modułów)
                                                                 ├─ pamięć podręczna w plikach (odpowiedzi i analizy)
                                                                 └─ konta (opcjonalne): SQLite na wolumenie Dockera
@@ -154,7 +154,7 @@ Kod: `backend/src/retencja_api/` (`api.py`, `report.py`, `modules.py`, `assessme
 |---|---|---|---|
 | Działki (identyfikator, geometria, jednostki) | ULDK, GUGiK | ewidencyjna, aktualna | API, bez klucza |
 | Nakładka ewidencyjna, ortofotomapa | KIEG WMS, ORTO WMS Geoportalu (GUGiK) | — | WMS, bez klucza |
-| Teren | NMT GRID1, GUGiK (LIDAR) | 1 m, przepróbkowany do 2 m; prostokąt działki + 60 m | WCS, bez klucza |
+| Teren | NMT GRID1, GUGiK (LIDAR; arkusz ze skaningu laserowego, jeśli jest, potem najnowszy) | 1 m, przepróbkowany do 2 m; prostokąt działki + 60 m | arkusze .asc z opendata.geoportal.gov.pl (cache na serwerze); WCS jako zapas; bez klucza |
 | Pogoda (podstawowe źródło) | Open-Meteo Historical Weather API (ERA5, ERA5-Land, ECMWF IFS) | ok. 10 km (komórka 0,1°); dobowo; od daty analizy − 11 lat do daty analizy | API, bez klucza |
 | Pogoda (zapasowe źródło) | NASA POWER (MERRA-2) | ok. 50 km; dobowo; ten sam okres | API, bez klucza |
 | Gleba | SoilGrids 2.0, ISRIC | 250 m; 0–100 cm w 5 warstwach | WCS, bez klucza |
@@ -249,8 +249,9 @@ powtarzalne i możliwe do wyjaśnienia.
 - **Kryterium SMSR dla lat 2016–2019 liczymy sami** z reanalizy (ET0 FAO-56). Nasz KBW bywa
   mniej ujemny niż KBW IUNG ze stacji, więc susza z tamtych lat może być niedoszacowana. Od
   2020 r. używamy oficjalnej tabeli IUNG, która opisuje całą gminę, a nie samą działkę.
-- **Teren:** usługa WCS GUGiK potrzebuje ok. 10 s plus 20–40 s na każdy km², a przy dużym
-  obciążeniu znacznie dłużej. Dla działek większych niż kilka hektarów teren może pojawić się
+- **Teren:** pobieramy całe arkusze NMT (ok. 35 MB, ok. 2 × 2 km), bo usługa WCS GUGiK pod
+  obciążeniem odpowiada minutami. Pierwsza działka w danym arkuszu czeka na pobranie, następne
+  w tym samym arkuszu korzystają z cache. Dla działek większych niż kilka hektarów teren może pojawić się
   po raporcie (strona uzupełni się sama). Dla działek powyżej 250 ha analiza terenu jest
   pomijana. NMT pochodzi z krajowego skanowania, a nie z bieżącego stanu terenu.
 - **Wykrywanie rowów** może też zaznaczać naturalne bruzdy spływu albo rowy przydrożne. Odstęp
@@ -332,7 +333,7 @@ cd frontend && pnpm build && pnpm lint
   - równoległe zapytania o tę samą działkę współdzielą jedno obliczenie.
 - **W skali kraju:**
   - analizę terenu (najwolniejszą część, niezależną od daty) liczyć z góry dla wszystkich
-    działek rolnych, z krajowych arkuszy NMT zamiast WCS;
+    działek rolnych, z krajowych arkuszy NMT pobranych z góry;
   - pogodę i bilans wody liczyć raz dziennie na siatce dla całej Polski (kilka tysięcy komórek);
   - wyniki trzymać w PostGIS lub magazynie obiektów;
   - uruchomić kilka bezstanowych instancji backendu za load balancerem.

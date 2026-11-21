@@ -3,8 +3,11 @@ from affine import Affine
 from shapely.geometry import LineString, box
 
 from retencja_api.terrain.ditches import (
+    LIDAR_KIND,
     MIN_SPACING_M,
     WEIR_HEAD_M,
+    merge_sources,
+    osm_lines,
     plan_ditch,
     plan_ditches,
 )
@@ -52,7 +55,16 @@ def test_short_ditches_and_far_ditches_are_ignored(monkeypatch):
         {"kind": "ditch", "coords": [(300, 190), (900, 190)]},  # 40 m away
         {"kind": "drain", "coords": [(200, 100), (230, 100)]},  # too short
     ]
-    plans = plan_ditches(ways, parcel, dem)
+    plans = plan_ditches(osm_lines(ways), parcel, dem)
     assert len(plans) == 1
     assert plans[0].length_m > 500
     assert MIN_SPACING_M <= plans[0].length_m
+
+
+def test_lidar_channels_already_on_the_map_are_not_duplicated():
+    osm = [(LineString([(0, 100), (500, 100)]), "ditch")]
+    same = LineString([(0, 103), (500, 103)])
+    new = LineString([(0, 150), (500, 150)])
+    merged = merge_sources([same, new], osm)
+    assert [kind for _, kind in merged] == ["ditch", LIDAR_KIND]
+    assert [kind for _, kind in merge_sources([same], [])] == [LIDAR_KIND]

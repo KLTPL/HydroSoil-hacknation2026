@@ -27,7 +27,15 @@ from retencja_api.models import (
     RetentionSite,
     RetentionSummary,
 )
-from retencja_api.terrain.ditches import WEIR_HEAD_M, DitchPlan, fetch_waterways, plan_ditches
+from retencja_api.terrain.channels import detect_channels
+from retencja_api.terrain.ditches import (
+    WEIR_HEAD_M,
+    DitchPlan,
+    fetch_waterways,
+    merge_sources,
+    osm_lines,
+    plan_ditches,
+)
 from retencja_api.terrain.nmt import load_dem
 from retencja_api.terrain.retention import Site, find_sites
 
@@ -86,7 +94,9 @@ async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> Retention
     dem = await dem_task
     sites = await asyncio.to_thread(find_sites, dem, parcel_geom)
     models = [_to_model(i, s) for i, s in enumerate(sites, start=1)]
-    plans = await asyncio.to_thread(plan_ditches, ways or [], parcel_geom, dem)
+    channels = await asyncio.to_thread(detect_channels, dem)
+    lines = merge_sources(channels, osm_lines(ways or []))
+    plans = await asyncio.to_thread(plan_ditches, lines, parcel_geom, dem)
 
     result = RetentionAnalysis(
         parcel_id=parcel_id,

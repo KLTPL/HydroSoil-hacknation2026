@@ -35,17 +35,24 @@ function TerrainSection({
             selectedSiteId={selectedSiteId}
             onSelectSite={onSelectSite}
           />
-          <p className="muted">
-            {!terrain.data.ditches_checked
-              ? 'Mapa rowów (OpenStreetMap) była niedostępna, więc nie sprawdzono miejsc na zastawki.'
-              : terrain.data.ditches.length === 0
-                ? 'Na działce i przy jej granicy nie ma rowów w OpenStreetMap.'
-                : `Rowy przy działce: ${terrain.data.ditches.length} (OpenStreetMap, © współtwórcy OSM, ODbL).`}
-          </p>
+          <DitchNote analysis={terrain.data} />
         </>
       )}
       <Sources sources={terrain.sources} />
     </section>
+  )
+}
+
+function DitchNote({ analysis }: { analysis: RetentionAnalysis }) {
+  const lidar = analysis.ditches.filter((d) => d.kind === 'lidar').length
+  const osm = analysis.ditches.length - lidar
+  return (
+    <p className="muted">
+      Rowy przy działce: {lidar} wykryte w modelu terenu LIDAR
+      {analysis.ditches_checked
+        ? `, ${osm} z OpenStreetMap (© współtwórcy OSM, licencja ODbL).`
+        : '; mapa rowów OpenStreetMap była niedostępna.'}
+    </p>
   )
 }
 

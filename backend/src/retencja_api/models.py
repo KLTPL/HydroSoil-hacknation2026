@@ -59,7 +59,7 @@ class DitchWeirs(BaseModel):
     """Weirs proposed on one ditch on or along the parcel."""
 
     id: int
-    kind: str  # OSM waterway type: ditch, drain, canal, stream
+    kind: str  # OSM waterway type (ditch, drain, canal, stream) or "lidar" if detected
     length_m: float
     slope_pct: float
     weir_count: int
@@ -77,7 +77,7 @@ class RetentionAnalysis(BaseModel):
     sites: list[RetentionSite]
     assumptions: Assumptions
     ditches: list[DitchWeirs] = []
-    ditches_checked: bool = False  # False when the ditch map could not be downloaded
+    ditches_checked: bool = False  # False when the OSM ditch map could not be downloaded
 
 
 class Crop(BaseModel):

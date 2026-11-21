@@ -74,6 +74,11 @@ def _weirs(terrain: RetentionAnalysis) -> Recommendation | None:
         high=sum(d.soil_m3.high + d.channel_m3 for d in terrain.ditches),
     )
     slopes = ", ".join(f"{d.slope_pct:.2f} %" for d in terrain.ditches[:3])
+    lidar = sum(d.kind == "lidar" for d in terrain.ditches)
+    found = (
+        f"{lidar} rowów wykryto w modelu terenu LIDAR, {len(terrain.ditches) - lidar} "
+        "pochodzi z OpenStreetMap. "
+    )
     return Recommendation(
         key="weirs",
         category="retention",
@@ -85,7 +90,7 @@ def _weirs(terrain: RetentionAnalysis) -> Recommendation | None:
             "Zamykaj je po roztopach i po ulewach, otwieraj przy podtopieniu pola."
         ),
         why=(
-            f"Spadek rowów z modelu terenu: {slopes}; zastawki rozmieszczono tak, by cofka "
+            f"{found}Spadek rowów z modelu terenu: {slopes}; zastawki rozmieszczono tak, by cofka "
             "wody sięgała do następnej. Podniesiony poziom wody w rowie podnosi wody gruntowe "
             "w pasie ok. 50 m po obu stronach."
         ),

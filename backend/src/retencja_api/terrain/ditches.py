@@ -1,4 +1,5 @@
-"""Ditches on and along the parcel (OpenStreetMap) and a weir plan for each one.
+"""Ditches on and along the parcel (OpenStreetMap and LIDAR-detected channels) and a weir
+plan for each one.
 
 A weir (zastawka) raises the water in a drainage ditch by WEIR_HEAD_M. Water is held
 twice: in the ditch behind the weir (backwater), and in the soil on both banks, where
@@ -12,7 +13,7 @@ import httpx
 import numpy as np
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.geometry.base import BaseGeometry
-from shapely.ops import linemerge
+from shapely.ops import linemerge, unary_union
 
 from retencja_api.cache import read_json, write_json
 from retencja_api.geo import lonlat_to_metric
@@ -25,6 +26,8 @@ OVERPASS_URLS = (
 )
 USER_AGENT = "zatrzymaj-wode/0.1 (hackathon prototype)"
 WATERWAYS = "ditch|drain|canal|stream"
+LIDAR_KIND = "lidar"  # channel detected in the terrain model, not on any map
+OVERLAP_BUFFER_M = 8.0  # a LIDAR channel this close to an OSM ditch is the same ditch
 DITCH_NEAR_PARCEL_M = 25.0  # ditches on the boundary also drain the parcel
 MIN_DITCH_LENGTH_M = 50.0
 
@@ -54,7 +57,7 @@ async def fetch_waterways(bounds_wgs84: tuple[float, float, float, float]) -> li
     if cached is not None:
         return cached
     query = f'[out:json][timeout:20];way["waterway"~"^({WATERWAYS})$"]({key});out geom tags;'
-    timeout = httpx.Timeout(25, connect=5)
+    timeout = httpx.Timeout(12, connect=5)  # LIDAR channels cover for a slow Overpass
     async with httpx.AsyncClient(timeout=timeout, headers={"User-Agent": USER_AGENT}) as client:
         for i, url in enumerate(OVERPASS_URLS):
             try:
@@ -108,11 +111,33 @@ def plan_ditch(line: LineString, kind: str, dem: Dem) -> DitchPlan | None:
     return DitchPlan(line, kind, length, slope, weirs, channel, soil)  # type: ignore[arg-type]
 
 
-def plan_ditches(ways: list[dict], parcel: BaseGeometry, dem: Dem) -> list[DitchPlan]:
+Line = tuple[LineString, str]  # PL-1992 geometry, kind
+
+
+def osm_lines(ways: list[dict]) -> list[Line]:
+    return [
+        (LineString([lonlat_to_metric(lon, lat) for lon, lat in way["coords"]]), way["kind"])
+        for way in ways
+    ]
+
+
+def merge_sources(lidar: list[LineString], osm: list[Line]) -> list[Line]:
+    """OSM ditches plus LIDAR channels that OSM does not already map."""
+    if not osm:
+        return [(line, LIDAR_KIND) for line in lidar]
+    mapped = unary_union([line.buffer(OVERLAP_BUFFER_M) for line, _ in osm])
+    extra = [
+        (line, LIDAR_KIND)
+        for line in lidar
+        if line.intersection(mapped).length < 0.5 * line.length
+    ]
+    return osm + extra
+
+
+def plan_ditches(lines: list[Line], parcel: BaseGeometry, dem: Dem) -> list[DitchPlan]:
     reach = parcel.buffer(DITCH_NEAR_PARCEL_M)
     plans = []
-    for way in ways:
-        line = LineString([lonlat_to_metric(lon, lat) for lon, lat in way["coords"]])
+    for line, kind in lines:
         part = line.intersection(reach)
         if part.is_empty:
             continue
@@ -120,6 +145,6 @@ def plan_ditches(ways: list[dict], parcel: BaseGeometry, dem: Dem) -> list[Ditch
             part = linemerge(part)
         parts = part.geoms if isinstance(part, MultiLineString) else [part]
         for segment in parts:
-            if isinstance(segment, LineString) and (plan := plan_ditch(segment, way["kind"], dem)):
+            if isinstance(segment, LineString) and (plan := plan_ditch(segment, kind, dem)):
                 plans.append(plan)
     return sorted(plans, key=lambda p: -p.soil_m3[1])

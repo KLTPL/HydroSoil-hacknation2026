@@ -70,6 +70,22 @@ class DitchWeirs(BaseModel):
     weirs: GeoJSON  # WGS84 MultiPoint
 
 
+class FlowPath(BaseModel):
+    """Surface runoff line (downstream direction); width on the map from `area_m2`."""
+
+    area_m2: float  # upstream area draining through the segment
+    end: Literal["pool", "exit", "join"]  # pools in a depression, leaves the area, joins `next`
+    next: int | None  # index of the downstream segment after a confluence
+    geometry: GeoJSON  # WGS84 LineString
+
+
+class ReliefImage(BaseModel):
+    """Shaded micro-relief image of the analysed area, served by /api/terrain/relief.png."""
+
+    corners: list[list[float]]  # WGS84 [lon, lat]: top-left, top-right, bottom-right, bottom-left
+    spread_m: float  # colour scale spans ± this height around the local mean
+
+
 class RetentionAnalysis(BaseModel):
     parcel_id: str
     computed_at: datetime  # when the terrain data was downloaded and analysed
@@ -78,6 +94,8 @@ class RetentionAnalysis(BaseModel):
     assumptions: Assumptions
     ditches: list[DitchWeirs] = []
     ditches_checked: bool = False  # False when the OSM ditch map could not be downloaded
+    flow: list[FlowPath] = []
+    relief: ReliefImage | None = None
 
 
 class Crop(BaseModel):
@@ -230,9 +248,24 @@ class Cause(BaseModel):
     detail: str
 
 
+SignalVerdict = Literal["dry", "normal", "wet", "missing"]
+
+
+class SourceSignal(BaseModel):
+    """What one independent data source says about this date against the last 10 years."""
+
+    key: str
+    source: str  # short name shown to the farmer
+    verdict: SignalVerdict
+    value: str  # the reading, e.g. "22 % (średnio 23 %)"
+    note: str  # rank or reason, e.g. "5. najniższy z 11 lat"
+
+
 class Diagnosis(BaseModel):
     level: DroughtLevel
     headline: str
+    signals: list[SourceSignal] = []
+    stress_threshold_pct: float | None = None  # plant-available water below which the crop suffers
     warnings: list[str] = []  # shown before everything else (e.g. parcel is not farmland)
     evidence: list[str]  # observations supporting the verdict
     causes: list[Cause]

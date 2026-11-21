@@ -66,10 +66,12 @@ DITCH = DitchWeirs(
 )
 
 
-def test_irrigation_only_when_crop_is_stressed_and_comes_first():
-    stressed = recommend(CROP, 10, _water(20), None, None, None)
-    assert stressed[0].key == "irrigation"
-    assert stressed[0].effect_m3.high == round(120 * 0.8 * 10 * 10)
+def test_irrigation_only_when_crop_is_stressed_and_comes_last():
+    # KOWR sequence: retention and agrotechnics first, irrigation only as the last resort.
+    stressed = recommend(CROP, 10, _water(20), SANDY, None, _terrain([DITCH]))
+    assert stressed[-1].key == "irrigation"
+    assert [r.category for r in stressed[:2]] == ["retention", "soil"]
+    assert stressed[-1].effect_m3.high == round(120 * 0.8 * 10 * 10)
     assert all(r.key != "irrigation" for r in recommend(CROP, 10, _water(80), None, None, None))
     off = recommend(CROP, 10, _water(20, in_season=False), None, None, None)
     assert all(r.key != "irrigation" for r in off)

@@ -23,6 +23,10 @@ MONTHS_IN = ["", "styczniu", "lutym", "marcu", "kwietniu", "maju", "czerwcu", "l
              "sierpniu", "wrześniu", "październiku", "listopadzie", "grudniu"]
 
 
+# KOWR sequence ("Podstawy naukowe"): retention → agrotechnics → irrigation as a last resort.
+CATEGORY_ORDER = {"retention": 0, "soil": 1, "crop": 2, "irrigation": 3}
+
+
 def plural(n: int, one: str, few: str, many: str) -> str:
     """Polish noun form for a count: 1 zastawka, 2–4 zastawki, 5+ zastawek."""
     if n == 1:
@@ -259,9 +263,7 @@ def recommend(
     if water is not None:
         recs += [_mulch(water, area_ha), _crop_timing(water)]
     present = [r for r in recs if r is not None]
-    urgent = [r for r in present if r.category == "irrigation"]
-    rest = sorted(
-        (r for r in present if r.category != "irrigation"),
-        key=lambda r: -(r.effect_m3.high if r.effect_m3 else 0),
+    return sorted(
+        present,
+        key=lambda r: (CATEGORY_ORDER[r.category], -(r.effect_m3.high if r.effect_m3 else 0)),
     )
-    return urgent + rest

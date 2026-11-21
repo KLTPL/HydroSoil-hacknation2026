@@ -2,363 +2,78 @@
 
 Zobacz, dokąd ucieka woda z Twojej działki, i zatrzymaj ją.
 
-HackNation 2026, zadanie KOWR „Zatrzymaj wodę, chroń plony”.
-Zespół: Cyberodporni
+HackNation 2026 · zadanie KOWR „Zatrzymaj wodę, chroń plony” · zespół Cyberodporni
 
-**Działająca wersja:** https://splyw.kodlab.pl · przykładowy raport:
-https://splyw.kodlab.pl/#p=040706_5.0016.51%2F1&c=zboza_ozime&d=2025-06-15
+**Działająca wersja: https://splyw.kodlab.pl** (bez instalacji, każda przeglądarka, także telefon)
+· [przykładowy raport](https://splyw.kodlab.pl/#p=040706_5.0016.51%2F1&c=zboza_ozime&d=2025-06-15)
 
-Rolnik wpisuje numer działki ewidencyjnej (albo klika na mapie lub używa GPS), wybiera uprawę
-i datę analizy (dziś lub do 10 lat wstecz). W około 30 sekund dostaje raport, który
-odpowiada na trzy pytania:
+## Co robi
 
-1. **Czy na mojej działce brakuje wody i na ile jest to nietypowe?** Klimatyczny bilans
-   wodny i model wody w strefie korzeni dla wybranej uprawy, porównane z tym samym dniem
-   w 10 poprzednich latach. Ocenę sprawdzają niezależnie: uwodnienie roślin z satelity
-   i wilgotność gleby z reanalizy.
-2. **Dlaczego?** Przyczyny wyrażone w milimetrach wody: brak opadów, większe parowanie, mała
-   pojemność wodna gleby, mało próchnicy, spływ wody z pola, susza hydrologiczna.
-3. **Co mogę zrobić na tej działce?** Zalecenia z ilością zatrzymanej wody (m³),
-   uzasadnieniem liczbami, terminem, kosztem i formalnościami. Wyróżnik: **mapa retencji
-   z lotniczego skanowania LIDAR (1 m)**. Pokazuje zagłębienia terenu, w których można
-   zatrzymać wodę, oraz **rowy wykryte w modelu terenu z planem zastawek**, rozmieszczonych
-   według spadku rowu.
+Rolnik podaje numer działki (albo klika na mapie lub używa GPS), uprawę i datę (dziś lub do
+10 lat wstecz). W ok. 30 s dostaje raport z odpowiedzią na trzy pytania:
 
-Raport można wydrukować lub zapisać jako PDF. Zawiera wszystkie źródła danych z licencją i datą
-pobrania, a także ograniczenia i brakujące dane.
+1. **Czy brakuje wody i na ile to nietypowe?** Werdykt w 4 stopniach, porównanie z tym samym
+   dniem w 10 poprzednich latach, „głosowanie” niezależnych źródeł.
+2. **Dlaczego?** Przyczyny w mm wody: brak opadów, parowanie, słaba gleba, mało próchnicy,
+   spływ, susza hydrologiczna.
+3. **Co zrobić na tej działce?** Zalecenia z efektem w m³, terminem, kosztem i formalnościami.
+   **Wyróżnik: mapa retencji z LIDAR (1 m)**: zagłębienia na oczka wodne i podmokłe łąki oraz
+   rowy wykryte w modelu terenu z planem zastawek.
 
-Materiały zgłoszenia:
-- prezentacja: `presentation/splyw-prezentacja.pdf` (źródło: `presentation/slides.html`);
-- scenariusz filmu: `presentation/video-script.md`;
-- przykładowe raporty wygenerowane przez działającą aplikację, w katalogu `reports/`:
-  - Kujawy, czerwiec 2025,
-  - Kujawy, susza w lipcu 2019,
-  - Lubelskie, dziś, z aktywnymi ostrzeżeniami IMGW.
+Do tego: symulacja ulewy 30 mm, scenariusze „co jeśli” na 30 dni, kalendarz ryzyka suszy,
+raport PDF, opcjonalne konto (moje działki, analiza zbiorcza, archiwum raportów).
 
----
+## Dlaczego to działa
 
-## 1. Instrukcja uruchomienia
+Metody z „Podstaw naukowych” KOWR. **Aplikacja nie używa AI ani uczenia maszynowego**: każda
+liczba to opisane, deterministyczne obliczenie na publicznych danych, powtarzalne
+i wyjaśnialne. Wszystko liczone w chwili zapytania.
 
-**Bez instalacji:** otwórz https://splyw.kodlab.pl w dowolnej aktualnej przeglądarce (Chrome,
-Firefox, Edge, Safari, Opera), na komputerze lub telefonie.
+| Pytanie | Metoda | Dane |
+|---|---|---|
+| Ile wody ma uprawa? | Dobowy bilans wody w strefie korzeni FAO-56 (Allen i in.): krzywa Kc, głębokość korzeni i współczynnik stresu Ks dla wybranej uprawy | Open-Meteo (ERA5), zapasowo NASA POWER |
+| Ile wody utrzyma gleba? | Funkcja pedotransferowa Saxtona i Rawlsa (2006) z piasku, iłu i węgla organicznego | SoilGrids 250 m, mapa kategorii gleb IUNG |
+| Czy to susza rolnicza? | Oficjalne kryterium SMSR IUNG: KBW (opad − ET0) z sześciu dekad poniżej progu dla uprawy i gleby (Dz.U. 2019 poz. 739); od 2020 r. tabela IUNG dla gminy | IUNG-PIB |
+| Czy to nietypowe? | Ten sam dzień w ok. 11 latach; błędy systematyczne modelu się znoszą | jw. |
+| Czy źródła się zgadzają? | Osobne „głosy”: model gleby, KBW, wilgotność z reanalizy, NDMI z satelity, ostrzeżenia IMGW; rozbieżność obniża wiarygodność. Do tego porównanie z CDI Europejskiego Obserwatorium Suszy | ERA5-Land, Sentinel-2, IMGW, EDO |
+| Gdzie zatrzymać wodę? | Priority-flood (Barnes i in. 2014): zagłębienia ≥ 0,15 m i ≥ 300 m² z pojemnością, zlewnią i wodą zatrzymaną z deszczu 30 mm | NMT LIDAR GUGiK 1 m |
+| Gdzie zastawki? | Rowy z modelu terenu (+ OpenStreetMap); piętrzenie 0,5 m, odstęp = piętrzenie / spadek rowu, by cofka sięgała następnej zastawki | jw. |
+| Co zalecić? | Kolejność KOWR: retencja → gleba i uprawa → nawadnianie (tylko przy stresie). Zalecenie pojawia się tylko, gdy wynika z danych działki (spadek, rowy, gleba, kształt, uprawa) | wszystkie powyżej |
 
-Lokalnie, w Dockerze:
+Parametry wszystkich metod: [dokumentacja techniczna](docs/dokumentacja-techniczna.md#metody).
 
-```sh
-docker compose up --build        # http://localhost:8080
-```
+## Weryfikacja
 
-Tryb deweloperski:
+- Kujawy, lipiec 2019: u nas „silny niedobór”, w EDO klasa „Warning”.
+- Próg silnego stresu wyróżnia znane susze 2015, 2018 i 2019, a mokry rok 2017 nie.
+- Rowy i zagłębienia sprawdzone z ortofotomapą; ET0 z NASA POWER i Open-Meteo: korelacja 0,98.
+- 10 działek z różnych regionów, upraw i dat (2019–2026): wszystkie raporty kompletne, pierwsza
+  odpowiedź w 4–13 s.
+- 125 testów automatycznych (m.in. FAO-56 na przykładzie z podręcznika FAO, bilans wody,
+  wypełnianie zagłębień, odstępy zastawek).
+- Każde źródło w raporcie podlinkowane z licencją i datą pobrania.
 
-```sh
-cd backend && uv run uvicorn retencja_api.api:app --reload   # API na :8000
-cd frontend && pnpm install && pnpm dev                      # UI na :5173, przekierowuje /api
-```
+## Najważniejsze ograniczenia
 
-Produkcja (HTTPS przez Caddy; domenę ustawia się w `deploy/Caddyfile`):
+- Pogoda z reanalizy (ok. 10 km), nie ze stacji na polu: lokalne burze mogą umknąć.
+- Gleba modelowana (250 m), nie badana w terenie.
+- Model wody nie uwzględnia wód gruntowych, drenowania ani rzeczywistej daty siewu.
+- Wykrywanie rowów może zaznaczyć też naturalne bruzdy lub rowy przydrożne.
 
-```sh
-docker compose -f docker-compose.yml -f deploy/compose.prod.yml up -d --build
-```
+[Pełna lista ograniczeń](docs/dokumentacja-techniczna.md#8-znane-ograniczenia)
 
-Link otwierający działkę i od razu uruchamiający analizę:
-`/#p=<id działki>&c=<id uprawy>&d=<RRRR-MM-DD>`. Identyfikatory upraw: `GET /api/crops`.
-
-Opcjonalnie: przed pokazem można policzyć z góry analizę terenu dla działek demonstracyjnych,
-żeby wynik pojawiał się od razu:
+## Uruchomienie lokalne
 
 ```sh
-cd backend && uv run python -m retencja_api.warm_cache [id_działki ...]
+docker compose up --build   # http://localhost:8080
 ```
 
-## 2. Podstawowe funkcjonalności
+## Materiały
 
-| Krok | Co dostaje rolnik |
-|---|---|
-| Działka | Wyszukiwanie po pełnym identyfikatorze (`040706_5.0016.51/1`) lub obrębie i numerze (`Karczyn 51/1`); kliknięcie na mapie; GPS. Granica działki na ortofotomapie z nakładką ewidencyjną. |
-| Dane wejściowe | Uprawa (14 grup upraw z monitoringu suszy IUNG oraz trwałe użytki zielone: łąki i pastwiska) i data analizy (od dziś do 10 lat wstecz). |
-| Postęp analizy | Zamiast samego wskaźnika ładowania lista źródeł danych odhaczana na żywo (strumień SSE), z tym, co każde źródło znalazło, i czasem pobrania. |
-| Ocena | Werdykt w 4 stopniach: brak / uwaga / niedobór / silny niedobór. Wskaźnik „zbiornika” wody w strefie korzeni z progiem stresu uprawy i poziomem typowym dla tej daty. Zdanie oddziela stan uprawy dziś od porównania z 10 latami. „Głosowanie źródeł”: każde źródło (model wody w glebie, KBW, reanaliza, NDMI z satelity, IMGW) mówi osobno: suszej / typowo / wilgotniej / brak danych. Do tego poziom wiarygodności, niższy, gdy źródła się nie zgadzają. |
-| Przyczyny | Uszeregowane, w mm: brak opadów, większe parowanie, słaba gleba, próchnica, spływ, susza hydrologiczna. |
-| Zalecenia | W kolejności z „Podstaw naukowych” KOWR: najpierw retencja, potem gleba i uprawa, nawadnianie na końcu (tylko gdy uprawa cierpi na stres wodny). Zastawki na rowach, oczka wodne i podmokłe łąki w zagłębieniach, wysoki poziom wody na glebach organicznych i w dnie doliny, zadrzewienia śródpolne (od strony wiatru lub wzdłuż poziomicy), pas trawy przy rowie i u podnóża stoku, zadarnienie stromych miejsc, orka w poprzek stoku, międzyplony i resztki pożniwne, próchnica, mulcz i uprawa bez orki, odmiana i termin siewu, użytkowanie łąki i pastwiska. Każde zalecenie pojawia się tylko wtedy, gdy wynika z danych działki (spadek z LIDAR, rowy, gleba, kształt, uprawa). Dla wąskich, długich pasów (typowych na południu) zamiast oczka i orki w poprzek stoku: miedze w poprzek pasa i współpraca z sąsiadami. Sad: ściółka pod rzędami i nawadnianie kroplowe. Każde z efektem w m³ (gdy da się go policzyć), uzasadnieniem danymi, terminem, kosztem i formalnościami. Przy nawadnianiu: ilość wody na całą działkę, orientacyjny koszt pracy i ostrzeżenie o limicie poboru bez pozwolenia wodnoprawnego. |
-| Mapa retencji | Zagłębienia (oczko wodne / podmokła łąka) z numerami, pojemnością, zlewnią i ilością wody zatrzymanej z deszczu obliczeniowego. Rowy (LIDAR + OpenStreetMap) z proponowanymi zastawkami. Legenda. |
-| Rzeźba terenu | Przełącznik podkładu „Zdjęcie / Rzeźba terenu”: cieniowana mikrorzeźba z LIDAR (wysokość względem otoczenia ±kilkadziesiąt cm) i drogi spływu wody. Widać niecki, bruzdy i rowy, których nie widać na zdjęciu. |
-| Symulacja ulewy | Przycisk „Puść ulewę 30 mm”: animacja deszczu spływającego po drogach spływu z LIDAR do niecek i poza działkę, z licznikami: ile spada, ile spływa, ile zatrzyma plan (oczka, obniżenia, zastawki). Wariant „Dziś / Z planem”. Objętości pochodzą z analizy; animacja tylko je ilustruje. Przy ustawieniu „ogranicz ruch” pokazuje od razu stan końcowy. |
-| Co jeśli | Scenariusze na 30 dni od daty analizy: bez deszczu, sucho / typowo / mokro (pogoda tych samych dni z lat poprzednich), nawadnianie teraz, +1 % próchnicy. Dla każdego: kiedy zacznie się silny stres, ile dni potrwa, ile wody zostanie w glebie, jaka dawka ją uzupełni. |
-| Kryterium suszy IUNG (SMSR) | Oficjalny wynik IUNG dla gminy, uprawy i kategorii gleby (od 2020 r.) albo próg KBW z rozporządzenia MRiRW liczony dla działki; widoczny w „głosowaniu źródeł”. |
-| Porównanie z EDO | Klasa wskaźnika CDI Europejskiego Obserwatorium Suszy dla tego miejsca i dekady oraz informacja, czy zgadza się z naszą oceną. |
-| Kalendarz ryzyka | W ilu z ostatnich 10 lat uprawa miała co najmniej 15 dni silnego stresu wodnego, osobno dla każdego miesiąca od kwietnia do września. |
-| Raport | Druk i zapis do PDF (A4, mapa działki, źródła z adresami); link do udostępnienia. |
-| Konto (opcjonalne) | Analiza działa bez logowania. Po założeniu konta (tylko nazwa i hasło) rolnik ma: **Moje działki** (zapis działki z uprawą i własną nazwą, zmiana nazwy, usuwanie, otwarcie analizy jednym kliknięciem), **Analizę zbiorczą** (tabela wszystkich działek na wybrany dzień: werdykt, % wody w glebie, najważniejsze działanie; wiersze pojawiają się na bieżąco, najpilniejsze na górze) i **Archiwum raportów** (każda analiza zapisana jako migawka, otwierana tylko do odczytu, z porównaniem z poprzednią analizą tej działki: ocena i % wody wtedy i teraz). |
-| Rzetelność | Każde źródło z licencją i datą pobrania; brakujące dane opisane wprost; ostrzeżenie, gdy działka nie jest rolna (ESA WorldCover). |
-
-## 3. Architektura
-
-```
-Przeglądarka (React + MapLibre)  ──HTTPS──>  Caddy  ──>  nginx (statyczny UI, proxy /api)
-                                                          │
-                                                          └─>  backend FastAPI (Python)
-                                                                ├─ działka: ULDK GUGiK
-                                                                ├─ moduły liczone równolegle, każdy z limitem czasu:
-                                                                │   woda      Open-Meteo / NASA POWER → KBW + bilans wody w glebie FAO-56
-                                                                │   gleba     SoilGrids WCS → uziarnienie, kategoria IUNG, pojemność wodna
-                                                                │   satelita  Sentinel-2 L2A (Planetary Computer STAC + COG) → NDVI/NDMI
-                                                                │   hydro     API ostrzeżeń IMGW
-                                                                │   pokrycie  ESA WorldCover → czy to grunt rolny
-                                                                │   EDO       CDI (WCS Copernicus EMS) → niezależne porównanie
-                                                                │   teren     arkusze NMT (LIDAR) → zagłębienia, zlewnie, rowy, zastawki
-                                                                ├─ diagnoza i zalecenia (czyste funkcje na wynikach modułów)
-                                                                ├─ pamięć podręczna w plikach (odpowiedzi i analizy)
-                                                                └─ konta (opcjonalne): SQLite na wolumenie Dockera
-```
-
-- Każdy moduł zwraca stan `ok | pending | unavailable` z wyjaśnieniem dla rolnika, źródłami
-  i czasem trwania. Awaria jednego źródła nie psuje raportu: trafia ono do listy brakujących
-  danych.
-- Wolne moduły (teren, satelita) mają 25 s. Jeśli nie zdążą, raport i tak się pojawia, a sekcja
-  jest oznaczona „w toku”. Obliczenie trwa dalej w tle, a przeglądarka sama pobiera wynik, gdy
-  jest gotowy.
-- Wyniki analiz są zapisywane w plikach. Opcjonalne konta (`accounts/`) trzymają użytkowników,
-  sesje, zapisane działki i archiwum raportów w jednym pliku SQLite (`RETENCJA_DB_PATH`,
-  w Dockerze wolumen `accounts_data`, który przetrwa przebudowę obrazu). Analiza zbiorcza
-  używa tego samego budowania raportu, liczy najwyżej 2 działki naraz i wysyła wiersze
-  strumieniem SSE.
-
-Kod: `backend/src/retencja_api/` (`api.py`, `report.py`, `modules.py`, `assessment/`,
-`meteo/`, `soil/`, `satellite/`, `hydro/`, `landcover/`, `terrain/`, `accounts/`) oraz `frontend/src/`.
-
-### Metody
-
-| Temat | Metoda |
-|---|---|
-| Klimatyczny bilans wodny (KBW) | Opad minus ewapotranspiracja wskaźnikowa ET0 (FAO-56) z 60 dni, czyli sześciu dekad, jak w Systemie Monitoringu Suszy Rolniczej IUNG. |
-| Woda w glebie | Dobowy bilans wody w strefie korzeni metodą FAO-56 z pojedynczym współczynnikiem uprawowym (Allen i in.). Dla każdej uprawy: krzywa Kc z typowymi w Polsce terminami faz, głębokość korzeni i współczynnik p. Całkowita woda dostępna = pojemność wodna × głębokość korzeni. Liczony jest też współczynnik stresu Ks. Symulacja startuje w listopadzie roku poprzedzającego najstarszy porównywany rok. |
-| Pojemność wodna gleby | Funkcja pedotransferowa Saxtona i Rawlsa (2006) z zawartości piasku, iłu i węgla organicznego (SoilGrids), 0–100 cm. |
-| Kategoria gleby IUNG | Z mapy kategorii glebowych SMSR (IUNG-PIB, warstwa `katgl_landuse2024`): dominanta z do 9 punktów działki; kod 5 oznacza glebę organiczną. Gdy mapa nie odpowiada: przybliżenie z uziarnienia SoilGrids, od I (piasek luźny) do IV (glina średnia i ciężka, ił). |
-| Kryterium suszy rolniczej (SMSR) | Rozporządzenie MRiRW z 11.04.2019 (Dz.U. 2019 poz. 739): KBW ostatniego pełnego okresu sześciodekadowego (21.III–30.IX) poniżej progu dla uprawy i kategorii gleby (tabela progów IUNG). Od 2020 r. wynik bierzemy z oficjalnej tabeli IUNG dla gminy; dla wcześniejszych lat liczymy go z reanalizy. Susza wg SMSR daje co najmniej „niedobór”; gdy IUNG suszy w gminie nie stwierdził, werdykt kończy się na „uwadze”. |
-| Werdykt | Najpierw kryterium SMSR (wyżej). Poza nim: bezwzględny stres uprawy (woda dostępna poniżej progu 1 − p), stopniowany liczbą niezależnych sygnałów suszy pomniejszoną o sygnały „mokro”: model wody w glebie, KBW, wilgotność gleby z reanalizy (ERA5-Land lub MERRA-2), NDMI z satelity. „Sucho” oznacza: wśród 3 najsuchszych z ok. 11 lat albo co najmniej 15 % poniżej średniej; różnice mniejsze niż 5 pkt proc. wody w glebie i 10 mm KBW liczą się jako typowe. Remisy dostają środkową pozycję. |
-| Silny stres / kalendarz ryzyka | Ks < 0,5; miesiąc liczy się jako suchy przy co najmniej 15 takich dniach. Próg dobrano tak, by wyróżniały się znane susze 2015, 2018 i 2019. |
-| Satelita | Sentinel-2 L2A: najnowsze zdjęcie z 20 dni przed datą, na którym co najmniej 60 % działki jest bez chmur (maska SCL). To samo okno w każdym wcześniejszym roku od 2017. Porównanie liczy się tylko przy co najmniej 3 latach porównania i zwartym łanie (NDVI ≥ 0,4 teraz i średnio), a dla upraw polowych nie w fazie dojrzewania. NDVI = (B08−B04)/(B08+B04), NDMI = (B08−B11)/(B08+B11), siatka 20 m, z korektą przesunięcia BOA. Na łące i pastwisku spadek NDMI liczy się jako sygnał suszy tylko wtedy, gdy potwierdza go bilans wody w glebie (inaczej to zwykle pokos lub wypas); w sadzie raport zaznacza, że piksel łączy drzewa z murawą. |
-| Łąki i pastwiska | Parametry FAO-56 (tab. 12 i 22): Kc 0,40 / 0,90 / 0,85 (łąka, uśrednione pokosy) i 0,40 / 0,85 / 0,75 (pastwisko), korzenie 0,5 m, p = 0,6; wegetacja od 1 kwietnia do 31 października. |
-| Spadek i kształt działki | Spadek z NMT wygładzonego w oknie 10 m (spadek pola, nie bruzdy), kierunek spływu, udział powierzchni powyżej 10 % (silna erozja wg IUNG), wysokość działki względem otoczenia, krawędź, przez którą spływa woda (D8). Kształt: prostokąt o tym samym polu i obwodzie (szerokość robocza, także dla krętych pasów), minimalny prostokąt obejmujący, zwartość 4πA/P². Wąski pas: szerokość < 40 m i długość ≥ 5 × szerokość. |
-| Zagłębienia | Wypełnianie zagłębień metodą priority-flood (Barnes i in. 2014) na NMT LIDAR 1 m przepróbkowanym do 2 m, kierunki spływu D8. Zagłębienia o głębokości co najmniej 0,15 m i powierzchni co najmniej 300 m², w co najmniej 30 % na działce. Zatrzymana woda = min(pojemność, zlewnia × 30 mm × współczynnik spływu 0,05–0,25). |
-| Drogi spływu | Akumulacja przepływu D8 na powierzchni po wypełnieniu zagłębień; linie tam, gdzie spływa woda z co najmniej 800 m². Sieć dzielona przy połączeniach; linia kończy się w niecce (wypełnienie > 0,1 m) albo poza obszarem analizy. |
-| Rzeźba terenu (obraz) | Wysokość minus średnia z okna 80 m (rzeźba lokalna), skala barw do 97. percentyla, przemnożona przez cieniowanie wielokierunkowe z przewyższeniem 3×. PNG liczony z tego samego NMT co analiza. |
-| Rowy | Komórki leżące co najmniej 0,25 m poniżej średniej z otoczenia 20 m, do których spływa woda z co najmniej 0,2 ha, prowadzone w dół spływu (D8) w linie. Gdy działa OpenStreetMap, dochodzą zapisane tam cieki. |
-| Zastawki | Piętrzenie 0,5 m; odstęp = piętrzenie / spadek rowu (co najmniej 50 m), tak by cofka sięgała do następnej zastawki. Woda zatrzymana w rowie plus podniesienie wód gruntowych w pasie 2 × 50 m (średnio 0,25 m × odsączalność 0,05–0,15). |
-| Efekty zaleceń | Nawadnianie: uzupełnienie niedoboru w strefie korzeni. Mulcz: 25–50 % parowania z gołej gleby (Kc 0,3 × ET0 od siewu do zwarcia łanu, średnia z 10 lat). Próchnica: +0,5–1 % w warstwie ornej 0,3 m według Saxtona i Rawlsa. Zadrzewienia: 5–15 % mniej parowania uprawy (ETc z FAO-56, średnia z 10 lat) w pasie do 15 wysokości drzew (badania IŚRiL PAN w Turwi). Pas trawy u podnóża stoku: 20–50 % spływu z deszczu 30 mm. Zadarnienie stromych miejsc: współczynnik spływu niższy o 0,10–0,20. Orka w poprzek stoku: 10–50 % spływu (czynnik P w USLE 0,5–0,9). Gleba organiczna lub dno doliny: woda gruntowa wyżej o 0,2 m × odsączalność 0,1–0,2. Nawadnianie: dawka × powierzchnia, koszt pracy 0,5–2 zł/m³ (szacunek: energia i obsługa przy własnym źródle, bez sprzętu). |
-
-## 4. Źródła i zakres danych
-
-| Dane | Źródło | Rozdzielczość / okres | Dostęp |
-|---|---|---|---|
-| Działki (identyfikator, geometria, jednostki) | ULDK, GUGiK | ewidencyjna, aktualna | API, bez klucza |
-| Nakładka ewidencyjna, ortofotomapa | KIEG WMS, ORTO WMS Geoportalu (GUGiK) | — | WMS, bez klucza |
-| Teren | NMT GRID1, GUGiK (LIDAR; arkusz ze skaningu laserowego, jeśli jest, potem najnowszy) | 1 m, przepróbkowany do 2 m; prostokąt działki + 60 m | arkusze .asc z opendata.geoportal.gov.pl (cache na serwerze); WCS jako zapas; bez klucza |
-| Pogoda (podstawowe źródło) | Open-Meteo Historical Weather API (ERA5, ERA5-Land, ECMWF IFS) | ok. 10 km (komórka 0,1°); dobowo; od daty analizy − 11 lat do daty analizy | API, bez klucza |
-| Pogoda (zapasowe źródło) | NASA POWER (MERRA-2) | ok. 50 km; dobowo; ten sam okres | API, bez klucza |
-| Gleba | SoilGrids 2.0, ISRIC | 250 m; 0–100 cm w 5 warstwach | WCS, bez klucza |
-| Satelita | Copernicus Sentinel-2 L2A przez Microsoft Planetary Computer | 10–20 m; od 2017 do daty analizy | STAC + COG, anonimowy token SAS |
-| Pokrycie terenu | ESA WorldCover 2021 przez Planetary Computer | 10 m; 2021 | STAC + COG |
-| Susza hydrologiczna | IMGW-PIB, API danych publicznych, `warningshydro` | województwo / zlewnia; tylko bieżące | API, bez klucza |
-| Wskaźnik suszy do porównania | Europejskie Obserwatorium Suszy (EDO, Copernicus EMS), Combined Drought Indicator v4.1 | ok. 5 km (1/24°); co dekadę; od 2012 | WCS, bez klucza |
-| Rowy (uzupełniająco) | OpenStreetMap przez Overpass API | — | API, bez klucza |
-
-## 5. Dane pobierane na bieżąco i pobrane wcześniej
-
-**Wszystkie wyniki i zalecenia aplikacja liczy w chwili zapytania** z powyższych danych. Nie ma
-z góry przygotowanych zaleceń ani dołączonych zbiorów danych.
-
-Pobrane dane są zapisywane w pamięci podręcznej serwera, żeby kolejne zapytania były szybkie
-i nie wyczerpywały darmowych limitów. Każdy raport podaje przy każdym źródle, czy dane były
-**„pobrane teraz”**, czy pochodzą **„z pamięci podręcznej”**, wraz z datą pierwotnego pobrania.
-
-| Dane | Zasada zapisu w pamięci podręcznej |
-|---|---|
-| Działka (ULDK) | Zapisywana według identyfikatora działki. |
-| Analiza terenu (NMT) | Zapisywana dla działki i wersji algorytmu; teren nie zależy od daty analizy. |
-| Historia pogody | Open-Meteo: jedna historia od 2005 r. dla komórki 0,1°, odświeżana co miesiąc i wspólna dla wszystkich dat analizy; dni od końca ostatniego zamkniętego miesiąca zawsze pobierane na bieżąco. Po odmowie z powodu limitu (HTTP 429) aplikacja przez godzinę od razu korzysta z NASA POWER. |
-| Wskaźnik CDI (EDO) | Mapy starsze niż 60 dni zapisywane dla punktu i dekady; nowsze pobierane na bieżąco. |
-| Gleba, pokrycie terenu | Zapisywane według obszaru działki (dane się nie zmieniają). |
-| Wskaźniki Sentinel-2 | Wcześniejsze lata zapisywane dla działki i daty (archiwum się nie zmienia); bieżący miesiąc zawsze pobierany na bieżąco. |
-| Ostrzeżenia IMGW | Zawsze pobierane na bieżąco. |
-
-Działki demonstracyjne przygotowano 21.11.2026 skryptem `warm_cache` (tylko analiza terenu).
-
-## 6. Biblioteki, komponenty, usługi i narzędzia AI
-
-| Komponent | Wersja | Licencja | Zastosowanie |
-|---|---|---|---|
-| Python | 3.12 | PSF | środowisko backendu |
-| FastAPI | 0.165 | MIT | API HTTP |
-| Pydantic | 2.14 | MIT | modele danych |
-| Uvicorn | 0.54 | BSD-3-Clause | serwer ASGI |
-| HTTPX | 0.28 | BSD-3-Clause | klient HTTP |
-| NumPy | 2.5 | BSD-3-Clause | obliczenia na siatkach |
-| Rasterio (z GDAL) | 1.5 | BSD-3-Clause (GDAL: MIT) | odczyt GeoTIFF / COG, rasteryzacja |
-| Shapely | 2.2 | BSD-3-Clause | geometria |
-| pyproj (z PROJ) | 3.8 | MIT | transformacje współrzędnych |
-| affine | 3.0 | BSD-3-Clause | transformacje rastrów |
-| argon2-cffi | 25.1 | MIT | skróty haseł (Argon2id) |
-| SQLite (moduł `sqlite3` Pythona) | 3 | domena publiczna | konta, zapisane działki, archiwum |
-| pytest, pytest-asyncio, Ruff | 9.2, 1.5, 0.17 | MIT | testy, lint (tylko w trakcie tworzenia) |
-| React, React DOM | 19.3 | MIT | interfejs |
-| MapLibre GL JS | 6.19 | BSD-3-Clause | mapa |
-| Vite, TypeScript, oxlint | 8.3, 7.0, 1.90 | MIT, Apache-2.0, MIT | budowanie, lint (tylko w trakcie tworzenia) |
-| nginx | 1.29 | BSD-2-Clause | pliki statyczne, proxy API |
-| Caddy | 2.10 | Apache-2.0 | HTTPS (Let's Encrypt) |
-| Docker / Docker Compose | — | Apache-2.0 | konteneryzacja |
-| Oracle Cloud Always Free (Ampere A1, 4 OCPU / 24 GB) | — | darmowy plan | hosting |
-
-Usługi zewnętrzne: patrz punkt 4 (wszystkie bezpłatne, bez kluczy API).
-
-**Narzędzia AI.** Kod, testy i dokumentację napisano z pomocą **Claude Code (Anthropic, model
-Claude Opus)** jako asystenta programisty, pod kierunkiem i z weryfikacją zespołu. Działająca
-aplikacja **nie używa żadnego modelu AI ani uczenia maszynowego**. Każda liczba w raporcie
-wynika z deterministycznych, opisanych obliczeń (punkt 3) na danych źródłowych. Wyniki są więc
-powtarzalne i możliwe do wyjaśnienia.
-
-## 7. Licencje i warunki korzystania
-
-| Dane / usługa | Warunki |
-|---|---|
-| GUGiK (ULDK, NMT, ortofotomapa, KIEG) | Bezpłatne, art. 40a ustawy Prawo geodezyjne i kartograficzne. |
-| Open-Meteo | Dane CC BY 4.0; darmowe API do użytku niekomercyjnego. Do użytku komercyjnego: płatny plan API albo zapasowe źródło NASA POWER. |
-| NASA POWER | Dane publiczne NASA, bez ograniczeń; prośba o podanie źródła. |
-| SoilGrids (ISRIC) | CC BY 4.0. |
-| Copernicus Sentinel-2 | Bezpłatne, pełne i otwarte (rozporządzenie UE 1159/2013); „Zawiera zmodyfikowane dane Copernicus Sentinel”. |
-| Microsoft Planetary Computer | Bezpłatny dostęp; dane na licencjach poszczególnych zbiorów. |
-| ESA WorldCover | CC BY 4.0, © ESA WorldCover project. |
-| Dane publiczne IMGW-PIB | Bezpłatne; wymagane podanie źródła („Źródłem danych jest IMGW-PIB”). |
-| EDO (Copernicus EMS) | Dane Copernicus: bezpłatne i otwarte (rozp. UE 1159/2013); wymagane podanie źródła. |
-| OpenStreetMap | ODbL, © współtwórcy OpenStreetMap. |
-| Kod | Napisany w trakcie wydarzenia. Wszystkie zależności mają liberalne licencje open source (punkt 6), zgodne z korzystaniem z rozwiązania przez KOWR. |
-
-## 8. Znane ograniczenia
-
-- **Pogoda pochodzi z reanalizy w siatce** (ok. 10 km Open-Meteo, ok. 50 km NASA POWER), a nie ze
-  stacji na polu. Lokalne burze mogą zostać pominięte.
-- **Darmowy limit Open-Meteo jest liczony dla adresu IP na dobę.** Po jego przekroczeniu
-  aplikacja sama przechodzi na NASA POWER. ET0 z NASA POWER (własne obliczenie FAO-56) jest
-  o ok. 10 % niższe niż z Open-Meteo. Porównanie z wcześniejszymi latami pozostaje spójne, bo
-  obie strony porównania pochodzą z tego samego źródła.
-- **Gleba jest modelowana** (SoilGrids, 250 m), a nie badana w terenie. Kategoria gleby
-  pochodzi z mapy IUNG; przybliżenie z uziarnienia służy tylko jako zapas.
-- **Model wody w glebie** nie uwzględnia wód gruntowych, drenowania ani nawadniania. Korzysta
-  z typowych terminów faz, a nie z rzeczywistej daty siewu.
-- **Kryterium SMSR dla lat 2016–2019 liczymy sami** z reanalizy (ET0 FAO-56). Nasz KBW bywa
-  mniej ujemny niż KBW IUNG ze stacji, więc susza z tamtych lat może być niedoszacowana. Od
-  2020 r. używamy oficjalnej tabeli IUNG, która opisuje całą gminę, a nie samą działkę.
-- **Teren:** pobieramy całe arkusze NMT (ok. 35 MB, ok. 2 × 2 km), bo usługa WCS GUGiK pod
-  obciążeniem odpowiada minutami. Pierwsza działka w danym arkuszu czeka na pobranie, następne
-  w tym samym arkuszu korzystają z cache. Dla działek większych niż kilka hektarów teren może pojawić się
-  po raporcie (strona uzupełni się sama). Dla działek powyżej 250 ha analiza terenu jest
-  pomijana. NMT pochodzi z krajowego skanowania, a nie z bieżącego stanu terenu.
-- **Wykrywanie rowów** może też zaznaczać naturalne bruzdy spływu albo rowy przydrożne. Odstęp
-  zastawek i efekt dla wód gruntowych liczone są z typowymi wartościami (piętrzenie 0,5 m,
-  zasięg 50 m, odsączalność 0,05–0,15).
-- **Sentinel-2** wymaga w miarę bezchmurnego zdjęcia z 20 dni przed datą. W przeciwnym razie ten
-  rok jest wymieniony jako brakujący.
-- **Ostrzeżenia hydrologiczne IMGW** są dostępne tylko dla bieżącego dnia (bez archiwum)
-  i dopasowywane według województwa.
-- **Scenariusze „co jeśli”** powtarzają pogodę z poprzednich lat, a nie prognozę. Pokazują
-  zakres możliwych sytuacji, nie przewidują pogody.
-- **CDI z EDO** ma siatkę ok. 5 km i opisuje region, a nie konkretną uprawę. JRC zaleca
-  ostrożność przy jego interpretacji od połowy maja 2025 r. (niepewne dane o wilgotności gleby);
-  raport to zaznacza.
-- **Pokrycie terenu** (sprawdzenie, czy działka jest rolna) pochodzi z 2021 roku.
-- **Konta nie mają odzyskiwania hasła**: nie zbieramy e-maila, więc zapomniane hasło oznacza
-  nowe konto. Limit prób logowania jest trzymany w pamięci serwera (zeruje się po restarcie).
-  Analiza zbiorcza wielu nowych działek może trwać kilka minut (pobieranie terenu z GUGiK).
-- **Zalecenia krajobrazowe** (zadrzewienia, pasy trawy, miedze) opierają się na typowych wartościach
-  z literatury i na modelu terenu; nie uwzględniają granic własności sąsiadów ani istniejących
-  zadrzewień poza działką. Gleba organiczna jest rozpoznawana z SoilGrids (250 m), a nie z mapy
-  glebowej. Koszt nawadniania to orientacyjny koszt pracy, bez sprzętu i opłat za wodę.
-- **Formalności** w zaleceniach (zgłoszenie wodnoprawne, zarządca rowu, limit 5 m³ na dobę
-  z art. 33 Prawa wodnego) to ogólne wskazówki, a nie
-  porada prawna.
-
-## 9. Weryfikacja wyników i zaleceń
-
-- **Niezależne porównania w każdym raporcie.** Model wody w glebie zestawiany jest
-  z wilgotnością gleby z reanalizy (ERA5-Land lub MERRA-2) i z NDMI z Sentinel-2 dla tej samej
-  daty i historii. Zgodność podnosi, a rozbieżność obniża podaną wiarygodność. Do tego
-  porównanie ze wskaźnikiem CDI Europejskiego Obserwatorium Suszy (EDO). Przykład: działka
-  z Kujaw w lipcu 2019 r. to u nas „silny niedobór”, a w EDO klasa „Warning”.
-- **Porównanie z 10 wcześniejszymi latami** zamiast samych progów bezwzględnych. Błędy
-  systematyczne modelu się znoszą, a rolnik może sprawdzić na wykresach lata, które pamięta
-  (np. 2018, 2019).
-- **Kalibracja.** Próg silnego stresu ustawiono tak, by wyróżniały się znane susze 2015, 2018
-  i 2019, a mokry rok 2017 nie (sprawdzone na działce z Kujaw).
-- **Kontrole wyrywkowe:**
-  - rowy i zagłębienia porównane z ortofotomapą;
-  - ET0 z NASA POWER a z Open-Meteo: korelacja 0,98;
-  - suchą wiosnę 2025 z Sentinel-2 (NDMI najniższe z 8 lat) zestawiono ze znaną suszą 2025;
-  - działka z Kujaw w lipcu 2019 daje „silny niedobór”;
-  - próba na 10 działkach z różnych regionów, upraw i dat (2019–2026): wszystkie raporty
-    kompletne, pierwsza odpowiedź w 4–13 s.
-- **Testy automatyczne** (`cd backend && uv run pytest`, 125 testów):
-  - promieniowanie FAO-56 sprawdzone na przykładzie z podręcznika FAO;
-  - wiarygodność wyników Penmana-Monteitha;
-  - zachowanie bilansu wody w glebie;
-  - szeregowanie lat;
-  - funkcja pedotransferowa i kategorie gleb;
-  - wypełnianie zagłębień i objętości retencji;
-  - wykrywanie rowów i odstępy zastawek na sztucznym terenie;
-  - zalecenia i scenariusze „co jeśli”;
-  - zalecenia dopasowane do kształtu, spadku, gleby i uprawy (wąskie pasy, łąki, sady, gleby
-    organiczne), spadek i kształt działki na sztucznym terenie;
-  - pamięć podręczna i limit Open-Meteo;
-  - działanie raportu przy awarii źródeł;
-  - konta: rejestracja, logowanie, wylogowanie, wygasanie sesji, limit prób, ochrona CSRF,
-    izolacja danych (użytkownik nigdy nie widzi działek ani raportów innego), zapisane działki,
-    archiwum i analiza zbiorcza (z podstawionym budowaniem raportu i limitem równoległości).
-- **Identyfikowalność.** Każde źródło jest w raporcie podlinkowane z licencją i datą pobrania,
-  więc każde dane wejściowe można sprawdzić ręcznie.
-
-Sprawdzenie:
-
-```sh
-cd backend && uv run pytest && uv run ruff check .
-cd frontend && pnpm build && pnpm lint
-```
-
-## Skalowalność i koszty
-
-- **Limity i dostępność źródeł:**
-  - wszystkie odpowiedzi źródeł są zapisywane w pamięci podręcznej (dane stałe dla działki,
-    pogoda dla komórki 0,1°, archiwalne zdjęcia dla działki i daty);
-  - przy awarii pogoda przechodzi na NASA POWER, a rowy na samo wykrywanie z LIDAR;
-  - wolne moduły mają limit czasu i kończą się w tle;
-  - równoległe zapytania o tę samą działkę współdzielą jedno obliczenie.
-- **W skali kraju:**
-  - analizę terenu (najwolniejszą część, niezależną od daty) liczyć z góry dla wszystkich
-    działek rolnych, z krajowych arkuszy NMT pobranych z góry;
-  - pogodę i bilans wody liczyć raz dziennie na siatce dla całej Polski (kilka tysięcy komórek);
-  - wyniki trzymać w PostGIS lub magazynie obiektów;
-  - uruchomić kilka bezstanowych instancji backendu za load balancerem.
-- **Koszty:**
-  - prototyp działa na Oracle Cloud Always Free (0 zł);
-  - usługa krajowa potrzebowałaby komercyjnej licencji na dane pogodowe (API Open-Meteo od
-    ok. 30 €/mies.) albo własnego przetwarzania ERA5-Land z Copernicus CDS (bezpłatnie);
-  - do tego 2–4 maszyny w chmurze i miejsce na wyniki analizy terenu: rzędu kilkuset zł
-    miesięcznie;
-  - pozostałe źródła danych są bezpłatne.
-
-## Bezpieczeństwo i prywatność
-
-- Konto jest opcjonalne i nie wymaga danych osobowych: tylko nazwa użytkownika (3–32 znaki)
-  i hasło (8–128 znaków), bez e-maila. Numer działki to publiczna informacja ewidencyjna.
-  Analizy bez logowania nie są nigdzie zapisywane.
-- Hasła: Argon2id (argon2-cffi); przy nieznanej nazwie też liczony jest skrót, więc czas
-  odpowiedzi nie zdradza, czy konto istnieje. Sesja: losowy token w ciasteczku `HttpOnly`,
-  `SameSite=Lax`, `Secure` w produkcji, ważny 30 dni; w bazie tylko jego skrót SHA-256;
-  wylogowanie usuwa sesję na serwerze. Zapisy wymagają nagłówka `X-Splyw` i zgodnego
-  nagłówka `Origin` (ochrona CSRF). Limit: 5 błędnych haseł na konto w 15 min, 100 na
-  serwer na minutę, 30 nowych kont na godzinę. Wszystkie zapytania SQL są parametryzowane
-  i ograniczone do właściciela danych.
-- Tylko HTTPS (HTTP przekierowuje na HTTPS). Dane wejściowe są sprawdzane (długość
-  identyfikatora, zakres dat, znane uprawy), a wywołania usług zewnętrznych tylko odczytują dane.
-- Przeglądarka pyta o lokalizację tylko po kliknięciu przycisku GPS. Pozycja służy wyłącznie do
-  znalezienia działki. Aplikacja jej nie zapisuje (pojawia się jedynie w rotowanym logu dostępu
-  serwera).
+- Prezentacja: [`presentation/splyw-prezentacja.pdf`](presentation/splyw-prezentacja.pdf)
+- Scenariusz filmu: [`presentation/video-script.md`](presentation/video-script.md)
+- Raporty z aplikacji: [`reports/`](reports/) (Kujawy 06.2025, Kujawy susza 07.2019,
+  Lubelskie dziś z ostrzeżeniami IMGW)
+- **[Dokumentacja techniczna](docs/dokumentacja-techniczna.md)**: pełne punkty 1–9 regulaminu
+  (architektura, źródła i zakresy danych, dane bieżące i z pamięci podręcznej z datami,
+  biblioteki i narzędzia AI, licencje, ograniczenia, weryfikacja), skalowalność, bezpieczeństwo.

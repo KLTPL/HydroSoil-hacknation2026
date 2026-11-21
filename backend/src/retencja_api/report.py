@@ -15,7 +15,7 @@ from retencja_api.assessment.crop_params import CROP_PARAMS
 from retencja_api.assessment.diagnosis import diagnose, land_warnings
 from retencja_api.assessment.recommendations import recommend
 from retencja_api.background import shared_task
-from retencja_api.config import HISTORY_YEARS, TERRAIN_TIME_BUDGET_S
+from retencja_api.config import HISTORY_YEARS, TERRAIN_MAX_AREA_HA, TERRAIN_TIME_BUDGET_S
 from retencja_api.geo import geometry_to_wgs84
 from retencja_api.models import (
     AnalysisReport,
@@ -57,6 +57,16 @@ async def terrain_module(
     cached = cached_analysis(parcel_id)
     if cached is not None:
         return _terrain_ok(cached, "cached", elapsed())
+    area_ha = geom.area / 10_000
+    if area_ha > TERRAIN_MAX_AREA_HA:
+        return ModuleResult(
+            status="unavailable",
+            message=(
+                f"Działka ma {area_ha:.0f} ha; analiza terenu z LIDAR działa dla działek do "
+                f"{TERRAIN_MAX_AREA_HA:.0f} ha (czas pobierania danych GUGiK)."
+            ),
+            duration_ms=elapsed(),
+        )
 
     task = shared_task(f"terrain:{parcel_id}", lambda: analyze_parcel(parcel_id, geom))
     try:

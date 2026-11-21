@@ -29,6 +29,8 @@ PARCEL_BUFFER_M = 60
 # Terrain results later than this are reported as pending; the download keeps
 # running in the background and fills the cache for the next request.
 TERRAIN_TIME_BUDGET_S = 25.0
+# Larger parcels would take minutes to download and analyse; terrain is skipped for them.
+TERRAIN_MAX_AREA_HA = 250.0
 
 # Analysis dates accepted: today and up to this many years back.
 HISTORY_YEARS = 10

@@ -126,3 +126,15 @@ async def test_missing_modules_are_listed_and_lower_confidence(monkeypatch):
 def test_earliest_analysis_date_handles_leap_day():
     assert earliest_analysis_date(date(2028, 2, 29)) == date(2018, 2, 28)
     assert earliest_analysis_date(date(2026, 11, 21)) == date(2016, 11, 21)
+
+
+async def test_huge_parcel_skips_terrain(monkeypatch):
+    async def never(_id, _geom):
+        raise AssertionError("terrain must not be computed")
+
+    monkeypatch.setattr(report, "analyze_parcel", never)
+
+    result = await report.terrain_module(PARCEL.id, box(0, 0, 2000, 2000), 1.0)  # 400 ha
+
+    assert result.status == "unavailable"
+    assert "400 ha" in result.message

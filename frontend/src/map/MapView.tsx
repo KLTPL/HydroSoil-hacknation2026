@@ -4,20 +4,22 @@ import {
   NavigationControl,
   setWorkerUrl,
   type GeoJSONSource,
-  type LngLatBoundsLike,
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 // The production bundle does not emit MapLibre's worker by itself; ship it as an asset.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { DitchWeirs, Geometry, Parcel, RetentionSite } from '../api'
+import type { Parcel, RetentionAnalysis } from '../model'
 import { PRINT_EVENT } from '../print'
-import { DITCHES_SOURCE, mapStyle, PARCEL_SOURCE, SITES_FILL_LAYER, SITES_SOURCE } from './style'
+import { bounds, viewPadding } from './geometry'
+import { LayerSwitch, Legend, type BaseLayer } from './MapChrome'
+import { RainControl } from './RainControl'
+import { mapStyle, PARCEL_SOURCE, SITES_FILL_LAYER } from './style'
+import { useTerrainLayers } from './useTerrainLayers'
 
 interface Props {
   parcel: Parcel | null
-  sites: RetentionSite[]
-  ditches: DitchWeirs[]
+  terrain: RetentionAnalysis | null
   selectedSiteId: number | null
   onPick: (lon: number, lat: number) => void
   onSelectSite: (id: number) => void
@@ -29,17 +31,11 @@ setWorkerUrl(workerUrl)
 
 const POLAND_CENTER: [number, number] = [19.3, 52.1]
 
-function bounds(geometry: Geometry): LngLatBoundsLike {
-  const points = geometry.coordinates.flat(geometry.type === 'Polygon' ? 1 : 2) as number[][]
-  const lons = points.map((p) => p[0])
-  const lats = points.map((p) => p[1])
-  return [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]
-}
-
-export function MapView({ parcel, sites, ditches, selectedSiteId, onPick, onSelectSite }: Props) {
+export function MapView({ parcel, terrain, selectedSiteId, onPick, onSelectSite }: Props) {
   const container = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<MapLibreMap | null>(null)
-  const loaded = useRef<Promise<void> | null>(null)
+  const [map, setMap] = useState<MapLibreMap | null>(null)
+  const [base, setBase] = useState<BaseLayer>('photo')
+  const [raining, setRaining] = useState(false)
   // Handlers change every render; the map listeners read the latest through refs.
   const handlers = useRef({ onPick, onSelectSite })
   useLayoutEffect(() => {
@@ -47,7 +43,7 @@ export function MapView({ parcel, sites, ditches, selectedSiteId, onPick, onSele
   })
 
   useEffect(() => {
-    const map = new MapLibreMap({
+    const instance = new MapLibreMap({
       container: container.current!,
       style: mapStyle,
       center: POLAND_CENTER,
@@ -56,28 +52,24 @@ export function MapView({ parcel, sites, ditches, selectedSiteId, onPick, onSele
       // Keeps the last frame readable, so the map can be copied into the printed report.
       canvasContextAttributes: { preserveDrawingBuffer: true },
     })
-    mapRef.current = map
-    loaded.current = new Promise((resolve) => map.once('load', () => resolve()))
-
-    map.addControl(new NavigationControl(), 'top-left')
+    instance.addControl(new NavigationControl(), 'top-left')
     const geolocate = new GeolocateControl({
       positionOptions: { enableHighAccuracy: true },
       fitBoundsOptions: { maxZoom: 16 },
     })
-    map.addControl(geolocate, 'top-left')
+    instance.addControl(geolocate, 'top-left')
     geolocate.on('geolocate', (position) =>
       handlers.current.onPick(position.coords.longitude, position.coords.latitude),
     )
-
-    map.on('click', (event) => {
-      const hit = map.queryRenderedFeatures(event.point, { layers: [SITES_FILL_LAYER] })[0]
+    instance.on('click', (event) => {
+      const hit = instance.queryRenderedFeatures(event.point, { layers: [SITES_FILL_LAYER] })[0]
       if (hit?.id != null) handlers.current.onSelectSite(Number(hit.id))
       else handlers.current.onPick(event.lngLat.lng, event.lngLat.lat)
     })
-    map.on('mouseenter', SITES_FILL_LAYER, () => (map.getCanvas().style.cursor = 'pointer'))
-    map.on('mouseleave', SITES_FILL_LAYER, () => (map.getCanvas().style.cursor = ''))
-
-    return () => map.remove()
+    instance.on('mouseenter', SITES_FILL_LAYER, () => (instance.getCanvas().style.cursor = 'pointer'))
+    instance.on('mouseleave', SITES_FILL_LAYER, () => (instance.getCanvas().style.cursor = ''))
+    instance.once('load', () => setMap(instance))
+    return () => instance.remove()
   }, [])
 
   // Printing: frame the parcel, wait for tiles, snapshot the canvas, then print.
@@ -87,7 +79,7 @@ export function MapView({ parcel, sites, ditches, selectedSiteId, onPick, onSele
     printParcel.current = parcel
   })
   useEffect(() => {
-    const map = mapRef.current!
+    if (!map) return
     const capture = () => setSnapshot(map.getCanvas().toDataURL('image/png'))
     const onPrint = () => {
       const target = printParcel.current
@@ -105,63 +97,46 @@ export function MapView({ parcel, sites, ditches, selectedSiteId, onPick, onSele
       window.removeEventListener(PRINT_EVENT, onPrint)
       window.removeEventListener('beforeprint', capture)
     }
-  }, [])
+  }, [map])
 
   useEffect(() => {
-    const map = mapRef.current!
-    void loaded.current!.then(() => {
-      const data = parcel
-        ? { type: 'Feature' as const, geometry: parcel.geometry, properties: {} }
-        : { type: 'FeatureCollection' as const, features: [] }
-      map.getSource<GeoJSONSource>(PARCEL_SOURCE)!.setData(data as unknown as SourceData)
-      if (parcel) map.fitBounds(bounds(parcel.geometry), { padding: 60, maxZoom: 17 })
-    })
-  }, [parcel])
+    if (!map) return
+    const data = parcel
+      ? { type: 'Feature' as const, geometry: parcel.geometry, properties: {} }
+      : { type: 'FeatureCollection' as const, features: [] }
+    map.getSource<GeoJSONSource>(PARCEL_SOURCE)!.setData(data as unknown as SourceData)
+    if (parcel) map.fitBounds(bounds(parcel.geometry), { padding: viewPadding(), maxZoom: 17 })
+  }, [map, parcel])
 
+  // Once terrain results arrive, reframe the parcel clear of the rain card.
+  const hasTerrain = terrain !== null
   useEffect(() => {
-    const map = mapRef.current!
-    void loaded.current!.then(() => {
-      const features = sites.map((s) => ({
-        type: 'Feature' as const,
-        id: s.id,
-        geometry: s.geometry,
-        properties: { id: s.id, kind: s.kind },
-      }))
-      const data = { type: 'FeatureCollection' as const, features }
-      map.getSource<GeoJSONSource>(SITES_SOURCE)!.setData(data as unknown as SourceData)
-    })
-  }, [sites])
+    if (!map || !hasTerrain || !printParcel.current) return
+    const card = document.querySelector('.rain-control')?.getBoundingClientRect()
+    const padding = viewPadding()
+    if (card && !window.matchMedia('(width < 720px)').matches) padding.bottom += card.height * 0.6
+    map.fitBounds(bounds(printParcel.current.geometry), { padding, maxZoom: 17 })
+  }, [map, hasTerrain])
 
-  useEffect(() => {
-    const map = mapRef.current!
-    void loaded.current!.then(() => {
-      const features = ditches.flatMap((d) => [
-        { type: 'Feature' as const, geometry: d.geometry, properties: { id: d.id } },
-        ...d.weirs.coordinates.map((point) => ({
-          type: 'Feature' as const,
-          geometry: { type: 'Point' as const, coordinates: point },
-          properties: { id: d.id },
-        })),
-      ])
-      const data = { type: 'FeatureCollection' as const, features }
-      map.getSource<GeoJSONSource>(DITCHES_SOURCE)!.setData(data as unknown as SourceData)
-    })
-  }, [ditches])
-
-  useEffect(() => {
-    const map = mapRef.current!
-    void loaded.current!.then(() => {
-      map.removeFeatureState({ source: SITES_SOURCE })
-      if (selectedSiteId == null) return
-      map.setFeatureState({ source: SITES_SOURCE, id: selectedSiteId }, { selected: true })
-      const site = sites.find((s) => s.id === selectedSiteId)
-      if (site) map.fitBounds(bounds(site.geometry), { padding: 120, maxZoom: 18 })
-    })
-  }, [selectedSiteId, sites])
+  useTerrainLayers(map, terrain, selectedSiteId, base, raining, onSelectSite)
 
   return (
-    <>
+    <div className="map-stage">
       <div ref={container} className="map" aria-label="Mapa działek" role="region" />
+      {terrain && parcel && (
+        <div className="map-overlay">
+          <LayerSwitch value={base} onChange={setBase} hasRelief={terrain.relief !== null} />
+          <Legend terrain={terrain} base={base} />
+          {map && terrain.flow.length > 0 && (
+            <RainControl
+              map={map}
+              terrain={terrain}
+              areaHa={parcel.area_ha}
+              onRainingChange={setRaining}
+            />
+          )}
+        </div>
+      )}
       {snapshot && (
         <figure className="print-map">
           <img src={snapshot} alt="Mapa działki z miejscami retencji, rowami i zastawkami" />
@@ -171,6 +146,6 @@ export function MapView({ parcel, sites, ditches, selectedSiteId, onPick, onSele
           </figcaption>
         </figure>
       )}
-    </>
+    </div>
   )
 }

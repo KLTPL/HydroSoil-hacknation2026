@@ -3,9 +3,10 @@
 import asyncio
 import logging
 from datetime import UTC, datetime
+from pathlib import Path
 
 import httpx
-from shapely.geometry import MultiPoint, mapping
+from shapely.geometry import MultiPoint, Polygon, mapping
 from shapely.geometry.base import BaseGeometry
 
 from retencja_api import cache
@@ -22,7 +23,9 @@ from retencja_api.geo import geometry_to_wgs84
 from retencja_api.models import (
     Assumptions,
     DitchWeirs,
+    FlowPath,
     Range,
+    ReliefImage,
     RetentionAnalysis,
     RetentionSite,
     RetentionSummary,
@@ -36,7 +39,8 @@ from retencja_api.terrain.ditches import (
     osm_lines,
     plan_ditches,
 )
-from retencja_api.terrain.nmt import load_dem
+from retencja_api.terrain.flow import encode_png, flow_lines, relief_rgba
+from retencja_api.terrain.nmt import Dem, load_dem
 from retencja_api.terrain.retention import Site, find_sites
 
 
@@ -73,6 +77,30 @@ def _ditch_model(index: int, plan: DitchPlan) -> DitchWeirs:
     )
 
 
+def _rounded(geojson: dict) -> dict:
+    """~0.1 m precision is plenty for map lines and keeps the response small."""
+    coords = [[round(x, 6), round(y, 6)] for x, y in geojson["coordinates"]]
+    return {"type": geojson["type"], "coordinates": coords}
+
+
+def relief_path(parcel_id: str) -> Path:
+    return cache.cache_path("relief", _cache_key(parcel_id), ".png")
+
+
+def _save_relief(parcel_id: str, dem: Dem) -> ReliefImage:
+    rgba, spread = relief_rgba(dem)
+    path = relief_path(parcel_id)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_bytes(encode_png(rgba))
+    tmp.replace(path)
+    h, w = dem.elevation.shape
+    corners = Polygon([dem.transform * (c, r) for c, r in ((0, 0), (w, 0), (w, h), (0, h))])
+    lonlat = geometry_to_wgs84(corners).exterior.coords[:4]
+    return ReliefImage(
+        corners=[[round(x, 7), round(y, 7)] for x, y in lonlat], spread_m=round(spread, 2)
+    )
+
+
 def _cache_key(parcel_id: str) -> str:
     return f"{parcel_id}@v{ANALYSIS_VERSION}"
 
@@ -97,6 +125,8 @@ async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> Retention
     channels = await asyncio.to_thread(detect_channels, dem)
     lines = merge_sources(channels, osm_lines(ways or []))
     plans = await asyncio.to_thread(plan_ditches, lines, parcel_geom, dem)
+    flows = await asyncio.to_thread(flow_lines, dem)
+    relief = await asyncio.to_thread(_save_relief, parcel_id, dem)
 
     result = RetentionAnalysis(
         parcel_id=parcel_id,
@@ -120,6 +150,14 @@ async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> Retention
         ),
         ditches=[_ditch_model(i, p) for i, p in enumerate(plans, start=1)],
         ditches_checked=ways is not None,
+        flow=[
+            FlowPath(
+                area_m2=round(f.area_m2), end=f.end, next=f.next_index,
+                geometry=_rounded(mapping(geometry_to_wgs84(f.line))),
+            )
+            for f in flows
+        ],
+        relief=relief,
     )
     cache.write_json("retention", _cache_key(parcel_id), result.model_dump(mode="json"))
     return result

@@ -4,7 +4,9 @@ import {
   fetchAnalysis,
   fetchParcelAt,
   searchParcels,
+  streamAnalysis,
   type AnalysisReport,
+  type ModuleProgress,
   type ModuleResult,
   type Parcel,
 } from './api'
@@ -12,7 +14,8 @@ import {
 export type Lookup = { status: 'idle' | 'loading' } | { status: 'error'; message: string }
 
 export type ReportState =
-  | { status: 'idle' | 'loading' }
+  | { status: 'idle' }
+  | { status: 'loading'; started: number; progress: ModuleProgress[] }
   | { status: 'error'; message: string }
   | { status: 'done'; report: AnalysisReport }
 
@@ -95,10 +98,16 @@ export function useParcelReport() {
 
   const analyze = useCallback(async (target: Parcel, crop: string, date: string) => {
     const controller = restart()
-    setReport({ status: 'loading' })
+    setReport({ status: 'loading', started: performance.now(), progress: [] })
     writeHash(target.id, crop, date)
+    const onModule = (progress: ModuleProgress) =>
+      setReport((current) =>
+        current.status === 'loading'
+          ? { ...current, progress: [...current.progress, progress] }
+          : current,
+      )
     try {
-      const result = await fetchAnalysis(target.id, crop, date, controller.signal)
+      const result = await streamAnalysis(target.id, crop, date, onModule, controller.signal)
       setReport({ status: 'done', report: result })
     } catch (error) {
       if (!controller.signal.aborted) setReport({ status: 'error', message: errorMessage(error) })

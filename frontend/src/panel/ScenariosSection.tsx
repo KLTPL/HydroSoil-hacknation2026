@@ -1,4 +1,4 @@
-import type { ModuleResult, Scenario, WaterBalance } from '../api'
+import type { ModuleResult, Scenario, WaterBalance } from '../model'
 import * as fmt from '../format'
 
 function stressStart(s: Scenario, start: string): string {

@@ -19,15 +19,12 @@ export default function App() {
   }, [loadById, analyze])
 
   const terrain = report.status === 'done' ? report.report.terrain.data : null
-  const sites = terrain?.sites ?? []
-  const ditches = terrain?.ditches ?? []
 
   return (
     <div className="app">
       <MapView
         parcel={parcel}
-        sites={sites}
-        ditches={ditches}
+        terrain={terrain}
         selectedSiteId={selectedSiteId}
         onPick={(lon, lat) => {
           setSelectedSiteId(null)

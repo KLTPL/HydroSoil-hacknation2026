@@ -1,0 +1,301 @@
+/* Overlays on the visible part of the map (left of the panel / above the sheet) */
+.map-overlay {
+  position: absolute;
+  z-index: 1;
+  inset: var(--gap) calc(var(--panel-w) + 2 * var(--gap) + 8px) var(--gap) 56px;
+  display: grid;
+  grid-template:
+    'switch .' auto
+    '. .' 1fr
+    'legend rain' auto / auto 1fr;
+  gap: var(--gap);
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+
+  @media (width < 720px) {
+    inset: 10px 10px calc(58dvh + 10px) 52px;
+    grid-template:
+      'switch' auto
+      '.' 1fr
+      'rain' auto / minmax(0, 1fr);
+  }
+}
+
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(170%);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* Segmented control (radio group) */
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  margin: 0;
+  padding: 3px;
+  min-inline-size: 0;
+  background: var(--card-strong);
+  border: 0;
+  border-radius: 12px;
+
+  label {
+    margin: 0;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  span {
+    display: block;
+    padding: 7px 14px;
+    font-size: 0.86rem;
+    white-space: nowrap;
+    color: var(--muted);
+    border-radius: 9px;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  input:checked + span {
+    color: var(--text);
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+  }
+
+  label:has(input:focus-visible) span {
+    outline: 3px solid var(--accent);
+  }
+
+  &.small span {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+}
+
+.layer-switch {
+  grid-area: switch;
+  justify-self: start;
+  align-self: start;
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(170%);
+}
+
+.legend {
+  grid-area: legend;
+  align-self: end;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+
+  ul {
+    display: grid;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  @media (width < 720px) {
+    display: none;
+  }
+}
+
+.swatch {
+  flex: none;
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.swatch-parcel {
+  border: 2.5px solid #ffd23f;
+}
+
+.swatch-site {
+  background: #1f7cf0;
+}
+
+.swatch-ditch {
+  height: 0;
+  border-top: 3px dashed #5ee6ff;
+  border-radius: 0;
+}
+
+.swatch-weir {
+  width: 12px;
+  margin-inline: 2px;
+  background: #ff4f7b;
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+.swatch-flow {
+  height: 3px;
+  background: linear-gradient(90deg, #e6f6ff, #9fd8ff);
+}
+
+.relief-scale {
+  display: grid;
+  gap: 3px;
+  margin-block-start: 10px;
+  padding-block-start: 8px;
+  border-block-start: 1px solid var(--hairline);
+}
+
+.relief-ramp {
+  height: 8px;
+  background: linear-gradient(90deg, #1240a0, #2994c4, #e9eee0, #e2c480, #b07034);
+  border-radius: 4px;
+}
+
+.relief-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* "Puść ulewę" */
+.rain-control {
+  grid-area: rain;
+  justify-self: end;
+  align-self: end;
+  width: min(100%, 400px);
+  padding: 14px 16px;
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+  }
+
+  h2 {
+    font-size: 1rem;
+  }
+
+  @media (width < 720px) {
+    justify-self: stretch;
+    width: auto;
+    padding: 10px 12px;
+
+    .rain-caption,
+    .fine,
+    &.phase-idle .rain-stats {
+      display: none;
+    }
+
+    header {
+      margin-block-end: 8px;
+    }
+  }
+}
+
+.rain-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0 8px;
+
+  div {
+    display: grid;
+    align-content: start;
+    gap: 2px;
+  }
+
+  dt {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .runoff {
+    color: var(--moderate);
+  }
+
+  .kept dd {
+    color: var(--water-deep);
+
+    @media (prefers-color-scheme: dark) {
+      color: var(--water);
+    }
+  }
+
+  .lost dd {
+    color: var(--muted);
+  }
+}
+
+.rain-caption {
+  margin: 0 0 10px;
+  font-size: 0.84rem;
+}
+
+.rain-actions {
+  display: flex;
+  gap: 8px;
+
+  .primary {
+    flex: 1;
+  }
+}
+
+.rain-control .fine {
+  margin: 8px 0 0;
+}
+
+.flow-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Numbered pins on the retention sites */
+.site-pin {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  min-height: 26px;
+  height: 26px;
+  padding: 0;
+  font-size: 0.8rem;
+  font-weight: 750;
+  color: #fff;
+  background: #1f7cf0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+
+  &.kind-wet_depression {
+    background: #1595bd;
+  }
+
+  &:hover {
+    background: #0b5bc4;
+  }
+}
+
+.maplibregl-ctrl-group {
+  border-radius: 12px !important;
+  box-shadow: var(--shadow) !important;
+}

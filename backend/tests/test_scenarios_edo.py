@@ -6,6 +6,8 @@ from retencja_api.assessment.crop_params import CROP_PARAMS
 from retencja_api.assessment.scenarios import SCENARIO_DAYS, build_scenarios
 from retencja_api.drought.edo import dekad_start, previous_dekad
 from retencja_api.meteo.openmeteo import DailyWeather
+from retencja_api.models import EdoDrought, ModuleResult
+from retencja_api.progress import module_progress
 
 CROP = CROP_PARAMS["kukurydza_ziarno"]
 
@@ -63,3 +65,9 @@ def test_cdi_dekads():
     assert dekad_start(date(2019, 7, 10)) == date(2019, 7, 1)
     assert previous_dekad(date(2019, 7, 11)) == date(2019, 7, 1)
     assert previous_dekad(date(2019, 3, 1)) == date(2019, 2, 21)
+
+
+def test_edo_progress_line():
+    edo = EdoDrought(dekad=date(2019, 7, 21), cdi_class=2, label="Warning", drought=True)
+    result = ModuleResult[EdoDrought](status="ok", data=edo, duration_ms=5)
+    assert module_progress("edo", result).fact == "dekada od 21.07.2019: Warning"

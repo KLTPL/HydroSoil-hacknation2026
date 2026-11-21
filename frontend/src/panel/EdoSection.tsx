@@ -1,8 +1,8 @@
-import type { EdoDrought, ModuleResult } from '../api'
+import type { EdoDrought, ModuleResult } from '../model'
 import * as fmt from '../format'
 import { ModuleSection } from './ModuleSection'
 
-const CLASS_LEVEL = ['none', 'watch', 'moderate', 'severe', 'none', 'none', 'none'] as const
+const CLASS_TONE = ['ok', 'watch', 'moderate', 'severe', 'ok', 'ok', 'ok'] as const
 
 function agreement(edo: EdoDrought): string {
   if (edo.agrees === null) return ''
@@ -18,7 +18,8 @@ export function EdoSection({ edo }: { edo: ModuleResult<EdoDrought> }) {
     <ModuleSection id="edo" title="Porównanie z Europejskim Obserwatorium Suszy" module={edo}>
       {(e) => (
         <>
-          <p className={`level level-${CLASS_LEVEL[e.cdi_class] ?? 'none'}`}>
+          <p className={`edo-level tone-${CLASS_TONE[e.cdi_class] ?? 'ok'}`}>
+            <span className="level-dot" aria-hidden="true" />
             CDI: {e.label}
           </p>
           <p className="muted">

@@ -1,0 +1,217 @@
+/* Detailed data inside "Dane i dowody" */
+.facts {
+  width: 100%;
+  margin-block: 0.5rem;
+  font-size: 0.86rem;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 5px 6px;
+    text-align: end;
+    border-block-end: 1px solid var(--hairline);
+  }
+
+  th[scope='row'],
+  thead th:first-child {
+    font-weight: 500;
+    text-align: start;
+  }
+}
+
+.year-bars {
+  margin: 0.75rem 0;
+
+  ul {
+    display: grid;
+    gap: 2px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  li {
+    display: grid;
+    grid-template-columns: 3.2em 1fr 5em;
+    gap: 6px;
+    align-items: center;
+  }
+
+  li.current {
+    font-weight: 700;
+  }
+
+  .track {
+    position: relative;
+    height: 10px;
+    background: linear-gradient(var(--hairline), var(--hairline)) var(--zero) 0 / 1px 100% no-repeat;
+  }
+
+  .bar {
+    position: absolute;
+    inset-block: 0;
+    background: color-mix(in oklab, var(--water) 55%, transparent);
+    border-radius: 3px;
+  }
+
+  .bar.negative {
+    background: color-mix(in oklab, var(--moderate) 55%, transparent);
+  }
+
+  li.current .bar {
+    background: var(--water);
+  }
+
+  li.current .bar.negative {
+    background: var(--severe);
+  }
+
+  .value {
+    text-align: end;
+  }
+}
+
+.risk-calendar {
+  margin: 0.75rem 0;
+  font-size: 0.84rem;
+
+  ol {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    text-align: center;
+  }
+}
+
+.risk-cell {
+  display: block;
+  height: 28px;
+  margin-block: 2px;
+  background: color-mix(in oklab, var(--severe) calc(var(--risk) * 100%), var(--card));
+  border-radius: 6px;
+}
+
+.risk-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.warnings li {
+  margin-block-end: 0.5rem;
+}
+
+.sites {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-card {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 14px;
+  font-weight: 400;
+  text-align: start;
+  background: var(--surface);
+  border-inline-start: 4px solid var(--water);
+  border-radius: 12px;
+
+  &.kind-wet_depression {
+    border-inline-start-color: #4cc3e6;
+  }
+
+  &[aria-pressed='true'] {
+    outline: 2px solid var(--accent);
+  }
+}
+
+.site-title {
+  font-weight: 650;
+}
+
+.site-headline {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+
+  small {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--muted);
+  }
+}
+
+.site-stats {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 2px 12px;
+  margin: 0;
+  font-size: 0.8rem;
+
+  dt {
+    color: var(--muted);
+  }
+
+  dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.site-advice,
+.site-note {
+  font-size: 0.82rem;
+}
+
+.site-note {
+  color: var(--muted);
+}
+
+/* What-if scenarios */
+.scenarios {
+  display: grid;
+  gap: 6px;
+  margin: 0.5rem 0;
+  padding: 0;
+  font-size: 0.88rem;
+  list-style: none;
+}
+
+.scenarios li {
+  display: grid;
+  padding: 6px 8px;
+  border-inline-start: 3px solid var(--border);
+}
+
+.scenarios span {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.scenarios .scenario-irrigated,
+.scenarios .scenario-more_humus {
+  border-inline-start-color: var(--accent);
+}
+
+/* EDO cross-check */
+.edo-level {
+  --tone: var(--muted);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-weight: 600;
+  color: var(--tone);
+
+  &.tone-ok { --tone: var(--ok); }
+  &.tone-watch { --tone: var(--watch); }
+  &.tone-moderate { --tone: var(--moderate); }
+  &.tone-severe { --tone: var(--severe); }
+}

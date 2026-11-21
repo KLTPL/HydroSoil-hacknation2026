@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Zatrzymaj wodę — prezentacja</title>
+<title>Spływ — prezentacja</title>
 <style>
   @page { size: 1600px 900px; margin: 0; }
   :root {
@@ -55,7 +55,7 @@
 <!-- 1 -->
 <section class="slide title-slide">
   <div class="kicker" style="color:#cfe3ff">HackNation 2026 · KOWR</div>
-  <h1>Zatrzymaj wodę</h1>
+  <h1>Spływ</h1>
   <p>Numer działki, uprawa i data. W 30 sekund rolnik wie, czy brakuje mu wody, dlaczego,
      i <b>gdzie dokładnie na swoim polu ile wody może zatrzymać</b>.</p>
   <div class="url">woda.kodlab.pl</div>
@@ -115,6 +115,22 @@
 
 <!-- 5 -->
 <section class="slide">
+  <div class="kicker">Wyróżnik</div>
+  <h2>Ulewa na żywo: dziś i z planem</h2>
+  <div class="cols-wide">
+    <div>
+      <p style="font-size:28px">Przełącznik <b>„Rzeźba terenu”</b>: cieniowana mikrorzeźba z LIDAR (±kilkadziesiąt cm) i drogi spływu. Widać niecki, bruzdy i rowy, których nie ma na zdjęciu.</p>
+      <p style="font-size:28px"><b>„Puść ulewę 30 mm”</b>: deszcz spływa po drogach z LIDAR do niecek i poza działkę. Liczniki: ile spada, ile spływa, ile zatrzyma plan.</p>
+      <p class="pill">Dziś: woda ucieka rowami</p><p class="pill">Z planem: zostaje na polu</p>
+      <p class="muted" style="font-size:22px">Objętości pochodzą z analizy terenu; animacja je ilustruje.</p>
+    </div>
+    <img class="shot-crop" src="img/rain.png" alt="Symulacja ulewy na mapie rzeźby terenu" style="object-position: 100% 50%;">
+  </div>
+  <div class="num">5</div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
   <div class="kicker">Ocena i przyczyny</div>
   <h2>Ile wody brakuje i dlaczego, w milimetrach</h2>
   <div class="cols-wide">
@@ -131,10 +147,10 @@
     </div>
     <img class="shot-crop" src="img/diagnosis.png" alt="Ocena sytuacji wodnej w raporcie" style="object-position: 100% 0;">
   </div>
-  <div class="num">5</div>
+  <div class="num">6</div>
 </section>
 
-<!-- 6 -->
+<!-- 7 -->
 <section class="slide">
   <div class="kicker">Działania</div>
   <h2>Każde zalecenie: ile m³, dlaczego, kiedy, za ile</h2>
@@ -148,10 +164,10 @@
     </div>
     <img class="shot-crop" src="img/recs.png" alt="Zalecenia w raporcie" style="object-position: 100% 0;">
   </div>
-  <div class="num">6</div>
+  <div class="num">7</div>
 </section>
 
-<!-- 7 -->
+<!-- 8 -->
 <section class="slide">
   <div class="kicker">Dane i wiarygodność</div>
   <h2>11 publicznych źródeł, liczone na żywo</h2>
@@ -166,10 +182,10 @@
     <tr><td>Porównanie: wskaźnik suszy CDI</td><td>Europejskie Obserwatorium Suszy (Copernicus)</td><td>5 km, co dekadę</td></tr>
   </table>
   <p style="font-size:26px;margin-top:28px">W raporcie każde źródło ma licencję i datę pobrania. Brakujące dane są nazwane wprost, nic nie jest zgadywane. Wynik liczy się bez AI: deterministyczne, opisane metody (FAO-56, IUNG).</p>
-  <div class="num">7</div>
+  <div class="num">8</div>
 </section>
 
-<!-- 8 -->
+<!-- 9 -->
 <section class="slide">
   <div class="kicker">Prototyp</div>
   <h2>Działa dla każdej działki w Polsce</h2>
@@ -181,29 +197,29 @@
     <ul>
       <li>Awaria źródła nie psuje raportu: zapasowe źródła pogody i rowów, czytelny komunikat.</li>
       <li>Cache danych: szybko i bez przekraczania limitów darmowych API.</li>
-      <li>59 testów automatycznych, HTTPS, bez danych osobowych.</li>
+      <li>69 testów automatycznych, HTTPS, bez danych osobowych.</li>
       <li>Skala kraju: teren liczony z góry dla wszystkich pól, bilans wody na siatce raz dziennie.</li>
     </ul>
   </div>
-  <div class="num">8</div>
+  <div class="num">9</div>
 </section>
 
-<!-- 9 -->
+<!-- 10 -->
 <section class="slide">
   <div class="kicker">Wartość dla rolnika</div>
   <h2>Z monitoringu suszy do decyzji na własnym polu</h2>
   <p class="quote">„Na Twoim polu cztery zastawki zatrzymają 2–6 tys. m³ wody na sezon, a zagłębienia przy każdej ulewie do 700 m³. Zamknij je pod koniec marca.”</p>
   <p class="muted" style="margin-top:40px">Konkretne miejsce, ilość wody i termin, uzasadnione danymi, a nie ogólna porada.</p>
-  <div class="num">9</div>
+  <div class="num">10</div>
 </section>
 
-<!-- 10 -->
+<!-- 11 -->
 <section class="slide title-slide">
   <div class="kicker" style="color:#cfe3ff">Sprawdź sami</div>
   <h1 style="font-size:84px">woda.kodlab.pl</h1>
   <p>Wpisz numer działki, wybierz uprawę i datę. Raport w 30 sekund, do druku lub PDF.</p>
   <p style="font-size:30px;margin-top:40px;color:#cfe3ff">Dalej: kalibracja z danymi IUNG, scenariusze „co jeśli”, eksport do wniosków o dofinansowanie.</p>
-  <div class="num" style="color:#cfe3ff">10</div>
+  <div class="num" style="color:#cfe3ff">11</div>
 </section>
 
 </body>

@@ -4,12 +4,15 @@ Each statement names the numbers it is based on; missing inputs lower the confid
 from retencja_api.assessment.crop_params import CropParams
 from retencja_api.models import (
     Cause,
+    Comparison,
     Diagnosis,
     DroughtLevel,
     HydroStatus,
     LandCover,
     RetentionAnalysis,
+    SignalVerdict,
     SoilProfile,
+    SourceSignal,
     VegetationState,
     WaterBalance,
 )
@@ -29,32 +32,105 @@ LIMITATIONS = [
     "Progi suszy są przybliżeniem metody IUNG (KBW), a nie oficjalnym komunikatem SMSR.",
 ]
 
-LEVEL_TEXT: dict[DroughtLevel, str] = {
-    "none": "Brak niedoboru wody",
-    "watch": "Zwiększone ryzyko niedoboru wody",
-    "moderate": "Umiarkowany niedobór wody dla uprawy",
-    "severe": "Silny niedobór wody dla uprawy",
-}
-
-
-DRY_RANK = 3  # among the 3 driest of ~11 years
+DRY_RANK = 3  # among the 3 driest (or wettest) of ~11 years
 REANALYSIS_DRY_RATIO = 0.85
 
 
-def dry_signals(water: WaterBalance, vegetation: VegetationState | None) -> list[str]:
-    """Independent signs that this date is drier than usual at the parcel."""
-    signals = []
-    if water.available_pct.rank <= DRY_RANK:
-        signals.append("model wody w glebie")
-    if water.window.kbw_mm.rank <= DRY_RANK:
-        signals.append("bilans opadów i parowania")
+def _ranked(c: Comparison) -> SignalVerdict:
+    if c.rank <= DRY_RANK:
+        return "dry"
+    if c.rank > c.years - DRY_RANK:
+        return "wet"
+    return "normal"
+
+
+def _rank_note(c: Comparison) -> str:
+    if c.rank > c.years / 2:
+        return f"{c.years - c.rank + 1}. najwyższy wynik z {c.years} lat"
+    return f"{c.rank}. najniższy wynik z {c.years} lat"
+
+
+def _pl(value: float) -> str:
+    return f"{value:.2f}".replace(".", ",")
+
+
+def source_signals(
+    water: WaterBalance, vegetation: VegetationState | None, hydro: HydroStatus | None
+) -> list[SourceSignal]:
+    """Independent readings of this date against the same date in earlier years."""
+    a = water.available_pct
+    k = water.window.kbw_mm
+    out = [
+        SourceSignal(
+            key="soil_model",
+            source="Model wody w glebie",
+            verdict=_ranked(a),
+            value=f"{a.value:.0f} % (średnio {a.normal:.0f} %)",
+            note=_rank_note(a),
+        ),
+        SourceSignal(
+            key="kbw",
+            source="Opady minus parowanie (60 dni)",
+            verdict=_ranked(k),
+            value=f"{k.value:+.0f} mm (średnio {k.normal:+.0f} mm)",
+            note=_rank_note(k),
+        ),
+    ]
     sm = water.reanalysis_soil_moisture
-    if sm and (sm.rank <= DRY_RANK or sm.value < REANALYSIS_DRY_RATIO * sm.normal):
-        signals.append(f"wilgotność gleby {water.soil_moisture_source}")
+    if sm:
+        pct = 100 * (sm.value / sm.normal - 1) if sm.normal else 0
+        verdict = _ranked(sm)
+        if sm.value < REANALYSIS_DRY_RATIO * sm.normal:
+            verdict = "dry"
+        out.append(
+            SourceSignal(
+                key="reanalysis",
+                source=f"Wilgotność gleby {water.soil_moisture_source.split(' ')[0]}",
+                verdict=verdict,
+                value=f"{pct:+.0f} % względem średniej",
+                note=_rank_note(sm),
+            )
+        )
+    else:
+        out.append(SourceSignal(key="reanalysis", source="Wilgotność gleby (reanaliza)",
+                                verdict="missing", value="brak danych", note=""))
     ndmi = vegetation.ndmi if vegetation else None
-    if ndmi and ndmi.value < ndmi.normal - NDMI_DROP:
-        signals.append("uwodnienie roślin z satelity")
-    return signals
+    if ndmi and vegetation and vegetation.current:
+        verdict = "normal"
+        if ndmi.value < ndmi.normal - NDMI_DROP:
+            verdict = "dry"
+        elif ndmi.value > ndmi.normal + NDMI_DROP:
+            verdict = "wet"
+        out.append(
+            SourceSignal(
+                key="satellite",
+                source="Uwodnienie roślin z satelity",
+                verdict=verdict,
+                value=f"NDMI {_pl(ndmi.value)} (średnio {_pl(ndmi.normal)})",
+                note=f"Sentinel-2, {vegetation.current.date:%d.%m.%Y}",
+            )
+        )
+    else:
+        out.append(SourceSignal(key="satellite", source="Uwodnienie roślin z satelity",
+                                verdict="missing", value="brak bezchmurnego zdjęcia", note=""))
+    if hydro is not None:
+        n = len(hydro.drought_warnings)
+        out.append(
+            SourceSignal(
+                key="hydro",
+                source="Susza hydrologiczna IMGW",
+                verdict="dry" if n else "normal",
+                value=f"{n} ostrzeżeń" if n else "brak ostrzeżeń",
+                note=f"woj. {hydro.voivodeship}, stan bieżący",
+            )
+        )
+    return out
+
+
+def dry_signals(signals: list[SourceSignal]) -> list[str]:
+    """Names of the 10-year comparisons pointing to a drier than usual date.
+    IMGW warnings are current-only, so they do not count for historical dates."""
+    return [s.source.lower() for s in signals if s.verdict == "dry" and s.key != "hydro"]
 
 
 def _level(water: WaterBalance, crop: CropParams, signals: list[str]) -> DroughtLevel:
@@ -69,6 +145,45 @@ def _level(water: WaterBalance, crop: CropParams, signals: list[str]) -> Drought
     if stressed or signals:
         return "watch"
     return "none"
+
+
+def _headline(water: WaterBalance, crop: CropParams, signals: list[SourceSignal]) -> str:
+    """Two separate statements: does the crop have water now, and is that unusual."""
+    threshold = 100 * (1 - crop.depletion_p)
+    left = water.available_pct.value
+    if not water.in_season:
+        state = (
+            f"Uprawa jest poza sezonem wegetacji. W glebie jest {left:.0f} % "
+            "wody dostępnej (zapas na wiosnę)."
+        )
+    elif left < threshold:
+        state = (
+            f"Uprawa cierpi z braku wody: w strefie korzeni zostało {left:.0f} % wody "
+            f"dostępnej, a stres zaczyna się poniżej {threshold:.0f} %."
+        )
+    else:
+        state = (
+            f"Uprawa ma wodę: w strefie korzeni jest {left:.0f} % wody dostępnej "
+            f"(stres poniżej {threshold:.0f} %)."
+        )
+    compared = [s for s in signals if s.verdict != "missing" and s.key != "hydro"]
+    dry = [s.source.lower() for s in compared if s.verdict == "dry"]
+    wet = [s.source.lower() for s in compared if s.verdict == "wet"]
+    if dry and wet:
+        context = (
+            f"Na tle 10 lat źródła nie są zgodne: suszej niż zwykle wg {', '.join(dry)}, "
+            f"wilgotniej wg {', '.join(wet)}."
+        )
+    elif dry:
+        context = (
+            f"Na tle 10 lat jest suszej niż zwykle ({len(dry)} z {len(compared)} źródeł: "
+            f"{', '.join(dry)})."
+        )
+    elif wet:
+        context = f"Na tle 10 lat jest wilgotniej niż zwykle wg: {', '.join(wet)}."
+    else:
+        context = "Na tle 10 lat to typowa sytuacja dla tej pory roku."
+    return f"{state} {context}"
 
 
 def _weather_causes(water: WaterBalance) -> list[Cause]:
@@ -220,7 +335,8 @@ def diagnose(
             limitations=LIMITATIONS,
             missing_data=missing,
         )
-    signals = dry_signals(water, vegetation)
+    readings = source_signals(water, vegetation, hydro)
+    signals = dry_signals(readings)
     level = _level(water, crop, signals)
     causes = _weather_causes(water)
     if soil is not None:
@@ -239,20 +355,18 @@ def diagnose(
         causes.append(cause)
     causes.sort(key=lambda c: -(c.amount_mm or 0))
 
-    headline = LEVEL_TEXT[level]
-    if not water.in_season:
-        headline += " (poza sezonem wegetacji uprawy: oceniamy zapas wody w glebie)"
-    if signals:
-        prefix = "Nieco suszej niż zwykle" if level == "none" else "Sucho na tle 10 lat"
-        headline += f". {prefix} wg: {', '.join(signals)}."
     confidence = "high"
     if missing or (soil is not None and soil.assumed):
         confidence = "medium"
     if len(signals) == 1 and level != "none":
         confidence = "medium"  # only one source points to dryness
+    if signals and any(r.verdict == "wet" for r in readings):
+        confidence = "medium"  # sources disagree
     return Diagnosis(
         level=level,
-        headline=headline,
+        headline=_headline(water, crop, readings),
+        signals=readings,
+        stress_threshold_pct=round(100 * (1 - crop.depletion_p)),
         evidence=_evidence(water, vegetation, hydro),
         causes=causes,
         confidence=confidence,

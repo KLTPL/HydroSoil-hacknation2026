@@ -203,6 +203,13 @@ export interface HydroStatus {
   other_warnings: number
 }
 
+export interface LandCover {
+  year: number
+  classes: { code: number; name: string; share: number }[]
+  agricultural_share: number
+  is_agricultural: boolean
+}
+
 export type DroughtLevel = 'none' | 'watch' | 'moderate' | 'severe'
 
 export interface Cause {
@@ -215,6 +222,7 @@ export interface Cause {
 export interface Diagnosis {
   level: DroughtLevel
   headline: string
+  warnings: string[]
   evidence: string[]
   causes: Cause[]
   confidence: 'high' | 'medium' | 'low'
@@ -248,6 +256,7 @@ export interface AnalysisReport {
   soil: ModuleResult<SoilProfile>
   satellite: ModuleResult<VegetationState>
   hydro: ModuleResult<HydroStatus>
+  land: ModuleResult<LandCover>
   terrain: ModuleResult<RetentionAnalysis>
 }
 

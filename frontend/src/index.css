@@ -733,3 +733,12 @@ ol.recs {
     word-break: break-all;
   }
 }
+
+.warning {
+  padding: 10px 12px;
+  font-weight: 600;
+  color: #5c2a00;
+  background: #ffe8c2;
+  border-inline-start: 5px solid #d97706;
+  border-radius: 6px;
+}

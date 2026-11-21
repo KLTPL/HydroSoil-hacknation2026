@@ -19,6 +19,11 @@ export function DiagnosisSection({ diagnosis }: { diagnosis: Diagnosis }) {
   return (
     <section className="report-section" aria-labelledby="diagnosis-heading">
       <h3 id="diagnosis-heading">Ocena sytuacji wodnej</h3>
+      {diagnosis.warnings.map((warning) => (
+        <p key={warning} className="warning" role="alert">
+          {warning}
+        </p>
+      ))}
       <p className={`level level-${diagnosis.level}`}>{LEVEL_LABEL[diagnosis.level]}</p>
       <p className="headline">{diagnosis.headline}</p>
       {diagnosis.evidence.length > 0 && (

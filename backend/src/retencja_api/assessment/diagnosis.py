@@ -7,6 +7,7 @@ from retencja_api.models import (
     Diagnosis,
     DroughtLevel,
     HydroStatus,
+    LandCover,
     RetentionAnalysis,
     SoilProfile,
     VegetationState,
@@ -258,3 +259,15 @@ def diagnose(
         limitations=LIMITATIONS,
         missing_data=missing,
     )
+
+
+def land_warnings(land: LandCover | None) -> list[str]:
+    """Warn when the parcel is mostly not farmland: crop results would be misleading."""
+    if land is None or land.is_agricultural:
+        return []
+    main = ", ".join(f"{c.name} {100 * c.share:.0f} %" for c in land.classes[:3])
+    return [
+        f"Ta działka nie wygląda na rolniczą (mapa pokrycia terenu ESA WorldCover "
+        f"{land.year}: {main}; grunty orne i łąki tylko {100 * land.agricultural_share:.0f} %). "
+        "Ocena dla uprawy i zalecenia mają tu ograniczony sens. Sprawdź numer działki."
+    ]

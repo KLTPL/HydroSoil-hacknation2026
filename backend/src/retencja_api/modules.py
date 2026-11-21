@@ -11,11 +11,13 @@ from retencja_api.assessment.crop_params import CropParams
 from retencja_api.assessment.water_balance import assess_water
 from retencja_api.background import run_within
 from retencja_api.hydro.imgw import fetch_warnings, warnings_for
+from retencja_api.landcover.worldcover import land_cover
 from retencja_api.meteo.nasa_power import fetch_daily_power
 from retencja_api.meteo.openmeteo import fetch_daily
 from retencja_api.models import (
     DataSource,
     HydroStatus,
+    LandCover,
     ModuleResult,
     SoilProfile,
     VegetationState,
@@ -46,6 +48,11 @@ SOURCES = {
         "Copernicus Sentinel-2 L2A (ESA) przez Microsoft Planetary Computer",
         "https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a",
         "Dane Copernicus: bezpłatne i otwarte (rozp. UE 1159/2013)",
+    ),
+    "land": (
+        "ESA WorldCover 2021 (10 m) przez Microsoft Planetary Computer",
+        "https://esa-worldcover.org",
+        "CC BY 4.0 © ESA WorldCover project",
     ),
     "hydro": (
         "IMGW-PIB, ostrzeżenia hydrologiczne (dane publiczne)",
@@ -189,3 +196,22 @@ async def hydro_module(voivodeship: str, day: date) -> ModuleResult[HydroStatus]
         sources=[_source("hydro")],
         duration_ms=timer.ms(),
     )
+
+
+LAND_BUDGET_S = 10.0
+
+
+async def land_module(parcel_id: str, geometry_wgs84: dict) -> ModuleResult[LandCover]:
+    timer = _Timer()
+    try:
+        data = await run_within(
+            f"land:{parcel_id}", lambda: land_cover(parcel_id, geometry_wgs84), LAND_BUDGET_S
+        )
+    except (TimeoutError, httpx.HTTPError) as exc:
+        log.warning("Land cover unavailable: %r", exc)
+        return ModuleResult(
+            status="unavailable",
+            message="Nie udało się sprawdzić pokrycia terenu (ESA WorldCover).",
+            duration_ms=timer.ms(),
+        )
+    return ModuleResult(status="ok", data=data, sources=[_source("land")], duration_ms=timer.ms())

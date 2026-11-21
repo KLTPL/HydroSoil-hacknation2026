@@ -71,3 +71,17 @@ def test_warnings_for_matches_voivodeship():
     assert status.drought_warnings[0].valid_to is None
     assert status.other_warnings == 1
     assert warnings_for("mazowieckie", WARNINGS).drought_warnings == []
+
+
+def test_land_cover_flags_built_up_parcel():
+    from retencja_api.assessment.diagnosis import land_warnings
+    from retencja_api.landcover.worldcover import summarize
+
+    arena = summarize({50: 70, 30: 20, 10: 10})
+    assert not arena.is_agricultural
+    assert arena.classes[0].name == "zabudowa"
+    assert "nie wygląda na rolniczą" in land_warnings(arena)[0]
+
+    field = summarize({40: 90, 30: 5, 50: 5})
+    assert field.is_agricultural and field.agricultural_share == 0.95
+    assert land_warnings(field) == []

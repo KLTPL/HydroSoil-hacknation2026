@@ -1,4 +1,4 @@
-import type { HydroStatus, ModuleResult, SoilProfile, VegetationState } from '../api'
+import type { HydroStatus, LandCover, ModuleResult, SoilProfile, VegetationState } from '../api'
 import * as fmt from '../format'
 import { ModuleSection } from './ModuleSection'
 import { YearBars } from './YearBars'
@@ -106,6 +106,22 @@ export function HydroSection({ hydro }: { hydro: ModuleResult<HydroStatus> }) {
           </ul>
         )
       }
+    </ModuleSection>
+  )
+}
+
+export function LandSection({ land }: { land: ModuleResult<LandCover> }) {
+  return (
+    <ModuleSection id="land" title="Pokrycie terenu działki" module={land}>
+      {(l) => (
+        <p>
+          {l.classes
+            .filter((c) => c.share >= 0.02)
+            .map((c) => `${c.name} ${fmt.pct(100 * c.share)}`)
+            .join(', ')}{' '}
+          <span className="muted">(ESA WorldCover {l.year}, siatka 10 m)</span>
+        </p>
+      )}
     </ModuleSection>
   )
 }

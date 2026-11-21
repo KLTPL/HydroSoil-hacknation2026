@@ -3,7 +3,7 @@ import * as fmt from '../format'
 import { requestPrint } from '../print'
 import { Busy } from './Busy'
 import { DiagnosisSection, LimitationsSection } from './DiagnosisSection'
-import { HydroSection, SatelliteSection, SoilSection } from './FieldSections'
+import { HydroSection, LandSection, SatelliteSection, SoilSection } from './FieldSections'
 import { RecommendationsSection } from './RecommendationsSection'
 import { SiteCard } from './SiteCard'
 import { Sources } from './Sources'
@@ -130,6 +130,7 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
       <WaterSection water={report.water} year={year} />
       <SatelliteSection satellite={report.satellite} year={year} />
       <SoilSection soil={report.soil} />
+      <LandSection land={report.land} />
       <HydroSection hydro={report.hydro} />
       <TerrainSection
         terrain={report.terrain}

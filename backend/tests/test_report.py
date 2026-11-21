@@ -63,7 +63,7 @@ def offline_modules(monkeypatch):
 
         return result()
 
-    for name in ("soil_module", "water_module", "satellite_module", "hydro_module"):
+    for name in ("soil_module", "water_module", "satellite_module", "hydro_module", "land_module"):
         monkeypatch.setattr(report, name, unavailable)
 
 
@@ -119,7 +119,7 @@ async def test_missing_modules_are_listed_and_lower_confidence(monkeypatch):
     result = await report.build_report(PARCEL, GEOM, CROP, date(2025, 6, 1))
 
     assert result.diagnosis.confidence == "low"
-    assert len(result.diagnosis.missing_data) == 4  # all but terrain
+    assert len(result.diagnosis.missing_data) == 5  # all but terrain
     assert all("offline" in m for m in result.diagnosis.missing_data)
 
 

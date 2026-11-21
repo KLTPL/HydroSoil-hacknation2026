@@ -12,7 +12,7 @@ from shapely.geometry import mapping
 from shapely.geometry.base import BaseGeometry
 
 from retencja_api.assessment.crop_params import CROP_PARAMS
-from retencja_api.assessment.diagnosis import diagnose
+from retencja_api.assessment.diagnosis import diagnose, land_warnings
 from retencja_api.assessment.recommendations import recommend
 from retencja_api.background import shared_task
 from retencja_api.config import HISTORY_YEARS, TERRAIN_TIME_BUDGET_S
@@ -27,7 +27,13 @@ from retencja_api.models import (
     SoilProfile,
     WaterBalance,
 )
-from retencja_api.modules import hydro_module, satellite_module, soil_module, water_module
+from retencja_api.modules import (
+    hydro_module,
+    land_module,
+    satellite_module,
+    soil_module,
+    water_module,
+)
 from retencja_api.soil.soilgrids import DEFAULT_PROFILE
 from retencja_api.terrain.service import analyze_parcel, cached_analysis
 
@@ -91,6 +97,7 @@ def _missing(modules: dict[str, ModuleResult]) -> list[str]:
         "soil": "gleba",
         "satellite": "zdjęcia satelitarne",
         "hydro": "ostrzeżenia hydrologiczne IMGW",
+        "land": "pokrycie terenu",
         "terrain": "model terenu",
     }
     return [
@@ -120,10 +127,11 @@ async def build_report(
         water = await water_module(centre.y, centre.x, params, analysis_date, awc, HISTORY_YEARS)
         return soil, water
 
-    (soil, water), satellite, hydro, terrain = await asyncio.gather(
+    (soil, water), satellite, hydro, land, terrain = await asyncio.gather(
         soil_and_water(),
         satellite_module(parcel.id, mapping(geom_wgs84), analysis_date, HISTORY_YEARS, budget),
         hydro_module(parcel.voivodeship, analysis_date),
+        land_module(parcel.id, mapping(geom_wgs84)),
         terrain_module(parcel.id, geom, budget),
     )
     diagnosis = diagnose(
@@ -136,9 +144,11 @@ async def build_report(
         terrain.data,
         _missing(
             {"water": water, "soil": soil, "satellite": satellite, "hydro": hydro,
-             "terrain": terrain}
+             "land": land, "terrain": terrain}
         ),
     )
+    if warnings := land_warnings(land.data):
+        diagnosis = diagnosis.model_copy(update={"warnings": warnings, "confidence": "low"})
     return AnalysisReport(
         parcel=parcel,
         crop=crop,
@@ -152,5 +162,6 @@ async def build_report(
         soil=soil,
         satellite=satellite,
         hydro=hydro,
+        land=land,
         terrain=terrain,
     )

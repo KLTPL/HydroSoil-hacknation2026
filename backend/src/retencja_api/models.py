@@ -207,6 +207,19 @@ class HydroStatus(BaseModel):
     other_warnings: int
 
 
+class LandCoverShare(BaseModel):
+    code: int
+    name: str
+    share: float  # 0–1 of the parcel area
+
+
+class LandCover(BaseModel):
+    year: int
+    classes: list[LandCoverShare]
+    agricultural_share: float  # cropland + grassland
+    is_agricultural: bool
+
+
 DroughtLevel = Literal["none", "watch", "moderate", "severe"]
 
 
@@ -220,6 +233,7 @@ class Cause(BaseModel):
 class Diagnosis(BaseModel):
     level: DroughtLevel
     headline: str
+    warnings: list[str] = []  # shown before everything else (e.g. parcel is not farmland)
     evidence: list[str]  # observations supporting the verdict
     causes: list[Cause]
     confidence: Literal["high", "medium", "low"]
@@ -253,4 +267,5 @@ class AnalysisReport(BaseModel):
     soil: ModuleResult[SoilProfile]
     satellite: ModuleResult[VegetationState]
     hydro: ModuleResult[HydroStatus]
+    land: ModuleResult[LandCover]
     terrain: ModuleResult[RetentionAnalysis]

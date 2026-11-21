@@ -84,7 +84,12 @@
     display: grid !important;
   }
 
-  .rec-toggle::after {
+  .data-row-body[hidden] {
+    display: grid !important;
+  }
+
+  .rec-toggle::after,
+  .data-row-heading button::after {
     display: none;
   }
 

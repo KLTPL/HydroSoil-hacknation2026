@@ -1,7 +1,7 @@
-import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
 
-export interface Tab {
-  id: string
+export interface Tab<T extends string> {
+  id: T
   label: ReactNode
   content: ReactNode
 }
@@ -18,23 +18,28 @@ function scrollParent(element: HTMLElement): HTMLElement | null {
  * Report parts as tabs under a bar that sticks to the top of the panel. Every tab stays in
  * the DOM (inactive ones hidden) so the printed report still contains all of them.
  */
-export function ReportTabs({ tabs, actions }: { tabs: Tab[]; actions?: ReactNode }) {
+interface Props<T extends string> {
+  tabs: Tab<T>[]
+  active: T
+  onSelect: (id: T) => void
+  actions?: ReactNode
+}
+
+export function ReportTabs<T extends string>({ tabs, active, onSelect, actions }: Props<T>) {
   const base = useId()
-  const [active, setActive] = useState(tabs[0].id)
   const root = useRef<HTMLDivElement>(null)
   const buttons = useRef(new Map<string, HTMLButtonElement>())
   const tabId = (id: string) => `${base}-tab-${id}`
   const panelId = (id: string) => `${base}-panel-${id}`
 
-  function select(id: string) {
-    setActive(id)
-    // Switching from deep inside a long tab starts the new one at its top, not mid-way.
+  // Switching from deep inside a long tab starts the new one at its top, not mid-way.
+  useEffect(() => {
     const element = root.current
     const scroller = element && scrollParent(element)
     if (!element || !scroller) return
     const above = scroller.getBoundingClientRect().top + scroller.clientTop - element.getBoundingClientRect().top
     if (above > 0) scroller.scrollTop -= above
-  }
+  }, [active])
 
   // Arrow keys move between tabs and open them (automatic activation).
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -47,7 +52,7 @@ export function ReportTabs({ tabs, actions }: { tabs: Tab[]; actions?: ReactNode
     }[event.key]
     if (next === undefined) return
     event.preventDefault()
-    select(tabs[next].id)
+    onSelect(tabs[next].id)
     buttons.current.get(tabs[next].id)?.focus()
   }
 
@@ -69,7 +74,7 @@ export function ReportTabs({ tabs, actions }: { tabs: Tab[]; actions?: ReactNode
               aria-selected={tab.id === active}
               aria-controls={panelId(tab.id)}
               tabIndex={tab.id === active ? 0 : -1}
-              onClick={() => select(tab.id)}
+              onClick={() => onSelect(tab.id)}
             >
               {tab.label}
             </button>

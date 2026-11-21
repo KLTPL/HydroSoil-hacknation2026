@@ -40,8 +40,13 @@ function PrintButton() {
   )
 }
 
+type TabId = 'assessment' | 'plan' | 'data'
+
 export function Report({ report, selectedSiteId, onSelectSite }: Props) {
   const { diagnosis, recommendations } = report
+  const [tab, setTab] = useState<TabId>('assessment')
+  const [dataRow, setDataRow] = useState<string | null>(null)
+  const steps = recommendations.length
   return (
     <article className="report" aria-label="Raport">
       <header className="report-header print-only">
@@ -59,6 +64,8 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
         </p>
       </header>
       <ReportTabs
+        active={tab}
+        onSelect={setTab}
         actions={<PrintButton />}
         tabs={[
           {
@@ -66,9 +73,18 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
             label: 'Ocena',
             content: (
               <>
-                <Verdict diagnosis={diagnosis} water={report.water.data} />
+                <Verdict diagnosis={diagnosis} water={report.water.data} onShowData={() => {
+                    setDataRow('basis')
+                    setTab('data')
+                  }}
+                />
                 <CausesSection diagnosis={diagnosis} />
-                <ScenariosSection water={report.water} />
+                <ScenariosSection water={report.water} threshold={diagnosis.stress_threshold_pct} />
+                {steps > 0 && (
+                  <button type="button" className="next-tab no-print" onClick={() => setTab('plan')}>
+                    Co z tym zrobić: plan działań, {steps} {fmt.plural(steps, 'krok', 'kroki', 'kroków')}
+                  </button>
+                )}
               </>
             ),
           },
@@ -76,7 +92,7 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
             id: 'plan',
             label: (
               <>
-                Plan <span className="tab-count">{recommendations.length}</span>
+                Plan <span className="tab-count">{steps}</span>
               </>
             ),
             content: (
@@ -94,7 +110,15 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
           {
             id: 'data',
             label: 'Dane',
-            content: <DataTab report={report} selectedSiteId={selectedSiteId} onSelectSite={onSelectSite} />,
+            content: (
+              <DataTab
+                report={report}
+                openRow={dataRow}
+                onOpenRow={setDataRow}
+                selectedSiteId={selectedSiteId}
+                onSelectSite={onSelectSite}
+              />
+            ),
           },
         ]}
       />

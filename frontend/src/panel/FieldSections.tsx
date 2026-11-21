@@ -11,7 +11,16 @@ export function SatelliteSection({
   year: number
 }) {
   return (
-    <ModuleSection id="satellite" title="Stan roślin z satelity Sentinel-2" module={satellite}>
+    <ModuleSection
+      id="satellite"
+      title="Satelita Sentinel-2"
+      module={satellite}
+      summary={(v) =>
+        v.ndmi && v.current
+          ? `NDMI ${fmt.index(v.ndmi.value)}, zwykle ${fmt.index(v.ndmi.normal)}`
+          : 'brak zdjęcia z tej daty'
+      }
+    >
       {(v) => (
         <>
           {v.current && v.ndmi && v.ndvi ? (
@@ -46,7 +55,7 @@ export function SatelliteSection({
 
 export function SoilSection({ soil }: { soil: ModuleResult<SoilProfile> }) {
   return (
-    <ModuleSection id="soil" title="Gleba" module={soil}>
+    <ModuleSection id="soil" title="Gleba" module={soil} summary={(s) => `${s.texture.split(',')[0]}, kat. ${s.category}`}>
       {(s) => (
         <>
           <p>
@@ -85,7 +94,15 @@ export function SoilSection({ soil }: { soil: ModuleResult<SoilProfile> }) {
 
 export function HydroSection({ hydro }: { hydro: ModuleResult<HydroStatus> }) {
   return (
-    <ModuleSection id="hydro" title="Susza hydrologiczna (IMGW)" module={hydro}>
+    <ModuleSection
+      id="hydro"
+      title="Susza hydrologiczna IMGW"
+      module={hydro}
+      summary={(h) => {
+        const n = h.drought_warnings.length
+        return n === 0 ? 'brak ostrzeżeń' : `${n} ${fmt.plural(n, 'ostrzeżenie', 'ostrzeżenia', 'ostrzeżeń')}`
+      }}
+    >
       {(h) =>
         h.drought_warnings.length === 0 ? (
           <p>Brak ostrzeżeń o suszy hydrologicznej w woj. {h.voivodeship}.</p>
@@ -114,7 +131,15 @@ export function HydroSection({ hydro }: { hydro: ModuleResult<HydroStatus> }) {
 
 export function LandSection({ land }: { land: ModuleResult<LandCover> }) {
   return (
-    <ModuleSection id="land" title="Pokrycie terenu działki" module={land}>
+    <ModuleSection
+      id="land"
+      title="Pokrycie terenu"
+      module={land}
+      summary={(l) => {
+        const [top] = [...l.classes].sort((a, b) => b.share - a.share)
+        return top ? `${top.name} ${fmt.pct(100 * top.share)}` : 'brak klas'
+      }}
+    >
       {(l) => (
         <p>
           {l.classes

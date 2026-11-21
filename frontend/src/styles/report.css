@@ -148,55 +148,24 @@
   font-weight: 550;
 }
 
-/* Source "votes": each data source's reading against 10 years */
-.votes {
-  display: grid;
-  gap: 2px;
-  margin: 0;
-  padding: 10px 0 0;
-  list-style: none;
+/* Verdict: one dot per data source, full readings in the Dane tab */
+.vote-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: center;
+  padding-block-start: 10px;
+  font-size: 0.86rem;
   border-block-start: 1px solid var(--hairline);
 }
 
-.vote {
-  display: grid;
-  grid-template-columns: 12px 1fr auto;
-  gap: 2px 10px;
-  align-items: center;
-  padding-block: 4px;
-  font-size: 0.86rem;
-}
+.vote-dots {
+  display: flex;
+  gap: 4px;
 
-.vote-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-
-  .vote-dry & { background: var(--moderate); }
-  .vote-normal & { background: var(--ok); }
-  .vote-wet & { background: var(--water); }
-  .vote-missing & { border: 1.5px solid var(--muted); }
-}
-
-.vote-source {
-  font-weight: 600;
-}
-
-.vote-verdict {
-  font-weight: 600;
-  white-space: nowrap;
-
-  .vote-dry & { color: var(--moderate); }
-  .vote-wet & { color: var(--water-deep); }
-  .vote-missing &,
-  .vote-normal & { color: var(--muted); }
-}
-
-.vote-detail {
-  grid-column: 2 / -1;
-  font-size: 0.78rem;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
+  > span {
+    display: flex;
+  }
 }
 
 .confidence {

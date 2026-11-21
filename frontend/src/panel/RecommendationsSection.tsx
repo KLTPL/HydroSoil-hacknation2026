@@ -20,7 +20,7 @@ export function RecommendationsSection({
   const [open, setOpen] = useState<string | null>(null)
   return (
     <section className="report-section" aria-labelledby="recs-heading">
-      <p className="eyebrow">3 · Plan działań</p>
+      <p className="eyebrow print-only">3 · Plan działań</p>
       <h3 id="recs-heading">Co zrobić na tej działce</h3>
       <p className="section-lead">
         Najpierw zatrzymaj wodę, która spada na pole, potem popraw glebę. Nawadniaj na końcu.

@@ -7,7 +7,7 @@ export function CausesSection({ diagnosis }: { diagnosis: Diagnosis }) {
   const maxMm = Math.max(1, ...diagnosis.causes.map((c) => c.amount_mm ?? 0))
   return (
     <section className="report-section" aria-labelledby="causes-heading">
-      <p className="eyebrow">2 · Przyczyny</p>
+      <p className="eyebrow print-only">2 · Przyczyny</p>
       <h3 id="causes-heading">Dlaczego brakuje wody</h3>
       <ol className="causes">
         {diagnosis.causes.map((cause, i) => (
@@ -37,14 +37,11 @@ export function CausesSection({ diagnosis }: { diagnosis: Diagnosis }) {
 export function EvidenceList({ diagnosis }: { diagnosis: Diagnosis }) {
   if (diagnosis.evidence.length === 0) return null
   return (
-    <section className="report-section" aria-labelledby="evidence-heading">
-      <h3 id="evidence-heading">Na czym opiera się ocena</h3>
-      <ul className="evidence">
-        {diagnosis.evidence.map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-      </ul>
-    </section>
+    <ul className="evidence">
+      {diagnosis.evidence.map((line) => (
+        <li key={line}>{line}</li>
+      ))}
+    </ul>
   )
 }
 

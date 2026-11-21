@@ -1,10 +1,13 @@
 """Endpoints for a logged-in user's data: saved parcels, report archive, batch analysis.
 Every query is scoped to the session's user; another user's ids answer 404."""
 
+import asyncio
+import logging
 from collections.abc import AsyncIterator
 from datetime import date
 from typing import Annotated
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
@@ -20,12 +23,16 @@ from retencja_api.accounts.schemas import (
 )
 from retencja_api.config import HISTORY_YEARS
 from retencja_api.crops import CROPS_BY_ID
-from retencja_api.parcel.uldk import ParcelNotFound, get_parcel_by_id
+from retencja_api.models import GeoJSON
+from retencja_api.parcel.uldk import ParcelNotFound, UldkError, get_parcel_by_id
 
 router = APIRouter(prefix="/api/account", tags=["account"])
 
 CurrentUser = Annotated[User, Depends(current_user)]
 NOT_FOUND = "Nie znaleziono działki na Twojej liście"
+BACKFILL_CONCURRENCY = 4
+
+log = logging.getLogger(__name__)
 
 
 def _check_crop(crop: str) -> None:
@@ -33,9 +40,32 @@ def _check_crop(crop: str) -> None:
         raise HTTPException(422, "Nieznana uprawa")
 
 
+async def _fill_missing_outlines(user_id: int, saved: list[SavedParcel]) -> list[SavedParcel]:
+    """Parcels saved before the list kept outlines get theirs from ULDK once.
+    A failed lookup leaves the thumbnail out; the next listing tries again."""
+    missing = [s for s in saved if s.geometry is None]
+    if not missing:
+        return saved
+    limit = asyncio.Semaphore(BACKFILL_CONCURRENCY)
+
+    async def outline(s: SavedParcel) -> tuple[int, GeoJSON | None]:
+        async with limit:
+            try:
+                parcel, _ = await get_parcel_by_id(s.parcel_id)
+            except (ParcelNotFound, UldkError, httpx.HTTPError) as err:
+                log.warning("No outline for saved parcel %s: %s", s.parcel_id, err)
+                return s.id, None
+        return s.id, parcel.geometry
+
+    found = {i: g for i, g in await asyncio.gather(*map(outline, missing)) if g is not None}
+    if found:
+        parcels.set_geometries(user_id, found)
+    return [s.model_copy(update={"geometry": found[s.id]}) if s.id in found else s for s in saved]
+
+
 @router.get("/parcels")
-def list_parcels(user: CurrentUser) -> list[SavedParcel]:
-    return parcels.list_parcels(user.id)
+async def list_parcels(user: CurrentUser) -> list[SavedParcel]:
+    return await _fill_missing_outlines(user.id, parcels.list_parcels(user.id))
 
 
 @router.post("/parcels", status_code=201, dependencies=[Depends(same_origin)])

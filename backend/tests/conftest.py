@@ -15,7 +15,7 @@ from retencja_api.models import (
     Recommendation,
 )
 
-WRITE = {"X-Splyw": "1"}
+WRITE = {"X-HydroSoil": "1"}
 PASSWORD = "dobre-haslo-123"
 
 

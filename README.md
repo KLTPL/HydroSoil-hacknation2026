@@ -1,11 +1,11 @@
-# Spływ
+# HydroSoil
 
 Zobacz, dokąd ucieka woda z Twojej działki, i zatrzymaj ją.
 
 HackNation 2026 · zadanie KOWR „Zatrzymaj wodę, chroń plony” · zespół Cyberodporni
 
-**Działająca wersja: https://splyw.kodlab.pl** (bez instalacji, każda przeglądarka, także telefon)
-· [przykładowy raport](https://splyw.kodlab.pl/#p=040706_5.0016.51%2F1&c=zboza_ozime&d=2025-06-15)
+**Działająca wersja: https://hydrosoil.kodlab.pl** (bez instalacji, każda przeglądarka, także telefon)
+· [przykładowy raport](https://hydrosoil.kodlab.pl/#p=040706_5.0016.51%2F1&c=zboza_ozime&d=2025-06-15)
 
 ## Co robi
 
@@ -70,7 +70,7 @@ docker compose up --build   # http://localhost:8080
 
 ## Materiały
 
-- Prezentacja: [`presentation/splyw-prezentacja.pdf`](presentation/splyw-prezentacja.pdf)
+- Prezentacja: [`presentation/hydrosoil-prezentacja.pdf`](presentation/hydrosoil-prezentacja.pdf)
 - Scenariusz filmu: [`presentation/video-script.md`](presentation/video-script.md)
 - Raporty z aplikacji: [`reports/`](reports/) (Kujawy 06.2025, Kujawy susza 07.2019,
   Lubelskie dziś z ostrzeżeniami IMGW)

@@ -1,7 +1,7 @@
 # Metody, źródła naukowe i walidacja na nietypowych działkach
 
 Stan na 21.11.2026. Kod: `backend/src/retencja_api/`. Testy wykonano na produkcji
-(`https://splyw.kodlab.pl`, wcześniej `woda.kodlab.pl`), zapytania GET, najwyżej 2 naraz.
+(`https://hydrosoil.kodlab.pl`, wcześniej `splyw.kodlab.pl` i `woda.kodlab.pl`), zapytania GET, najwyżej 2 naraz.
 
 Punkt odniesienia: „KOWR – Podstawy naukowe” wymienia jako bazę FAO-56 (Allen i in.),
 System Monitoringu Suszy Rolniczej IUNG-PIB (Doroszewski i in. 2012), wytyczne NWRM (KE 2014,

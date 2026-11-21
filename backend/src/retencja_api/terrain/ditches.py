@@ -24,7 +24,7 @@ OVERPASS_URLS = (
     "https://overpass-api.de/api/interpreter",
     "https://overpass.private.coffee/api/interpreter",
 )
-USER_AGENT = "splyw/0.1 (hackathon prototype)"
+USER_AGENT = "hydrosoil/0.1 (hackathon prototype)"
 WATERWAYS = "ditch|drain|canal|stream"
 LIDAR_KIND = "lidar"  # channel detected in the terrain model, not on any map
 OVERLAP_BUFFER_M = 8.0  # a LIDAR channel this close to an OSM ditch is the same ditch

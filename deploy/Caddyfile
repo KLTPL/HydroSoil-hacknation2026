@@ -1,9 +1,9 @@
-splyw.kodlab.pl {
+hydrosoil.kodlab.pl {
 	encode gzip
 	reverse_proxy frontend:80
 }
 
-# Old address: keep shared links working.
-woda.kodlab.pl {
-	redir https://splyw.kodlab.pl{uri} permanent
+# Old addresses: keep shared links working.
+splyw.kodlab.pl, woda.kodlab.pl {
+	redir https://hydrosoil.kodlab.pl{uri} permanent
 }

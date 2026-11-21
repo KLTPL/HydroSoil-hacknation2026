@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+backend/.cache/
+*.tsbuildinfo
+
+# Organizer materials (not ours to redistribute)
+KOWR - *.pdf

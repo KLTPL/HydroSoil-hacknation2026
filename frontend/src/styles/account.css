@@ -1,0 +1,271 @@
+/* Optional account: header control, saved parcels, batch table, report archive */
+.account-button {
+  flex: none;
+  align-self: start;
+  min-height: 36px;
+  margin-inline-start: auto;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  color: var(--water-deep);
+  background: color-mix(in oklab, var(--water) 12%, transparent);
+  border-radius: 999px;
+
+  @media (prefers-color-scheme: dark) {
+    color: var(--water);
+  }
+}
+
+button.small {
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+
+button.link {
+  min-height: 0;
+  padding: 0;
+  font-weight: 650;
+  color: var(--accent);
+  text-align: start;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+}
+
+.block {
+  display: block;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.account {
+  display: grid;
+  gap: 12px;
+}
+
+.account-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+button.back {
+  justify-self: start;
+  padding-inline: 8px;
+}
+
+.account-form {
+  display: grid;
+  gap: 10px;
+  margin-block-start: 8px;
+}
+
+.account-switch {
+  width: 100%;
+  margin-block-start: 6px;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+/* Tabs wrap to two rows on narrow phones instead of scrolling sideways */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  background: var(--card);
+  border-radius: 14px;
+}
+
+.tab {
+  flex: 1 1 auto;
+  min-height: 38px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  background: transparent;
+  border-radius: 10px;
+
+  &.active {
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgb(10 20 30 / 0.12);
+  }
+}
+
+.tab-body {
+  display: grid;
+  gap: 12px;
+}
+
+.saved-list,
+.archive-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.saved-item {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  background: var(--card);
+  border-radius: 12px;
+}
+
+.saved-text {
+  display: grid;
+  gap: 2px;
+}
+
+.saved-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.rename {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  input {
+    flex: 1 1 160px;
+  }
+}
+
+.save-parcel {
+  margin-block-start: 10px;
+
+  p {
+    margin: 0;
+  }
+}
+
+.batch-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: end;
+
+  @media (width < 420px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The table scrolls inside its own box; the page never scrolls sideways */
+.batch-scroll {
+  overflow-x: auto;
+}
+
+.batch-table,
+.compare-table {
+  width: 100%;
+  font-size: 0.88rem;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 8px 6px;
+    text-align: start;
+    vertical-align: top;
+    border-block-end: 1px solid var(--hairline);
+  }
+
+  thead th {
+    font-size: 0.75rem;
+    font-weight: 650;
+    color: var(--muted);
+  }
+
+  tbody th {
+    font-weight: 600;
+  }
+
+  .num {
+    text-align: end;
+  }
+}
+
+.compare-table caption {
+  margin-block-end: 4px;
+  text-align: start;
+}
+
+.batch-action {
+  min-width: 9rem;
+}
+
+.batch-level {
+  --tone: var(--muted);
+  font-weight: 650;
+  color: var(--tone);
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-inline-end: 6px;
+    background: var(--tone);
+    border-radius: 50%;
+  }
+
+  &.tone-ok { --tone: var(--ok); }
+  &.tone-watch { --tone: var(--watch); }
+  &.tone-moderate { --tone: var(--moderate); }
+  &.tone-severe { --tone: var(--severe); }
+}
+
+.batch-wait {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  vertical-align: -1px;
+  border: 2px solid var(--hairline);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 4s;
+  }
+}
+
+.archive-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  width: 100%;
+  padding: 10px 12px;
+  font-weight: 400;
+  text-align: start;
+  background: var(--card);
+}
+
+.archive-when,
+.archive-result {
+  display: grid;
+  gap: 2px;
+}
+
+.archive-result {
+  justify-items: end;
+}
+
+.archive-change {
+  grid-column: 1 / -1;
+}
+
+.archived-banner {
+  display: grid;
+  gap: 4px;
+  border-inline-start: 4px solid var(--accent);
+}

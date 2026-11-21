@@ -80,7 +80,7 @@ export async function streamAnalysis(
   throw new ApiError(502, 'Połączenie z serwerem przerwało się w trakcie analizy. Spróbuj ponownie.')
 }
 
-function parseEvent(block: string): { type: string; data: string } | null {
+export function parseEvent(block: string): { type: string; data: string } | null {
   let type = 'message'
   const data: string[] = []
   for (const line of block.split('\n')) {

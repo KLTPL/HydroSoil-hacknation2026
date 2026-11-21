@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useAccountPanel } from './account/useAccountPanel'
 import { MapView } from './map/MapView'
 import { Panel } from './panel/Panel'
 import { readHash, todayIso, useParcelReport } from './useParcelReport'
@@ -18,16 +19,34 @@ export default function App() {
     })
   }, [loadById, analyze])
 
-  const terrain = report.status === 'done' ? report.report.terrain.data : null
+  const account = useAccountPanel({
+    parcel,
+    crop,
+    date,
+    selectedSiteId,
+    onDateChange: setDate,
+    onSelectSite: setSelectedSiteId,
+    onOpenSaved: (saved) => {
+      setCrop(saved.crop)
+      setSelectedSiteId(null)
+      void loadById(saved.parcel_id).then((found) => {
+        if (found) void analyze(found, saved.crop, date)
+      })
+    },
+  })
+  // An archived report opened from the account replaces the live one on the map too.
+  const shown = account.archived ?? (report.status === 'done' ? report.report : null)
+  const terrain = shown ? shown.terrain.data : null
 
   return (
     <div className="app">
       <MapView
-        parcel={parcel}
+        parcel={account.archived?.parcel ?? parcel}
         terrain={terrain}
         selectedSiteId={selectedSiteId}
         onPick={(lon, lat) => {
           setSelectedSiteId(null)
+          account.close()
           void pickAt(lon, lat)
         }}
         onSelectSite={setSelectedSiteId}
@@ -51,6 +70,7 @@ export default function App() {
           void analyze(parcel, crop, date)
         }}
         onSelectSite={setSelectedSiteId}
+        {...account.slots}
       />
     </div>
   )

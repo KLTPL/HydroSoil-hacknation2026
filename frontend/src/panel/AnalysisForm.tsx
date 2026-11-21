@@ -1,14 +1,7 @@
 import { useEffect, useId, useState, type FormEvent } from 'react'
 import { fetchCrops, type Crop } from '../api'
+import { earliestIso } from '../dates'
 import { todayIso } from '../useParcelReport'
-
-const HISTORY_YEARS = 10
-
-function earliestIso(today: string): string {
-  const [y, m, d] = today.split('-').map(Number)
-  const day = m === 2 && d === 29 ? 28 : d
-  return `${y - HISTORY_YEARS}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-}
 
 interface Props {
   crop: string

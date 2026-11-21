@@ -5,6 +5,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 backend/.cache/
+backend/.data/
 *.tsbuildinfo
 
 # Organizer materials (not ours to redistribute)

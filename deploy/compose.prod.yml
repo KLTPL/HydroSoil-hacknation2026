@@ -3,6 +3,8 @@
 services:
   backend:
     restart: unless-stopped
+    environment:
+      RETENCJA_SECURE_COOKIES: "1"  # session cookie only over HTTPS (Caddy)
   frontend:
     restart: unless-stopped
     ports: !reset []

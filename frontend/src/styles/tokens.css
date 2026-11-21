@@ -30,7 +30,7 @@
   --spring: linear(0, 0.09 4%, 0.34 9.5%, 0.86 18%, 1.06 25%, 1.1 29.5%, 1.08 34%, 1.01 43%, 0.99 52%, 1);
 
   --radius: 16px;
-  --panel-w: 440px;
+  --panel-w: clamp(440px, 30vw, 580px);
   --gap: 12px;
 
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;

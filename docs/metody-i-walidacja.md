@@ -9,10 +9,10 @@ System Monitoringu Suszy Rolniczej IUNG-PIB (Doroszewski i in. 2012), wytyczne N
 retencja → agrotechnika → nawadnianie, oraz podania niepewności.
 
 Najważniejszy wniosek: obliczenia fizyczne (FAO-56, Saxton i Rawls, priority-flood) są zgodne
-ze źródłami. **Werdykt suszy nie korzysta jednak z kryterium SMSR IUNG** (progi KBW
-z rozporządzenia MRiRW, kategoria gleby z mapy IUNG). Jury najpewniej porówna wyniki właśnie
-z SMSR, a SMSR udostępnia publicznie progi, mapę kategorii gleb i tabele dla gmin
-(szczegóły w części d, pkt 1–2).
+ze źródłami. Audyt wykazał, że werdykt suszy nie korzystał z kryterium SMSR IUNG (progi KBW
+z rozporządzenia MRiRW, kategoria gleby z mapy IUNG). **Poprawione:** werdykt stosuje teraz
+kryterium SMSR, a kategoria gleby pochodzi z mapy IUNG (część d, pkt 1–2, i „Stan poprawek”).
+Tabele (a)–(c) opisują stan z chwili audytu; zmiany po poprawkach oznaczono „Po poprawce”.
 
 ## (a) Mapa metod → źródła naukowe
 
@@ -22,12 +22,12 @@ z SMSR, a SMSR udostępnia publicznie progi, mapę kategorii gleb i tabele dla g
 | 2 | Krzywa Kc, fazy (`assessment/crop_params.py`) | Kc_ini/mid/end z interpolacją liniową; stałe daty faz dla Polski; poza sezonem Kc = 0,3 | FAO-56 rozdz. 6, Tab. 12, rys. 25; aktualizacja Kc: Pereira i in. 2021, AWM 243:106466 | Tak | Brak korekty Kc_mid na klimat (równ. 62). W Polsce RHmin ≈ 45 %, u2 ≈ 2 m/s, więc FAO jej nie wymaga. Kiszonka: Kc_end 1,05 to wartość kukurydzy cukrowej. Daty faz kalendarzowe, nie z NDVI |
 | 3 | TAW, RAW, p, Zr | TAW = AWC × Zr; RAW = p × TAW | FAO-56 równ. 82–83, Tab. 22 | Tak | p bez korekty na ETc (przypis Tab. 22: p + 0,04(5 − ETc)). Zr zbóż ozimych 1,2 m (FAO 1,5–1,8 m): ostrożnie |
 | 4 | Ks i dobowy bilans strefy korzeni (`assessment/water_balance.py`) | Dr = Dr−1 − P + Ks·Kc·ET0; nadwyżka ponad FC odpada; start 1.11 roku przed najstarszym porównywanym (rozbieg) | FAO-56 równ. 84–85, rozdz. 8 | Tak | Brak spływu RO, podsiąku CR i perkolacji DP jako osobnych członów; brak warstwy parowania (Ke). Brak wód gruntowych, drenowania, śniegu i zamarzania |
-| 5 | KBW 60 dni | Σ(P − ET0) za 60 dni do daty; ranga wśród ok. 11 lat | SMSR IUNG: Doroszewski i in. 2012; rozp. MRiRW z 11.04.2019 (Dz.U. 2019 poz. 739) | **Częściowo** | SMSR: ETP, okresy sześciodekadowe 21.III–30.IX i **progi KBW dla uprawy i kategorii gleby** (ok. 20 % spadku plonu). Kod nie używa progów, tylko rangi |
+| 5 | KBW 60 dni | Σ(P − ET0) za 60 dni do daty; ranga wśród ok. 11 lat | SMSR IUNG: Doroszewski i in. 2012; rozp. MRiRW z 11.04.2019 (Dz.U. 2019 poz. 739) | **Częściowo** | SMSR: ETP, okresy sześciodekadowe 21.III–30.IX i **progi KBW dla uprawy i kategorii gleby** (ok. 20 % spadku plonu). Kod nie używa progów, tylko rangi. **Po poprawce:** progi SMSR dla okresu sześciodekadowego, uprawy i kategorii gleby (`assessment/smsr.py`), od 2020 r. tabela IUNG dla gminy |
 | 6 | Pojemność wodna gleby (`soil/soilgrids.py`) | AWC = θ33 − θ1500 wg Saxtona i Rawlsa z piasku, iłu i SOC (SoilGrids 250 m), 0–100 cm; OM = SOC × 1,724 | Saxton i Rawls 2006, SSSAJ 70:1569–1578; SoilGrids 2.0: Poggio i in. 2021, SOIL 7:217–240 | Tak (dane glebowe, pojemność wodna) | OM ucinane do 8 % → poza zakresem dla gleb organicznych. Średnia z prostokąta obejmującego działkę, nie z samej działki |
-| 7 | Kategoria IUNG (`soil_category`) | Progi piasku i iłu (USDA) → I–IV | IUNG SMSR: kategorie wg WOD (I < 127,5 mm; II 127,5–169,9; III 170–202,5; IV > 202,5) i grup PTG | **Nie w pełni** | IUNG publikuje rastrową mapę kategorii (WMS `sgeo.iung.pl`, warstwa `Susza:katgl_landuse2024`). Zgodność z nią: 7 z 14 działek (część c) |
-| 8 | Porównanie z 10 latami (`compare`, `_ranked`) | Ranga wartości tego dnia wśród lat; „sucho” = 3 najniższe z ok. 11 lub reanaliza < 85 % średniej | Idea percentylowa jak w SPI/SMA (McKee i in. 1993; WMO-No. 1090, 2012) | Częściowo | To nie jest SPI: bez dopasowania rozkładu, baza 10 lat (WMO zaleca ≥ 30). **Błąd przy remisach** (pkt d3) |
+| 7 | Kategoria IUNG (`soil_category`) | Progi piasku i iłu (USDA) → I–IV | IUNG SMSR: kategorie wg WOD (I < 127,5 mm; II 127,5–169,9; III 170–202,5; IV > 202,5) i grup PTG | **Nie w pełni** | IUNG publikuje rastrową mapę kategorii (WMS `sgeo.iung.pl`, warstwa `Susza:katgl_landuse2024`). Zgodność z nią: 7 z 14 działek (część c). **Po poprawce:** kategoria z tej mapy (dominanta z punktów działki), uziarnienie tylko jako zapas |
+| 8 | Porównanie z 10 latami (`compare`, `_ranked`) | Ranga wartości tego dnia wśród lat; „sucho” = 3 najniższe z ok. 11 lub reanaliza < 85 % średniej | Idea percentylowa jak w SPI/SMA (McKee i in. 1993; WMO-No. 1090, 2012) | Częściowo | To nie jest SPI: bez dopasowania rozkładu, baza 10 lat (WMO zaleca ≥ 30). **Błąd przy remisach** (pkt d3; poprawiony: ranga środkowa i minimalna różnica) |
 | 9 | Wilgotność gleby z reanalizy | ERA5-Land 0–100 cm, odchylenie od średniej | Muñoz-Sabater i in. 2021, ESSD 13:4349–4383 | Tak (niezależne źródło) | Siatka ok. 9–11 km, nie odpowiada konkretnej uprawie |
-| 10 | NDVI/NDMI (`satellite/`) | Średnia po pikselach bez chmur (SCL 4/5/6), siatka 20 m; porównanie z tym samym oknem 20 dni w latach od 2017; „sucho” = NDMI o 0,05 poniżej średniej | NDVI: Rouse i in. 1974, Tucker 1979; NDMI/NDWI: Gao 1996, RSE 58:257–266; PAK 2024 rozdz. 6.3.4 | Częściowo | Zadanie wymaga, by interpretacja uwzględniała uprawę. Kod jej nie uwzględnia i nie bierze pod uwagę płodozmianu ani gołej gleby. Porównanie bywa z 1 rokiem (pkt d4) |
+| 10 | NDVI/NDMI (`satellite/`) | Średnia po pikselach bez chmur (SCL 4/5/6), siatka 20 m; porównanie z tym samym oknem 20 dni w latach od 2017; „sucho” = NDMI o 0,05 poniżej średniej | NDVI: Rouse i in. 1974, Tucker 1979; NDMI/NDWI: Gao 1996, RSE 58:257–266; PAK 2024 rozdz. 6.3.4 | Częściowo | Zadanie wymaga, by interpretacja uwzględniała uprawę. Kod jej nie uwzględnia i nie bierze pod uwagę płodozmianu ani gołej gleby. Porównanie bywa z 1 rokiem (pkt d4). **Po poprawce:** sygnał tylko przy ≥ 3 latach i zwartym łanie (NDVI ≥ 0,4), bez fazy dojrzewania |
 | 11 | Zagłębienia (`terrain/hydrology.py`, `retention.py`) | Priority-flood + ε, D8, progi 0,15 m / 300 m² / 30 % na działce | Barnes, Lehman, Mulla 2014, Comput. Geosci. 62:117–127; D8: O'Callaghan i Mark 1984 | Tak (NWRM: oczka, mokradła; KE 2014/2015) | Progi dobrane empirycznie. NMT z daty skanowania |
 | 12 | Zlewnia i spływ | Zlewnia D8 w oknie działka + 60 m; spływ = zlewnia × 30 mm × C (0,05–0,25) | Metoda współczynnika spływu; zakres C odpowiada SCS-CN ≈ 75–86 przy P = 30 mm (USDA-NRCS NEH-630 rozdz. 10) | Tak, co do rzędu wielkości | C nie zależy od gleby ani spadku. Zlewnia ucięta oknem 60 m → zaniżona na stokach |
 | 13 | Rowy z LIDAR (`terrain/channels.py`) | Lokalna rzeźba < −0,25 m (okno 20 m) + akumulacja ≥ 0,2 ha | Topographic Position Index (Weiss 2001) + akumulacja D8 | Heurystyka | Myli z bruzdami i rowami przydrożnymi (opisane w README) |
@@ -36,7 +36,7 @@ z SMSR, a SMSR udostępnia publicznie progi, mapę kategorii gleb i tabele dla g
 | 16 | Mulcz | Kc 0,3 × ET0 od siewu do zwarcia łanu × 25–50 % | FAO-56 rozdz. 11: ok. 5 % mniej parowania na każde 10 % pokrycia mulczem | Tak | Parowanie z gleby przybliżone Kc 0,3 zamiast Ke (FAO-56 rozdz. 7) |
 | 17 | Dawka nawodnienia | Dr (dopełnienie do FC), gdy Dr > RAW | FAO-56 rozdz. 8 (dawka netto) | Tak; nawadnianie na końcu kolejności KOWR | Tekst „2–3 dawki po 20–30 mm” niezgodny z dawką (pkt d8) |
 | 18 | Scenariusze 30 dni | Ten sam model uruchomiony na pogodzie z tych samych dni wcześniejszych lat (rok suchy = drugi najsuchszy) | Analogi historyczne, jak ESP (Day 1985, J. Water Resour. Plan. Manage. 111:157) | Tak (pokazuje niepewność) | Nie jest to prognoza; tylko 10 analogów |
-| 19 | Werdykt i pewność (`assessment/diagnosis.py`) | Stres bezwzględny (avail < 1 − p) + liczba źródeł „sucho”; pewność obniżana przy brakach i niezgodności | Integracja wielu źródeł (PDF; Żyłowska i Kozyra 2025); kontrola krzyżowa EDO CDI: Sepulcre-Canto i in. 2012, NHESS 12:3519; Cammalleri i in. 2021, NHESS 21:481 | Częściowo | Reguła własna, niekalibrowana. **Brak kryterium prawnego SMSR** |
+| 19 | Werdykt i pewność (`assessment/diagnosis.py`) | Stres bezwzględny (avail < 1 − p) + liczba źródeł „sucho”; pewność obniżana przy brakach i niezgodności | Integracja wielu źródeł (PDF; Żyłowska i Kozyra 2025); kontrola krzyżowa EDO CDI: Sepulcre-Canto i in. 2012, NHESS 12:3519; Cammalleri i in. 2021, NHESS 21:481 | Częściowo | Reguła własna, niekalibrowana. ~~Brak kryterium prawnego SMSR~~ **Po poprawce:** najpierw kryterium SMSR, potem sygnały „sucho” pomniejszone o „mokro” |
 | 20 | Kalendarz ryzyka | Udział lat, w których w danym miesiącu było ≥ 15 dni z Ks < 0,5 | Rozróżnienie suszy bieżącej i prawdopodobieństwa suszy (PDF, s. 1) | Tak | Próg dobrany na jednej działce (Kujawy) |
 | 21 | Czy działka jest rolna | ESA WorldCover 2021, 10 m; rolna, gdy łąki i grunty orne ≥ 50 % | Zanaga i in. 2022 (WorldCover v200) | Tak | Sady i krzewy owocowe są w WorldCover „zadrzewieniami” → fałszywe ostrzeżenia (pkt d5) |
 | 22 | Susza hydrologiczna | Ostrzeżenia IMGW dla województwa, tylko bieżące | IMGW-PIB | Tak (dane hydrologiczne) | Skala województwa; brak archiwum |
@@ -50,7 +50,7 @@ z SMSR, a SMSR udostępnia publicznie progi, mapę kategorii gleb i tabele dla g
 | Porównanie z 10 latami (rangi) zamiast progów bezwzględnych | Błąd systematyczny modelu się znosi; zadanie mówi o danych z 10 lat | Remisy (pkt d3); 10 lat to za krótko na stabilne percentyle (WMO: ≥ 30) |
 | ET0 (FAO PM) zamiast ETP SMSR | Standard FAO-56 cytowany w PDF | Przed zastosowaniem progów SMSR do ET0 trzeba sprawdzić różnicę na kilku dekadach z map KBW IUNG |
 | Brak wód gruntowych | Brak publicznych danych o zwierciadle dla działki | Torfy i doliny (Biebrza, Noteć, Odra): model zawyża suszę. Trzeba to oznaczyć (pkt d2) |
-| SoilGrids 250 m zamiast mapy glebowo-rolniczej | Globalny, otwarty, z profilem 0–100 cm | Ta sama kategoria co IUNG tylko na 7 z 14 działek. Oficjalny raster IUNG jest dostępny (pkt d2) |
+| SoilGrids 250 m zamiast mapy glebowo-rolniczej | Globalny, otwarty, z profilem 0–100 cm | Ta sama kategoria co IUNG tylko na 7 z 14 działek. Poprawione: kategoria z rastra IUNG (pkt d2), SoilGrids tylko do pojemności wodnej |
 | Stałe daty faz | Brak daty siewu od rolnika | Można je zastąpić datami z krzywej NDVI z Sentinel-2 albo polem „data siewu” |
 | Retencja zagłębień = min(pojemność, spływ z 30 mm) | Proste i możliwe do sprawdzenia; zakres C odpowiada CN 75–86 | Duże zlewnie poza oknem 60 m → wynik zaniżony |
 | Zastawki: piętrzenie 0,5 m, zasięg 50 m, Sy 0,05–0,15 | Typowe wartości z praktyki drenażu regulowanego | Zastawka wymaga projektu i zgody zarządcy rowu; raport to mówi |
@@ -100,7 +100,7 @@ test WCS w tym czasie: wycinek 0,05 km² → przekroczony czas po 200 s; 0,17 km
 Wiarygodność ocen dla znanych lat: susze 2018 (Kujawy, Kozienice, Krajenka) i 2019 (Kujawy,
 Grójec, Noteć) wychodzą jako „silny niedobór”, zgodnie z EDO CDI w 6 z 10 przypadków „silnego niedoboru”. W wilgotnym
 2017 r. Kujawy dają „uwaga”, a KBW jest „wilgotniej niż zwykle”. Rozbieżność z SMSR widać
-w Łącku 2022 (pkt d1).
+w Łącku 2022 (pkt d1); po wdrożeniu kryterium SMSR Łącko 2022 daje „uwagę”.
 
 ## (d) Znalezione błędy i ryzyka (od najważniejszych)
 
@@ -147,7 +147,7 @@ Otwarte pozostają punkty 10–12, 14 i 15.
 | # | Pytanie | Krótka, uczciwa odpowiedź (źródło) |
 |---|---|---|
 | 1 | Skąd ewapotranspiracja? | FAO-56 Penman-Monteith (Allen i in. 1998, równ. 6) z reanalizy ERA5 (Open-Meteo); awaryjnie liczymy PM sami z NASA POWER, a Hargreaves (równ. 52) tylko tam, gdzie brak promieniowania. To standard cytowany w „Podstawach naukowych” |
-| 2 | Czym różni się wasz KBW od SMSR IUNG? | Ta sama definicja (opad minus ewapotranspiracja, 60 dni = 6 dekad). SMSR używa ETP wg zmodyfikowanego Penmana (Doroszewski i Górski 1995) i danych stacyjnych, my ET0 FAO-56 z reanalizy. Kryterium prawne SMSR to progi KBW z rozp. MRiRW (Dz.U. 2019 poz. 739) dla uprawy i kategorii gleby (po wdrożeniu pkt d1 – stosujemy je) |
+| 2 | Czym różni się wasz KBW od SMSR IUNG? | Ta sama definicja (opad minus ewapotranspiracja, 60 dni = 6 dekad). SMSR używa ETP wg zmodyfikowanego Penmana (Doroszewski i Górski 1995) i danych stacyjnych, my ET0 FAO-56 z reanalizy. Kryterium prawne SMSR to progi KBW z rozp. MRiRW (Dz.U. 2019 poz. 739) dla uprawy i kategorii gleby: stosujemy je w werdykcie, a od 2020 r. bierzemy oficjalny wynik IUNG dla gminy. Nasz KBW z reanalizy bywa mniej ujemny niż stacyjny, więc dla lat 2016–2019 susza może być niedoszacowana |
 | 3 | Jak uwzględniacie uprawę? | Krzywa Kc, głębokość korzeni i frakcja p z FAO-56 (Tab. 12 i 22) dla 14 grup upraw SMSR; okres krytyczny i kalendarz ryzyka liczone dla uprawy. Ograniczenie: daty faz typowe, nie z pola |
 | 4 | Skąd wiecie, ile wody trzyma gleba? | SoilGrids 2.0 (Poggio i in. 2021) → funkcja pedotransferowa Saxtona i Rawlsa (2006) z piasku, iłu i węgla, profil 0–100 cm; TAW = AWC × Zr (FAO-56 równ. 82). Kategoria podatności wg IUNG (WOD; mapa IUNG). SoilGrids ma 250 m, więc to szacunek, co raport mówi |
 | 5 | Kiedy uprawa „cierpi z braku wody”? | Gdy zapas w strefie korzeni spada poniżej RAW = p·TAW, a współczynnik stresu Ks (FAO-56 równ. 84) jest < 1. „Silny stres” to Ks < 0,5 |
@@ -159,8 +159,8 @@ Otwarte pozostają punkty 10–12, 14 i 15.
 | 11 | Jak rozmieszczacie zastawki? | Odstęp = wysokość piętrzenia / spadek rowu z NMT, tak by cofka sięgała następnej zastawki (zasada drenażu regulowanego, Skaggs i in. 2012). Efekt w glebie = pas 2 × 50 m × średnie podniesienie × odsączalność 0,05–0,15 (Johnson 1967). To szacunek do rozmowy ze spółką wodną, nie projekt |
 | 12 | Ile wody da próchnica? | Saxton i Rawls: +1 % materii organicznej w warstwie ornej to zwykle 1–4 mm wody dostępnej. To ten sam rząd co metaanaliza Minasny i McBratney 2018 (+1,16 mm/100 mm na +1 % C). Mówimy wprost, że efekt jest mały, a próchnica działa głównie przez infiltrację i strukturę |
 | 13 | Dlaczego nawadnianie jest na końcu? | Kolejność z „Podstaw naukowych” KOWR i NWRM: retencja → agrotechnika → nawadnianie. Nawadnianie proponujemy tylko, gdy zapas < RAW; dawka = niedobór Dr (FAO-56 rozdz. 8) |
-| 14 | Co z torfami, sadami, wąskimi pasami? | Torfy: model nie zna wód gruntowych, więc oznaczamy glebę organiczną (mapa IUNG, kod 5) i zalecamy piętrzenie zamiast próchnicy. Sady: Kc i p z FAO-56 dla jabłoni, kategoria z IUNG. Wąskie pasy: Sentinel-2 ma piksel 10–20 m, więc pokazujemy liczbę czystych pikseli i obniżamy pewność |
-| 15 | Jak sprawdziliście wyniki? | Znane susze 2018 i 2019 dają „silny niedobór”, wilgotny 2017 – nie. Zgodność z EDO CDI w 6 z 10 przypadków „silnego niedoboru”. Porównanie z tabelami SMSR dla gmin (2020+). Test 26 nietypowych przypadków (ten dokument). 69 testów jednostkowych (m.in. przykład FAO-56 dla promieniowania) |
+| 14 | Co z torfami, sadami, wąskimi pasami? | Torfy: model nie zna wód gruntowych, więc oznaczamy glebę organiczną (mapa IUNG, kod 5) i zalecamy piętrzenie zamiast próchnicy. Sady: Kc i p z FAO-56 dla jabłoni, kategoria z IUNG. Wąskie pasy: Sentinel-2 ma piksel 20 m, więc piksele mieszają się z sąsiadami; dlatego satelita to tylko jeden z głosów, a zalecenia dla pasów są osobne (miedze w poprzek, współpraca z sąsiadami) |
+| 15 | Jak sprawdziliście wyniki? | Znane susze 2018 i 2019 dają „silny niedobór”, wilgotny 2017 – nie. Zgodność z EDO CDI w 6 z 10 przypadków „silnego niedoboru”. Porównanie z tabelami SMSR dla gmin (2020+). Test 26 nietypowych przypadków (ten dokument). 133 testy automatyczne (m.in. przykład FAO-56 dla promieniowania) |
 
 ### Źródła (zweryfikowane)
 

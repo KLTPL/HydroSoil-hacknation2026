@@ -91,11 +91,132 @@ export interface ModuleResult<T> {
   duration_ms: number
 }
 
+export interface YearValue {
+  year: number
+  value: number
+}
+
+/** A value on the analysis date against the same date in earlier years. */
+export interface Comparison {
+  value: number
+  normal: number
+  rank: number // 1 = lowest
+  years: number
+  history: YearValue[]
+}
+
+export interface SoilLayer {
+  depth: string
+  clay_pct: number
+  sand_pct: number
+  silt_pct: number
+  organic_carbon_pct: number
+}
+
+export interface SoilProfile {
+  texture: string
+  category: 'I' | 'II' | 'III' | 'IV'
+  category_label: string
+  awc_mm_per_m: number
+  organic_carbon_pct: number
+  layers: SoilLayer[]
+  resolution_m: number
+  assumed: boolean
+}
+
+export interface RiskMonth {
+  month: number
+  years_with_stress: number
+  years: number
+  mean_stress_days: number
+}
+
+export interface WaterBalance {
+  window: {
+    start: string
+    end: string
+    precipitation_mm: Comparison
+    et0_mm: Comparison
+    kbw_mm: Comparison
+    hot_days: Comparison
+  }
+  in_season: boolean
+  kc: number
+  taw_mm: number
+  raw_mm: number
+  available_pct: Comparison
+  stress_days_30: number
+  reanalysis_soil_moisture: Comparison | null
+  soil_moisture_source: string
+  risk_calendar: RiskMonth[]
+  critical_stage: string
+  grid_lat: number
+  grid_lon: number
+}
+
+export interface VegetationObservation {
+  year: number
+  date: string
+  ndvi: number
+  ndmi: number
+  clear_pct: number
+}
+
+export interface VegetationState {
+  current: VegetationObservation | null
+  history: VegetationObservation[]
+  ndvi: Comparison | null
+  ndmi: Comparison | null
+  window_days: number
+  missing_years: number[]
+}
+
+export interface HydroWarning {
+  number: string
+  event: string
+  probability_pct: number
+  valid_from: string
+  valid_to: string | null
+  office: string
+  area: string
+  description: string
+}
+
+export interface HydroStatus {
+  voivodeship: string
+  drought_warnings: HydroWarning[]
+  other_warnings: number
+}
+
+export type DroughtLevel = 'none' | 'watch' | 'moderate' | 'severe'
+
+export interface Cause {
+  key: string
+  title: string
+  amount_mm: number | null
+  detail: string
+}
+
+export interface Diagnosis {
+  level: DroughtLevel
+  headline: string
+  evidence: string[]
+  causes: Cause[]
+  confidence: 'high' | 'medium' | 'low'
+  limitations: string[]
+  missing_data: string[]
+}
+
 export interface AnalysisReport {
   parcel: Parcel
   crop: Crop
   analysis_date: string
   generated_at: string
+  diagnosis: Diagnosis
+  water: ModuleResult<WaterBalance>
+  soil: ModuleResult<SoilProfile>
+  satellite: ModuleResult<VegetationState>
+  hydro: ModuleResult<HydroStatus>
   terrain: ModuleResult<RetentionAnalysis>
 }
 
@@ -109,8 +230,15 @@ export const searchParcels = (q: string, signal?: AbortSignal) =>
 export const fetchParcelAt = (lon: number, lat: number, signal?: AbortSignal) =>
   getJson<Parcel>(`/api/parcels/at?${query({ lon: String(lon), lat: String(lat) })}`, signal)
 
-export const fetchAnalysis = (parcelId: string, crop: string, date: string, signal?: AbortSignal) =>
-  getJson<AnalysisReport>(`/api/analysis?${query({ parcel_id: parcelId, crop, date })}`, signal)
-
-export const fetchTerrain = (parcelId: string, signal?: AbortSignal) =>
-  getJson<ModuleResult<RetentionAnalysis>>(`/api/terrain?${query({ parcel_id: parcelId })}`, signal)
+/** `poll` only collects results of slow modules that finished in the background. */
+export const fetchAnalysis = (
+  parcelId: string,
+  crop: string,
+  date: string,
+  signal?: AbortSignal,
+  poll = false,
+) =>
+  getJson<AnalysisReport>(
+    `/api/analysis?${query({ parcel_id: parcelId, crop, date, poll: String(poll) })}`,
+    signal,
+  )

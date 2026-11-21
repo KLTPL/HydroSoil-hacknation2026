@@ -1,32 +1,16 @@
-import type { AnalysisReport, DataSource, ModuleResult, RetentionAnalysis } from '../api'
+import type { AnalysisReport, ModuleResult, RetentionAnalysis } from '../api'
 import * as fmt from '../format'
 import { Busy } from './Busy'
+import { DiagnosisSection, LimitationsSection } from './DiagnosisSection'
+import { HydroSection, SatelliteSection, SoilSection } from './FieldSections'
 import { SiteCard } from './SiteCard'
-
-const dateTime = new Intl.DateTimeFormat('pl-PL', { dateStyle: 'medium', timeStyle: 'short' })
-const dateOnly = new Intl.DateTimeFormat('pl-PL', { dateStyle: 'long' })
+import { Sources } from './Sources'
+import { WaterSection } from './WaterSection'
 
 interface Props {
   report: AnalysisReport
   selectedSiteId: number | null
   onSelectSite: (id: number) => void
-}
-
-function Sources({ sources }: { sources: DataSource[] }) {
-  if (sources.length === 0) return null
-  return (
-    <ul className="sources muted">
-      {sources.map((s) => (
-        <li key={s.name}>
-          <a href={s.url} target="_blank" rel="noreferrer">
-            {s.name}
-          </a>{' '}
-          · {s.retrieved === 'live' ? 'pobrane teraz' : 'z pamięci podręcznej'},{' '}
-          {dateTime.format(new Date(s.retrieved_at))} · {s.license}
-        </li>
-      ))}
-    </ul>
-  )
 }
 
 function TerrainSection({
@@ -101,19 +85,26 @@ function TerrainResults({
 }
 
 export function Report({ report, selectedSiteId, onSelectSite }: Props) {
+  const year = Number(report.analysis_date.slice(0, 4))
   return (
     <article className="report" aria-label="Raport">
       <header className="report-header">
         <h2>
-          Raport: {report.crop.name}, {dateOnly.format(new Date(report.analysis_date))}
+          Raport: {report.crop.name}, {fmt.longDate(report.analysis_date)}
         </h2>
-        <p className="muted">Wygenerowano {dateTime.format(new Date(report.generated_at))}</p>
+        <p className="muted">Wygenerowano {fmt.dateTime(report.generated_at)}</p>
       </header>
+      <DiagnosisSection diagnosis={report.diagnosis} />
+      <WaterSection water={report.water} year={year} />
+      <SatelliteSection satellite={report.satellite} year={year} />
+      <SoilSection soil={report.soil} />
+      <HydroSection hydro={report.hydro} />
       <TerrainSection
         terrain={report.terrain}
         selectedSiteId={selectedSiteId}
         onSelectSite={onSelectSite}
       />
+      <LimitationsSection diagnosis={report.diagnosis} />
     </article>
   )
 }

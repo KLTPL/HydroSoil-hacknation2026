@@ -355,3 +355,199 @@ button.primary {
 .sources a {
   color: inherit;
 }
+
+.report-section h4 {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.95rem;
+}
+
+.report-section ul,
+.report-section ol {
+  padding-inline-start: 1.1rem;
+}
+
+.notice {
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  background: var(--bg);
+  border-inline-start: 4px solid var(--muted);
+  border-radius: 4px;
+}
+
+/* Diagnosis */
+.level {
+  display: inline-block;
+  margin: 0 0 0.25rem;
+  padding: 4px 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.level-none {
+  background: #2e7d32;
+}
+
+.level-watch {
+  background: #a66b00;
+}
+
+.level-moderate {
+  background: #d4561c;
+}
+
+.level-severe {
+  background: #b3261e;
+}
+
+.headline {
+  font-weight: 600;
+}
+
+.evidence li,
+.missing li {
+  margin-block-end: 0.3rem;
+  font-size: 0.9rem;
+}
+
+ol.causes {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.cause-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.cause-mm {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cause-bar {
+  display: block;
+  height: 6px;
+  margin-block: 4px;
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+.causes p {
+  margin: 0;
+}
+
+/* Tables of numbers */
+.facts {
+  width: 100%;
+  margin-block: 0.5rem;
+  font-size: 0.88rem;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.facts th,
+.facts td {
+  padding: 4px 6px;
+  text-align: end;
+  border-block-end: 1px solid var(--border);
+}
+
+.facts th[scope='row'],
+.facts thead th:first-child {
+  text-align: start;
+  font-weight: 500;
+}
+
+/* Year comparison bars */
+.year-bars {
+  margin: 0.75rem 0;
+}
+
+.year-bars ul {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.year-bars li {
+  display: grid;
+  grid-template-columns: 3.2em 1fr 5em;
+  gap: 6px;
+  align-items: center;
+}
+
+.year-bars li.current {
+  font-weight: 700;
+}
+
+.year-bars .track {
+  position: relative;
+  height: 10px;
+  background: linear-gradient(var(--border), var(--border)) var(--zero) 0 / 1px 100% no-repeat;
+}
+
+.year-bars .bar {
+  position: absolute;
+  inset-block: 0;
+  background: #7aa7dd;
+  border-radius: 2px;
+}
+
+.year-bars .bar.negative {
+  background: #d9965b;
+}
+
+.year-bars li.current .bar {
+  background: var(--accent);
+}
+
+.year-bars li.current .bar.negative {
+  background: #c2410c;
+}
+
+.year-bars .value {
+  text-align: end;
+}
+
+/* Risk calendar */
+.risk-calendar {
+  margin: 0.75rem 0;
+  font-size: 0.85rem;
+}
+
+.risk-calendar ol {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: center;
+}
+
+.risk-cell {
+  display: block;
+  height: 28px;
+  margin-block: 2px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: color-mix(in srgb, #c2410c calc(var(--risk) * 100%), transparent);
+}
+
+.risk-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.warnings li {
+  margin-block-end: 0.5rem;
+  font-size: 0.9rem;
+}

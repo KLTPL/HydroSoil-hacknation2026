@@ -3,9 +3,9 @@ import {
   ApiError,
   fetchAnalysis,
   fetchParcelAt,
-  fetchTerrain,
   searchParcels,
   type AnalysisReport,
+  type ModuleResult,
   type Parcel,
 } from './api'
 
@@ -16,7 +16,7 @@ export type ReportState =
   | { status: 'error'; message: string }
   | { status: 'done'; report: AnalysisReport }
 
-const TERRAIN_POLL_MS = 4000
+const POLL_MS = 4000
 
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError) return error.message
@@ -104,43 +104,51 @@ export function useParcelReport() {
     }
   }, [])
 
-  // Terrain may still be downloading when the report arrives; poll until it settles.
-  const pendingParcelId =
-    report.status === 'done' && report.report.terrain.status === 'pending'
-      ? report.report.parcel.id
+  // Terrain and satellite may still be downloading when the report arrives; poll until
+  // they settle. The polled report also refreshes the diagnosis with the new data.
+  const pending =
+    report.status === 'done' &&
+    (report.report.terrain.status === 'pending' || report.report.satellite.status === 'pending')
+      ? report.report
       : null
   useEffect(() => {
-    if (!pendingParcelId) return
+    if (!pending) return
     const controller = new AbortController()
+    const { parcel: target, crop, analysis_date } = pending
     const timer = window.setTimeout(async () => {
       try {
-        const terrain = await fetchTerrain(pendingParcelId, controller.signal)
+        const next = await fetchAnalysis(target.id, crop.id, analysis_date, controller.signal, true)
         setReport((current) =>
-          current.status === 'done' && current.report.parcel.id === pendingParcelId
-            ? { status: 'done', report: { ...current.report, terrain } }
+          current.status === 'done' && current.report === pending
+            ? { status: 'done', report: next }
             : current,
         )
       } catch (error) {
         if (controller.signal.aborted) return
         const message = errorMessage(error)
         setReport((current) =>
-          current.status === 'done'
+          current.status === 'done' && current.report === pending
             ? {
                 status: 'done',
                 report: {
                   ...current.report,
-                  terrain: { ...current.report.terrain, status: 'unavailable', message },
+                  terrain: settle(current.report.terrain, message),
+                  satellite: settle(current.report.satellite, message),
                 },
               }
             : current,
         )
       }
-    }, TERRAIN_POLL_MS)
+    }, POLL_MS)
     return () => {
       controller.abort()
       window.clearTimeout(timer)
     }
-  }, [pendingParcelId, report])
+  }, [pending])
 
   return { parcel, lookup, report, choose, pickAt, loadById, analyze }
+}
+
+function settle<T>(module: ModuleResult<T>, message: string): ModuleResult<T> {
+  return module.status === 'pending' ? { ...module, status: 'unavailable', message } : module
 }

@@ -18,7 +18,7 @@ result comes from the cache and appears instantly.
 | 1:50–2:15 | Recommendations list, scroll | „Każde zalecenie ma efekt w metrach sześciennych, uzasadnienie, termin, koszt i formalności, na przykład zgłoszenie wodnoprawne albo ekoschemat.” |
 | 2:15–2:30 | Open link B (2019): „Silny niedobór”, risk calendar | „Ta sama działka w lipcu 2019: silny niedobór, zgodnie z tym, co rolnicy pamiętają. Kalendarz ryzyka pokazuje, w których miesiącach susza wraca.” |
 | 2:30–2:45 | Click „Drukuj / zapisz jako PDF”, show the print preview | „Raport można wydrukować albo zapisać jako PDF, ze źródłami danych, licencjami i ograniczeniami.” |
-| 2:45–3:00 | Sources list, then the title slide with the URL | „Dziesięć publicznych źródeł, liczone na żywo, bez instalacji, za darmo. Zatrzymaj wodę: woda.kodlab.pl.” |
+| 2:45–3:00 | Sources list, then the title slide with the URL | „Dziesięć publicznych źródeł, liczone na żywo, bez instalacji, za darmo. Spływ: woda.kodlab.pl.” |
 
 Tips:
 

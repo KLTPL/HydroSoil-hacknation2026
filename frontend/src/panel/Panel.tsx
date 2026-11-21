@@ -29,8 +29,8 @@ function Brand() {
         <path className="brand-field" d="M7.6 21.5c3-1.6 5.8-1.6 8.4 0s5.4 1.6 8.4 0" />
       </svg>
       <div>
-        <h1>Zatrzymaj wodę</h1>
-        <p>Woda na Twojej działce: ile jest, dlaczego ucieka i jak ją zatrzymać</p>
+        <h1>Spływ</h1>
+        <p>Zobacz, dokąd ucieka woda z Twojej działki, i zatrzymaj ją</p>
       </div>
     </header>
   )

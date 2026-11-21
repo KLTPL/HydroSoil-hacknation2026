@@ -1,4 +1,6 @@
-# Zatrzymaj wodę
+# Spływ
+
+Zobacz, dokąd ucieka woda z Twojej działki, i zatrzymaj ją.
 
 HackNation 2026, zadanie KOWR „Zatrzymaj wodę, chroń plony”.
 Zespół: _do uzupełnienia_

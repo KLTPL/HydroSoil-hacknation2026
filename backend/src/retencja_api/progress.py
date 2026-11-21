@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from retencja_api.assessment.recommendations import plural
 from retencja_api.models import (
+    EdoDrought,
     HydroStatus,
     LandCover,
     ModuleResult,
@@ -50,6 +51,8 @@ def _fact(data: Any) -> str:
                 f"{sites} {plural(sites, 'miejsce', 'miejsca', 'miejsc')} na wodę · "
                 f"{ditches} {plural(ditches, 'rów', 'rowy', 'rowów')}"
             )
+        case EdoDrought():
+            return f"dekada od {data.dekad:%d.%m.%Y}: {data.label}"
     raise TypeError(f"No progress fact for {type(data).__name__}")
 
 

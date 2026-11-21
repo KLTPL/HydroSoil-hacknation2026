@@ -174,3 +174,44 @@
 .site-note {
   color: var(--muted);
 }
+
+/* What-if scenarios */
+.scenarios {
+  display: grid;
+  gap: 6px;
+  margin: 0.5rem 0;
+  padding: 0;
+  font-size: 0.88rem;
+  list-style: none;
+}
+
+.scenarios li {
+  display: grid;
+  padding: 6px 8px;
+  border-inline-start: 3px solid var(--border);
+}
+
+.scenarios span {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.scenarios .scenario-irrigated,
+.scenarios .scenario-more_humus {
+  border-inline-start-color: var(--accent);
+}
+
+/* EDO cross-check */
+.edo-level {
+  --tone: var(--muted);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-weight: 600;
+  color: var(--tone);
+
+  &.tone-ok { --tone: var(--ok); }
+  &.tone-watch { --tone: var(--watch); }
+  &.tone-moderate { --tone: var(--moderate); }
+  &.tone-severe { --tone: var(--severe); }
+}

@@ -29,13 +29,14 @@ from retencja_api.models import (
     WaterBalance,
 )
 from retencja_api.modules import (
+    edo_module,
     hydro_module,
     land_module,
     satellite_module,
     soil_module,
     water_module,
 )
-from retencja_api.soil.soilgrids import DEFAULT_PROFILE
+from retencja_api.soil.soilgrids import DEFAULT_PROFILE, humus_water_gain_mm
 from retencja_api.terrain.service import analyze_parcel, cached_analysis
 
 log = logging.getLogger(__name__)
@@ -145,14 +146,17 @@ async def build_report(
 
     async def soil_and_water() -> tuple[ModuleResult[SoilProfile], ModuleResult[WaterBalance]]:
         soil = await report("soil", soil_module(geom_wgs84.bounds))
-        awc = (soil.data or DEFAULT_PROFILE).awc_mm_per_m
+        profile = soil.data or DEFAULT_PROFILE
         water = await report(
             "water",
-            water_module(centre.y, centre.x, params, analysis_date, awc, HISTORY_YEARS),
+            water_module(
+                centre.y, centre.x, params, analysis_date, profile.awc_mm_per_m, HISTORY_YEARS,
+                humus_water_gain_mm(profile) if soil.data else 0.0,
+            ),
         )
         return soil, water
 
-    (soil, water), satellite, hydro, land, terrain = await asyncio.gather(
+    (soil, water), satellite, hydro, land, terrain, edo = await asyncio.gather(
         soil_and_water(),
         report(
             "satellite",
@@ -161,6 +165,7 @@ async def build_report(
         report("hydro", hydro_module(parcel.voivodeship, analysis_date)),
         report("land", land_module(parcel.id, mapping(geom_wgs84))),
         report("terrain", terrain_module(parcel.id, geom, budget)),
+        report("edo", edo_module(centre.y, centre.x, analysis_date)),
     )
     diagnosis = diagnose(
         params,
@@ -177,6 +182,9 @@ async def build_report(
     )
     if warnings := land_warnings(land.data):
         diagnosis = diagnosis.model_copy(update={"warnings": warnings, "confidence": "low"})
+    if edo.data is not None:
+        agrees = edo.data.drought == (diagnosis.level != "none")
+        edo = edo.model_copy(update={"data": edo.data.model_copy(update={"agrees": agrees})})
     return AnalysisReport(
         parcel=parcel,
         crop=crop,
@@ -192,4 +200,5 @@ async def build_report(
         hydro=hydro,
         land=land,
         terrain=terrain,
+        edo=edo,
     )

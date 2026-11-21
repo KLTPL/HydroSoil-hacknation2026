@@ -174,6 +174,25 @@ class RiskMonth(BaseModel):
     mean_stress_days: float
 
 
+class Scenario(BaseModel):
+    key: Literal["no_rain", "dry", "typical", "wet", "irrigated", "more_humus"]
+    label: str
+    analog_year: int | None  # past year whose weather of the same days is replayed
+    rain_mm: float
+    et0_mm: float
+    first_stress_day: date | None  # first in-season day with strong stress (Ks < 0.5)
+    stress_days: int
+    available_pct_end: float
+    refill_mm: float  # irrigation dose that refills the root zone at the end
+
+
+class Scenarios(BaseModel):
+    start: date
+    end: date
+    humus_gain_mm: float  # extra root-zone water assumed in the "more_humus" scenario
+    items: list[Scenario]
+
+
 class WaterBalance(BaseModel):
     window: WeatherWindow
     in_season: bool
@@ -187,6 +206,7 @@ class WaterBalance(BaseModel):
     risk_calendar: list[RiskMonth]
     critical_stage: str
     open_canopy_et0_mm: float  # mean ET0 from sowing until the canopy closes
+    scenarios: Scenarios | None = None  # None outside the growing season
     grid_lat: float
     grid_lon: float
 
@@ -289,6 +309,14 @@ class Recommendation(BaseModel):
     ditch_ids: list[int] = []
 
 
+class EdoDrought(BaseModel):
+    dekad: date  # first day of the 10-day period the map describes
+    cdi_class: int  # 0 none, 1 watch, 2 warning, 3 alert, 4–6 recovery
+    label: str
+    drought: bool  # watch, warning or alert
+    agrees: bool | None = None  # whether our verdict also says dry / not dry
+
+
 class AnalysisReport(BaseModel):
     parcel: Parcel
     crop: Crop
@@ -302,3 +330,4 @@ class AnalysisReport(BaseModel):
     hydro: ModuleResult[HydroStatus]
     land: ModuleResult[LandCover]
     terrain: ModuleResult[RetentionAnalysis]
+    edo: ModuleResult[EdoDrought]

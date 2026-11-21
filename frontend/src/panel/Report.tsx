@@ -4,8 +4,10 @@ import type { AnalysisReport, ModuleResult, RetentionAnalysis } from '../model'
 import { requestPrint } from '../print'
 import { Busy } from './Busy'
 import { CausesSection, EvidenceList, Limitations } from './DiagnosisSection'
+import { EdoSection } from './EdoSection'
 import { HydroSection, LandSection, SatelliteSection, SoilSection } from './FieldSections'
 import { RecommendationsSection } from './RecommendationsSection'
+import { ScenariosSection } from './ScenariosSection'
 import { SiteCard } from './SiteCard'
 import { Sources } from './Sources'
 import { Verdict } from './Verdict'
@@ -130,6 +132,7 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
       <Verdict diagnosis={diagnosis} water={report.water.data} />
       <CausesSection diagnosis={diagnosis} />
       <RecommendationsSection recommendations={report.recommendations} onSelectSite={onSelectSite} />
+      <ScenariosSection water={report.water} />
       {terrain.status === 'pending' && (
         <p className="notice no-print" role="status">
           Model terenu LIDAR jeszcze się pobiera. Miejsca na wodę i symulacja ulewy pojawią się
@@ -137,8 +140,9 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
         </p>
       )}
 
-      <More summary="Dane i dowody" hint="pogoda, satelita, gleba, teren, IMGW">
+      <More summary="Dane i dowody" hint="pogoda, satelita, gleba, teren, IMGW, EDO">
         <EvidenceList diagnosis={diagnosis} />
+        <EdoSection edo={report.edo} />
         <WaterSection water={report.water} year={year} />
         <SatelliteSection satellite={report.satellite} year={year} />
         <SoilSection soil={report.soil} />

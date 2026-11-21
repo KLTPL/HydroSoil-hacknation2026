@@ -8,6 +8,7 @@ const STEPS: { module: ModuleName; label: string; source: string }[] = [
   { module: 'terrain', label: 'Rzeźba terenu i rowy', source: 'LIDAR GUGiK · OSM' },
   { module: 'land', label: 'Pokrycie terenu', source: 'ESA WorldCover' },
   { module: 'hydro', label: 'Ostrzeżenia hydrologiczne', source: 'IMGW-PIB' },
+  { module: 'edo', label: 'Europejski wskaźnik suszy', source: 'EDO · Copernicus' },
 ]
 
 const seconds = new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })

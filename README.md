@@ -84,6 +84,8 @@ cd backend && uv run python -m retencja_api.warm_cache [id_działki ...]
 | Mapa retencji | Zagłębienia (oczko wodne / podmokła łąka) z numerami, pojemnością, zlewnią i ilością wody zatrzymanej z deszczu obliczeniowego. Rowy (LIDAR + OpenStreetMap) z proponowanymi zastawkami. Legenda. |
 | Rzeźba terenu | Przełącznik podkładu „Zdjęcie / Rzeźba terenu”: cieniowana mikrorzeźba z LIDAR (wysokość względem otoczenia ±kilkadziesiąt cm) i drogi spływu wody. Widać niecki, bruzdy i rowy, których nie widać na zdjęciu. |
 | Symulacja ulewy | Przycisk „Puść ulewę 30 mm”: animacja deszczu spływającego po drogach spływu z LIDAR do niecek i poza działkę, z licznikami: ile spada, ile spływa, ile zatrzyma plan (oczka, obniżenia, zastawki). Wariant „Dziś / Z planem”. Objętości pochodzą z analizy; animacja tylko je ilustruje. Przy ustawieniu „ogranicz ruch” pokazuje od razu stan końcowy. |
+| Co jeśli | Scenariusze na 30 dni od daty analizy: bez deszczu, sucho / typowo / mokro (pogoda tych samych dni z lat poprzednich), nawadnianie teraz, +1 % próchnicy. Dla każdego: kiedy zacznie się silny stres, ile dni potrwa, ile wody zostanie w glebie, jaka dawka ją uzupełni. |
+| Porównanie z EDO | Klasa wskaźnika CDI Europejskiego Obserwatorium Suszy dla tego miejsca i dekady oraz informacja, czy zgadza się z naszą oceną. |
 | Kalendarz ryzyka | W ilu z ostatnich 10 lat uprawa miała co najmniej 15 dni silnego stresu wodnego, osobno dla każdego miesiąca od kwietnia do września. |
 | Raport | Druk i zapis do PDF (A4, mapa działki, źródła z adresami); link do udostępnienia. |
 | Rzetelność | Każde źródło z licencją i datą pobrania; brakujące dane opisane wprost; ostrzeżenie, gdy działka nie jest rolna (ESA WorldCover). |
@@ -101,6 +103,7 @@ Przeglądarka (React + MapLibre)  ──HTTPS──>  Caddy  ──>  nginx (sta
                                                                 │   satelita  Sentinel-2 L2A (Planetary Computer STAC + COG) → NDVI/NDMI
                                                                 │   hydro     API ostrzeżeń IMGW
                                                                 │   pokrycie  ESA WorldCover → czy to grunt rolny
+                                                                │   EDO       CDI (WCS Copernicus EMS) → niezależne porównanie
                                                                 │   teren     NMT WCS (LIDAR) → zagłębienia, zlewnie, rowy, zastawki
                                                                 ├─ diagnoza i zalecenia (czyste funkcje na wynikach modułów)
                                                                 └─ pamięć podręczna w plikach (odpowiedzi i analizy)
@@ -148,6 +151,7 @@ Kod: `backend/src/retencja_api/` (`api.py`, `report.py`, `modules.py`, `assessme
 | Satelita | Copernicus Sentinel-2 L2A przez Microsoft Planetary Computer | 10–20 m; od 2017 do daty analizy | STAC + COG, anonimowy token SAS |
 | Pokrycie terenu | ESA WorldCover 2021 przez Planetary Computer | 10 m; 2021 | STAC + COG |
 | Susza hydrologiczna | IMGW-PIB, API danych publicznych, `warningshydro` | województwo / zlewnia; tylko bieżące | API, bez klucza |
+| Wskaźnik suszy do porównania | Europejskie Obserwatorium Suszy (EDO, Copernicus EMS), Combined Drought Indicator v4.1 | ok. 5 km (1/24°); co dekadę; od 2012 | WCS, bez klucza |
 | Rowy (uzupełniająco) | OpenStreetMap przez Overpass API | — | API, bez klucza |
 
 ## 5. Dane pobierane na bieżąco i pobrane wcześniej
@@ -163,7 +167,8 @@ i nie wyczerpywały darmowych limitów. Każdy raport podaje przy każdym źród
 |---|---|
 | Działka (ULDK) | Zapisywana według identyfikatora działki. |
 | Analiza terenu (NMT) | Zapisywana dla działki i wersji algorytmu; teren nie zależy od daty analizy. |
-| Historia pogody | Zapisywana dla komórki 0,1° do końca ostatniego zamkniętego miesiąca; dni od tego momentu zawsze pobierane na bieżąco. |
+| Historia pogody | Open-Meteo: jedna historia od 2005 r. dla komórki 0,1°, odświeżana co miesiąc i wspólna dla wszystkich dat analizy; dni od końca ostatniego zamkniętego miesiąca zawsze pobierane na bieżąco. Po odmowie z powodu limitu (HTTP 429) aplikacja przez godzinę od razu korzysta z NASA POWER. |
+| Wskaźnik CDI (EDO) | Mapy starsze niż 60 dni zapisywane dla punktu i dekady; nowsze pobierane na bieżąco. |
 | Gleba, pokrycie terenu | Zapisywane według obszaru działki (dane się nie zmieniają). |
 | Wskaźniki Sentinel-2 | Wcześniejsze lata zapisywane dla działki i daty (archiwum się nie zmienia); bieżący miesiąc zawsze pobierany na bieżąco. |
 | Ostrzeżenia IMGW | Zawsze pobierane na bieżąco. |
@@ -213,6 +218,7 @@ powtarzalne i możliwe do wyjaśnienia.
 | Microsoft Planetary Computer | Bezpłatny dostęp; dane na licencjach poszczególnych zbiorów. |
 | ESA WorldCover | CC BY 4.0, © ESA WorldCover project. |
 | Dane publiczne IMGW-PIB | Bezpłatne; wymagane podanie źródła („Źródłem danych jest IMGW-PIB”). |
+| EDO (Copernicus EMS) | Dane Copernicus: bezpłatne i otwarte (rozp. UE 1159/2013); wymagane podanie źródła. |
 | OpenStreetMap | ODbL, © współtwórcy OpenStreetMap. |
 | Kod | Napisany w trakcie wydarzenia. Wszystkie zależności mają liberalne licencje open source (punkt 6), zgodne z korzystaniem z rozwiązania przez KOWR. |
 
@@ -241,6 +247,11 @@ powtarzalne i możliwe do wyjaśnienia.
   rok jest wymieniony jako brakujący.
 - **Ostrzeżenia hydrologiczne IMGW** są dostępne tylko dla bieżącego dnia (bez archiwum)
   i dopasowywane według województwa.
+- **Scenariusze „co jeśli”** powtarzają pogodę z poprzednich lat, a nie prognozę. Pokazują
+  zakres możliwych sytuacji, nie przewidują pogody.
+- **CDI z EDO** ma siatkę ok. 5 km i opisuje region, a nie konkretną uprawę. JRC zaleca
+  ostrożność przy jego interpretacji od połowy maja 2025 r. (niepewne dane o wilgotności gleby);
+  raport to zaznacza.
 - **Pokrycie terenu** (sprawdzenie, czy działka jest rolna) pochodzi z 2021 roku.
 - **Formalności** w zaleceniach (zgłoszenie wodnoprawne, zarządca rowu) to ogólne wskazówki, a nie
   porada prawna.
@@ -249,7 +260,9 @@ powtarzalne i możliwe do wyjaśnienia.
 
 - **Niezależne porównania w każdym raporcie.** Model wody w glebie zestawiany jest
   z wilgotnością gleby z reanalizy (ERA5-Land lub MERRA-2) i z NDMI z Sentinel-2 dla tej samej
-  daty i historii. Zgodność podnosi, a rozbieżność obniża podaną wiarygodność.
+  daty i historii. Zgodność podnosi, a rozbieżność obniża podaną wiarygodność. Do tego
+  porównanie ze wskaźnikiem CDI Europejskiego Obserwatorium Suszy (EDO). Przykład: działka
+  z Kujaw w lipcu 2019 r. to u nas „silny niedobór”, a w EDO klasa „Warning”.
 - **Porównanie z 10 wcześniejszymi latami** zamiast samych progów bezwzględnych. Błędy
   systematyczne modelu się znoszą, a rolnik może sprawdzić na wykresach lata, które pamięta
   (np. 2018, 2019).
@@ -259,8 +272,10 @@ powtarzalne i możliwe do wyjaśnienia.
   - rowy i zagłębienia porównane z ortofotomapą;
   - ET0 z NASA POWER a z Open-Meteo: korelacja 0,98;
   - suchą wiosnę 2025 z Sentinel-2 (NDMI najniższe z 8 lat) zestawiono ze znaną suszą 2025;
-  - działka z Kujaw w lipcu 2019 daje „silny niedobór”.
-- **Testy automatyczne** (`cd backend && uv run pytest`, 52 testy):
+  - działka z Kujaw w lipcu 2019 daje „silny niedobór”;
+  - próba na 10 działkach z różnych regionów, upraw i dat (2019–2026): wszystkie raporty
+    kompletne, pierwsza odpowiedź w 4–13 s.
+- **Testy automatyczne** (`cd backend && uv run pytest`, 59 testów):
   - promieniowanie FAO-56 sprawdzone na przykładzie z podręcznika FAO;
   - wiarygodność wyników Penmana-Monteitha;
   - zachowanie bilansu wody w glebie;
@@ -268,7 +283,8 @@ powtarzalne i możliwe do wyjaśnienia.
   - funkcja pedotransferowa i kategorie gleb;
   - wypełnianie zagłębień i objętości retencji;
   - wykrywanie rowów i odstępy zastawek na sztucznym terenie;
-  - zalecenia;
+  - zalecenia i scenariusze „co jeśli”;
+  - pamięć podręczna i limit Open-Meteo;
   - działanie raportu przy awarii źródeł.
 - **Identyfikowalność.** Każde źródło jest w raporcie podlinkowane z licencją i datą pobrania,
   więc każde dane wejściowe można sprawdzić ręcznie.

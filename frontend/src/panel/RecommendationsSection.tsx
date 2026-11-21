@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import * as fmt from '../format'
-import type { Recommendation } from '../model'
+import type { IrrigationEstimate, Recommendation } from '../model'
 
 const CATEGORY = {
   retention: 'Retencja',
@@ -42,6 +42,7 @@ export function RecommendationsSection({
                     {fmt.m3Range(r.effect_m3)} <small>{r.effect_note}</small>
                   </p>
                 )}
+                {r.irrigation && <IrrigationNote estimate={r.irrigation} />}
                 <p className="rec-action">{r.action}</p>
                 {r.site_ids.length > 0 && (
                   <p className="rec-sites">
@@ -80,5 +81,24 @@ export function RecommendationsSection({
         </ol>
       )}
     </section>
+  )
+}
+
+/** Compact water and cost estimate with the water-law limit; details stay in "Formalności". */
+function IrrigationNote({ estimate }: { estimate: IrrigationEstimate }) {
+  const { water_m3, cost_pln, yearly_limit_m3, over_limit } = estimate
+  return (
+    <p className="rec-irrigation">
+      <span>
+        Koszt pracy ok. {fmt.whole(cost_pln.low)}–{fmt.whole(cost_pln.high)} zł (szacunek, własne źródło wody,
+        bez sprzętu).
+      </span>{' '}
+      {over_limit && (
+        <span className="rec-warning">
+          ⚠ {fmt.m3(water_m3)} to więcej niż {fmt.m3(yearly_limit_m3)} rocznie (średnio 5 m³ na dobę), które można
+          pobrać bez pozwolenia wodnoprawnego.
+        </span>
+      )}
+    </p>
   )
 }

@@ -33,7 +33,8 @@ type SourceData = Parameters<GeoJSONSource['setData']>[0]
 
 setWorkerUrl(workerUrl)
 
-const POLAND_CENTER: [number, number] = [19.3, 52.1]
+// West, south, east, north; framed beside the panel so the whole country stays visible.
+const POLAND_BOUNDS: [number, number, number, number] = [14.1, 49.0, 24.2, 54.9]
 
 // MapLibre labels its controls in English by default.
 const LOCALE = {
@@ -63,8 +64,8 @@ export function MapView({ parcel, terrain, selectedSiteId, place, onPick, onSele
     const instance = new MapLibreMap({
       container: container.current!,
       style: mapStyle,
-      center: POLAND_CENTER,
-      zoom: 6,
+      bounds: POLAND_BOUNDS,
+      fitBoundsOptions: { padding: viewPadding(20) },
       maxZoom: 19,
       locale: LOCALE,
       // Keeps the last frame readable, so the map can be copied into the printed report.

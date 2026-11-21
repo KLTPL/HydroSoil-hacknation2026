@@ -100,7 +100,7 @@ export function MyParcels({ account, cropName, onOpen }: Props) {
             <div className="saved-actions">
               <button
                 type="button"
-                className="chip"
+                className="chip saved-open"
                 aria-label={`Otwórz analizę: ${parcelLabel(saved)}`}
                 onClick={() => onOpen(saved)}
               >

@@ -110,17 +110,50 @@ button.back {
   list-style: none;
 }
 
+/* The whole card opens the analysis: the button's hit area stretches over it,
+   while the other controls stay above it and keep their own clicks. */
 .saved-item {
+  position: relative;
   display: grid;
   grid-template-columns: 64px 1fr;
   gap: 8px 12px;
   padding: 12px;
   background: var(--card);
   border-radius: 12px;
+  cursor: pointer;
 
   > :not(.parcel-thumb, .saved-text) {
     grid-column: 1 / -1;
   }
+
+  transition: scale 0.12s var(--ease-out), background-color 0.15s;
+
+  &:has(.saved-open:hover) {
+    background: var(--card-strong);
+  }
+
+  /* Press feedback on the card: scaling the button itself would make it the containing
+     block of its stretched hit area, which would shrink mid-click and lose the click. */
+  &:has(.saved-open:active) {
+    scale: 0.99;
+  }
+
+  .saved-open:active {
+    scale: none;
+  }
+
+  .saved-actions > :not(.saved-open),
+  .rename {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.saved-open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
 }
 
 .parcel-thumb {

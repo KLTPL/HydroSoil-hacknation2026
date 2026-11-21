@@ -3,7 +3,7 @@
 Zobacz, dokąd ucieka woda z Twojej działki, i zatrzymaj ją.
 
 HackNation 2026, zadanie KOWR „Zatrzymaj wodę, chroń plony”.
-Zespół: _do uzupełnienia_
+Zespół: Cyberodporni
 
 **Działająca wersja:** https://splyw.kodlab.pl · przykładowy raport:
 https://splyw.kodlab.pl/#p=040706_5.0016.51%2F1&c=zboza_ozime&d=2025-06-15

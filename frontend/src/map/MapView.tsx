@@ -16,6 +16,7 @@ import { bounds, viewPadding } from './geometry'
 import { LayerSwitch, Legend, type BaseLayer } from './MapChrome'
 import { RainControl } from './RainControl'
 import { mapStyle, PARCEL_SOURCE, SITES_FILL_LAYER } from './style'
+import { useOrthoLoading } from './useOrthoLoading'
 import { useTerrainLayers } from './useTerrainLayers'
 
 interface Props {
@@ -141,10 +142,16 @@ export function MapView({ parcel, terrain, selectedSiteId, place, onPick, onSele
   }, [map, hasTerrain])
 
   useTerrainLayers(map, terrain, selectedSiteId, base, raining, onSelectSite)
+  const orthoLoading = useOrthoLoading(map)
 
   return (
     <div className="map-stage">
       <div ref={container} className="map" aria-label="Mapa działek" role="region" />
+      {orthoLoading && (
+        <p className="map-loading glass" role="status">
+          Ładowanie…
+        </p>
+      )}
       {terrain && parcel && (
         <div className="map-overlay">
           <LayerSwitch value={base} onChange={setBase} hasRelief={terrain.relief !== null} />

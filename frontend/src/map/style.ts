@@ -20,6 +20,9 @@ function wmsTiles(base: string, layers: string, format: string, transparent: boo
   return [`${base}?${params}&BBOX={bbox-epsg-3857}`]
 }
 
+export const ORTHO_SOURCE = 'orto'
+/** From this zoom on, only the orthophoto is shown as the base map. */
+export const STREET_MAP_MAX_ZOOM = 13
 export const PARCEL_SOURCE = 'parcel'
 export const SITES_SOURCE = 'sites'
 export const SITES_FILL_LAYER = 'sites-fill'
@@ -52,7 +55,7 @@ export const mapStyle: StyleSpecification = {
       maxzoom: 19,
       attribution: '© OpenStreetMap',
     },
-    orto: {
+    [ORTHO_SOURCE]: {
       type: 'raster',
       tiles: wmsTiles(GEOPORTAL, 'Raster', 'image/jpeg', false),
       tileSize: 512,
@@ -70,8 +73,11 @@ export const mapStyle: StyleSpecification = {
     [FLOW_SOURCE]: { type: 'geojson', data: EMPTY },
   },
   layers: [
-    { id: 'osm', type: 'raster', source: 'osm' },
-    { id: 'orto', type: 'raster', source: 'orto', minzoom: 12 },
+    // Neutral ground under the orthophoto while it loads: the street map hides at field zooms
+    // so a slow orthophoto never leaves a cartoon map standing in for the real terrain.
+    { id: 'ground', type: 'background', paint: { 'background-color': '#c9cfc6' } },
+    { id: 'osm', type: 'raster', source: 'osm', maxzoom: STREET_MAP_MAX_ZOOM },
+    { id: 'orto', type: 'raster', source: ORTHO_SOURCE, minzoom: 12 },
     { id: 'kieg', type: 'raster', source: 'kieg', minzoom: 15, paint: { 'raster-opacity': 0.85 } },
     {
       id: 'parcel-fill',

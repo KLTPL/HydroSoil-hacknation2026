@@ -152,6 +152,33 @@
   font-size: 0.8rem;
 }
 
+.search-suggestions {
+  display: grid;
+  margin: 6px 0 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+
+  &[hidden] {
+    display: none;
+  }
+
+  li {
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  li:hover,
+  li[aria-selected='true'] {
+    background: var(--card-strong);
+  }
+}
+
 .search-placed {
   margin: 0.5rem 0 0;
   font-size: 0.9rem;

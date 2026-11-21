@@ -17,6 +17,7 @@ import { LayerSwitch, Legend, type BaseLayer } from './MapChrome'
 import { RainControl } from './RainControl'
 import { mapStyle, PARCEL_SOURCE, PARCELS_MIN_ZOOM, SITES_FILL_LAYER } from './style'
 import { useOrthoLoading } from './useOrthoLoading'
+import { useParcelHover } from './useParcelHover'
 import { useTerrainLayers } from './useTerrainLayers'
 
 interface Props {
@@ -146,6 +147,7 @@ export function MapView({ parcel, terrain, selectedSiteId, place, onPick, onSele
   }, [map, hasTerrain])
 
   useTerrainLayers(map, terrain, selectedSiteId, base, raining, onSelectSite)
+  useParcelHover(map, parcel?.id ?? null)
   const orthoLoading = useOrthoLoading(map)
 
   return (

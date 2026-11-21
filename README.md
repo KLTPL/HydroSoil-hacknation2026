@@ -49,7 +49,7 @@ Parametry wszystkich metod: [dokumentacja techniczna](docs/dokumentacja-technicz
 - Rowy i zagłębienia sprawdzone z ortofotomapą; ET0 z NASA POWER i Open-Meteo: korelacja 0,98.
 - 10 działek z różnych regionów, upraw i dat (2019–2026): wszystkie raporty kompletne, pierwsza
   odpowiedź w 4–13 s.
-- 125 testów automatycznych (m.in. FAO-56 na przykładzie z podręcznika FAO, bilans wody,
+- 133 testy automatyczne (m.in. FAO-56 na przykładzie z podręcznika FAO, bilans wody,
   wypełnianie zagłębień, odstępy zastawek).
 - Każde źródło w raporcie podlinkowane z licencją i datą pobrania.
 

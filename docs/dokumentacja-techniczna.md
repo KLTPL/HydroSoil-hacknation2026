@@ -262,7 +262,7 @@ powtarzalne i możliwe do wyjaśnienia.
   - działka z Kujaw w lipcu 2019 daje „silny niedobór”;
   - próba na 10 działkach z różnych regionów, upraw i dat (2019–2026): wszystkie raporty
     kompletne, pierwsza odpowiedź w 4–13 s.
-- **Testy automatyczne** (`cd backend && uv run pytest`, 125 testów):
+- **Testy automatyczne** (`cd backend && uv run pytest`, 133 testy):
   - promieniowanie FAO-56 sprawdzone na przykładzie z podręcznika FAO;
   - wiarygodność wyników Penmana-Monteitha;
   - zachowanie bilansu wody w glebie;

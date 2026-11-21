@@ -10,6 +10,8 @@ from fastapi.responses import FileResponse
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 from shapely.geometry.base import BaseGeometry
 
+from retencja_api.accounts import data_routes, routes
+from retencja_api.accounts.deps import Archiver, report_archiver
 from retencja_api.config import HISTORY_YEARS
 from retencja_api.crops import CROPS, CROPS_BY_ID
 from retencja_api.models import AnalysisReport, Crop, ModuleResult, Parcel, RetentionAnalysis
@@ -24,6 +26,8 @@ from retencja_api.report import build_report, terrain_module
 from retencja_api.terrain.service import relief_path
 
 app = FastAPI(title="Retencja API")
+app.include_router(routes.router)
+app.include_router(data_routes.router)
 
 # Polling requests (poll=true) only collect results that finished in the background.
 POLL_BUDGET_S = 2.0
@@ -92,16 +96,20 @@ async def analysis_inputs(
 @app.get("/api/analysis")
 async def analysis(
     inputs: Annotated[AnalysisInputs, Depends(analysis_inputs)],
+    archive: Annotated[Archiver, Depends(report_archiver)],
     poll: bool = Query(default=False),
 ) -> AnalysisReport:
     parcel, geom, crop_model, day = inputs
     budget = POLL_BUDGET_S if poll else None
-    return await build_report(parcel, geom, crop_model, day, budget)
+    result = await build_report(parcel, geom, crop_model, day, budget)
+    await asyncio.to_thread(archive, result, poll)
+    return result
 
 
 @app.get("/api/analysis/stream", response_class=EventSourceResponse)
 async def analysis_stream(
     inputs: Annotated[AnalysisInputs, Depends(analysis_inputs)],
+    archive: Annotated[Archiver, Depends(report_archiver)],
 ) -> AsyncIterator[ServerSentEvent]:
     """Same report as /api/analysis, preceded by a `module` event as each data source
     finishes, so the farmer sees the analysis progress instead of a spinner."""
@@ -116,6 +124,7 @@ async def analysis_stream(
     task.add_done_callback(lambda _: queue.put_nowait(None))
     while (progress := await queue.get()) is not None:
         yield ServerSentEvent(event="module", data=progress)
+    await asyncio.to_thread(archive, task.result(), False)
     yield ServerSentEvent(event="report", data=task.result())
 
 

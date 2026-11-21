@@ -3,9 +3,12 @@ services:
     build: ./backend
     volumes:
       - ./backend/.cache:/cache  # DEM tiles and analyses survive restarts
+      - accounts_data:/data  # optional user accounts (SQLite) survive rebuilds
   frontend:
     build: ./frontend
     ports:
       - "8080:80"
     depends_on:
       - backend
+volumes:
+  accounts_data:

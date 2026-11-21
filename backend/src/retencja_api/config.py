@@ -15,6 +15,14 @@ CRS_WGS84 = 4326
 
 CACHE_DIR = Path(os.environ.get("RETENCJA_CACHE_DIR", Path(__file__).parents[2] / ".cache"))
 
+# Optional user accounts (saved parcels, report archive). Kept apart from the cache, which
+# may be wiped at any time; in Docker this path lives on a named volume.
+ACCOUNTS_DB_PATH = Path(
+    os.environ.get("RETENCJA_DB_PATH", Path(__file__).parents[2] / ".data" / "accounts.sqlite3")
+)
+# Session cookies are marked Secure when served over HTTPS (production behind Caddy).
+SECURE_COOKIES = os.environ.get("RETENCJA_SECURE_COOKIES", "0") == "1"
+
 # WCS time grows with requested area; larger areas are split into concurrent strips.
 DEM_STRIP_MAX_M2 = 250_000
 DEM_FETCH_CONCURRENCY = 4

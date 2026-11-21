@@ -242,7 +242,8 @@ def diagnose(
     if not water.in_season:
         headline += " (poza sezonem wegetacji uprawy: oceniamy zapas wody w glebie)"
     if signals:
-        headline += f". Sucho na tle 10 lat wg: {', '.join(signals)}."
+        prefix = "Nieco suszej niż zwykle" if level == "none" else "Sucho na tle 10 lat"
+        headline += f". {prefix} wg: {', '.join(signals)}."
     confidence = "high"
     if missing or (soil is not None and soil.assumed):
         confidence = "medium"

@@ -2,10 +2,13 @@ import {
   GeolocateControl,
   Map as MapLibreMap,
   NavigationControl,
+  setWorkerUrl,
   type GeoJSONSource,
   type LngLatBoundsLike,
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+// The production bundle does not emit MapLibre's worker by itself; ship it as an asset.
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { DitchWeirs, Geometry, Parcel, RetentionSite } from '../api'
 import { PRINT_EVENT } from '../print'
@@ -21,6 +24,8 @@ interface Props {
 }
 
 type SourceData = Parameters<GeoJSONSource['setData']>[0]
+
+setWorkerUrl(workerUrl)
 
 const POLAND_CENTER: [number, number] = [19.3, 52.1]
 

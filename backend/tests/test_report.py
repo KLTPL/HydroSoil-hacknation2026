@@ -10,6 +10,7 @@ from retencja_api.api import earliest_analysis_date
 from retencja_api.crops import CROPS_BY_ID
 from retencja_api.models import (
     Assumptions,
+    ModuleResult,
     Parcel,
     Range,
     RetentionAnalysis,
@@ -50,6 +51,20 @@ def _analysis() -> RetentionAnalysis:
 @pytest.fixture(autouse=True)
 def no_cache(monkeypatch):
     monkeypatch.setattr(report, "cached_analysis", lambda _id: None)
+
+
+@pytest.fixture(autouse=True)
+def offline_modules(monkeypatch):
+    """Assessment modules are covered by their own tests; here they report no data."""
+
+    def unavailable(*_args, **_kwargs):
+        async def result():
+            return ModuleResult(status="unavailable", message="offline", duration_ms=0)
+
+        return result()
+
+    for name in ("soil_module", "water_module", "satellite_module", "hydro_module"):
+        monkeypatch.setattr(report, name, unavailable)
 
 
 async def test_terrain_ok_reports_live_source(monkeypatch):
@@ -93,6 +108,19 @@ async def test_upstream_failure_is_reported_as_unavailable(monkeypatch):
 
     assert result.terrain.status == "unavailable"
     assert result.terrain.message
+
+
+async def test_missing_modules_are_listed_and_lower_confidence(monkeypatch):
+    async def fast(_id, _geom):
+        return _analysis()
+
+    monkeypatch.setattr(report, "analyze_parcel", fast)
+
+    result = await report.build_report(PARCEL, GEOM, CROP, date(2025, 6, 1))
+
+    assert result.diagnosis.confidence == "low"
+    assert len(result.diagnosis.missing_data) == 4  # all but terrain
+    assert all("offline" in m for m in result.diagnosis.missing_data)
 
 
 def test_earliest_analysis_date_handles_leap_day():

@@ -89,9 +89,134 @@ class ModuleResult[T](BaseModel):
     duration_ms: int
 
 
+class YearValue(BaseModel):
+    year: int
+    value: float
+
+
+class Comparison(BaseModel):
+    """A value at the analysis date against the same calendar date in earlier years."""
+
+    value: float
+    normal: float  # mean of earlier years
+    rank: int  # 1 = lowest of all years incl. the analysed one
+    years: int  # number of years ranked
+    history: list[YearValue]  # earlier years, oldest first
+
+
+class SoilLayer(BaseModel):
+    depth: str
+    clay_pct: float
+    sand_pct: float
+    silt_pct: float
+    organic_carbon_pct: float
+
+
+class SoilProfile(BaseModel):
+    texture: str
+    category: Literal["I", "II", "III", "IV"]  # IUNG soil category, I = most drought-prone
+    category_label: str
+    awc_mm_per_m: float  # plant-available water per metre of soil
+    organic_carbon_pct: float  # topsoil 0–30 cm
+    layers: list[SoilLayer]
+    resolution_m: float
+    assumed: bool = False  # True when soil data was missing and a default was used
+
+
+class WeatherWindow(BaseModel):
+    start: date
+    end: date
+    precipitation_mm: Comparison
+    et0_mm: Comparison
+    kbw_mm: Comparison  # climatic water balance = precipitation − ET0
+    hot_days: Comparison  # days with Tmax ≥ 30 °C
+
+
+class RiskMonth(BaseModel):
+    month: int
+    years_with_stress: int
+    years: int
+    mean_stress_days: float
+
+
+class WaterBalance(BaseModel):
+    window: WeatherWindow
+    in_season: bool
+    kc: float
+    taw_mm: float  # total available water in the root zone
+    raw_mm: float  # readily available water (no stress until it is used up)
+    available_pct: Comparison  # modelled plant-available water left in the root zone
+    stress_days_30: int  # days with strong crop water stress in the last 30 days
+    reanalysis_soil_moisture: Comparison | None  # independent check from a reanalysis model
+    soil_moisture_source: str  # e.g. ERA5-Land 0–100 cm (m³/m³) or MERRA-2 root-zone wetness
+    risk_calendar: list[RiskMonth]
+    critical_stage: str
+    grid_lat: float
+    grid_lon: float
+
+
+class VegetationObservation(BaseModel):
+    year: int
+    date: date
+    ndvi: float
+    ndmi: float
+    clear_pct: float  # share of the parcel free of clouds and shadows
+
+
+class VegetationState(BaseModel):
+    current: VegetationObservation | None
+    history: list[VegetationObservation]
+    ndvi: Comparison | None
+    ndmi: Comparison | None
+    window_days: int
+    missing_years: list[int]
+
+
+class HydroWarning(BaseModel):
+    number: str
+    event: str
+    probability_pct: int
+    valid_from: str
+    valid_to: str | None
+    office: str
+    area: str
+    description: str
+
+
+class HydroStatus(BaseModel):
+    voivodeship: str
+    drought_warnings: list[HydroWarning]
+    other_warnings: int
+
+
+DroughtLevel = Literal["none", "watch", "moderate", "severe"]
+
+
+class Cause(BaseModel):
+    key: str
+    title: str
+    amount_mm: float | None  # contribution to the water shortage, where quantifiable
+    detail: str
+
+
+class Diagnosis(BaseModel):
+    level: DroughtLevel
+    headline: str
+    evidence: list[str]  # observations supporting the verdict
+    causes: list[Cause]
+    confidence: Literal["high", "medium", "low"]
+    limitations: list[str]
+    missing_data: list[str]
+
+
 class AnalysisReport(BaseModel):
     parcel: Parcel
     crop: Crop
     analysis_date: date
     generated_at: datetime
+    diagnosis: Diagnosis
+    water: ModuleResult[WaterBalance]
+    soil: ModuleResult[SoilProfile]
+    satellite: ModuleResult[VegetationState]
+    hydro: ModuleResult[HydroStatus]
     terrain: ModuleResult[RetentionAnalysis]

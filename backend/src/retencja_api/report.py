@@ -4,14 +4,18 @@ records which data sources were used, when, and under what licence."""
 import asyncio
 import logging
 import time
-from collections.abc import Awaitable, Callable
 from datetime import UTC, date, datetime
 from typing import Literal
 
 import httpx
+from shapely.geometry import mapping
 from shapely.geometry.base import BaseGeometry
 
-from retencja_api.config import TERRAIN_TIME_BUDGET_S
+from retencja_api.assessment.crop_params import CROP_PARAMS
+from retencja_api.assessment.diagnosis import diagnose
+from retencja_api.background import shared_task
+from retencja_api.config import HISTORY_YEARS, TERRAIN_TIME_BUDGET_S
+from retencja_api.geo import geometry_to_wgs84
 from retencja_api.models import (
     AnalysisReport,
     Crop,
@@ -19,7 +23,11 @@ from retencja_api.models import (
     ModuleResult,
     Parcel,
     RetentionAnalysis,
+    SoilProfile,
+    WaterBalance,
 )
+from retencja_api.modules import hydro_module, satellite_module, soil_module, water_module
+from retencja_api.soil.soilgrids import DEFAULT_PROFILE
 from retencja_api.terrain.service import analyze_parcel, cached_analysis
 
 log = logging.getLogger(__name__)
@@ -29,26 +37,6 @@ NMT_SOURCE = (
     "https://www.geoportal.gov.pl/pl/dane/numeryczny-model-terenu-nmt/",
     "Dane bezpłatne, art. 40a ustawy Prawo geodezyjne i kartograficzne",
 )
-
-# One in-flight computation per key, so parallel requests share a slow download
-# and a request that timed out keeps computing in the background.
-_in_flight: dict[str, asyncio.Task] = {}
-
-
-def _shared_task[T](key: str, start: Callable[[], Awaitable[T]]) -> asyncio.Task[T]:
-    task = _in_flight.get(key)
-    if task is None:
-        task = asyncio.ensure_future(start())
-        _in_flight[key] = task
-
-        def _done(t: asyncio.Task) -> None:
-            _in_flight.pop(key, None)
-            if not t.cancelled() and t.exception() is not None:
-                log.error("Background task %s failed", key, exc_info=t.exception())
-
-        task.add_done_callback(_done)
-    return task
-
 
 async def terrain_module(
     parcel_id: str, geom: BaseGeometry, budget_s: float
@@ -63,7 +51,7 @@ async def terrain_module(
     if cached is not None:
         return _terrain_ok(cached, "cached", elapsed())
 
-    task = _shared_task(f"terrain:{parcel_id}", lambda: analyze_parcel(parcel_id, geom))
+    task = shared_task(f"terrain:{parcel_id}", lambda: analyze_parcel(parcel_id, geom))
     try:
         data = await asyncio.wait_for(asyncio.shield(task), budget_s)
     except TimeoutError:
@@ -96,14 +84,69 @@ def _terrain_ok(
     return ModuleResult(status="ok", data=data, sources=[source], duration_ms=duration_ms)
 
 
+def _missing(modules: dict[str, ModuleResult]) -> list[str]:
+    labels = {
+        "water": "pogoda i bilans wodny",
+        "soil": "gleba",
+        "satellite": "zdjęcia satelitarne",
+        "hydro": "ostrzeżenia hydrologiczne IMGW",
+        "terrain": "model terenu",
+    }
+    return [
+        f"{labels[name]}: {result.message or 'brak danych'}"
+        for name, result in modules.items()
+        if result.status != "ok"
+    ]
+
+
 async def build_report(
-    parcel: Parcel, geom: BaseGeometry, crop: Crop, analysis_date: date
+    parcel: Parcel,
+    geom: BaseGeometry,
+    crop: Crop,
+    analysis_date: date,
+    budget_s: float | None = None,
 ) -> AnalysisReport:
-    terrain = await terrain_module(parcel.id, geom, TERRAIN_TIME_BUDGET_S)
+    """Runs all modules concurrently. `budget_s` limits slow modules (terrain, satellite);
+    a short budget is used by polling requests that only collect finished results."""
+    budget = TERRAIN_TIME_BUDGET_S if budget_s is None else budget_s
+    params = CROP_PARAMS[crop.id]
+    geom_wgs84 = geometry_to_wgs84(geom)
+    centre = geom_wgs84.representative_point()
+
+    async def soil_and_water() -> tuple[ModuleResult[SoilProfile], ModuleResult[WaterBalance]]:
+        soil = await soil_module(geom_wgs84.bounds)
+        awc = (soil.data or DEFAULT_PROFILE).awc_mm_per_m
+        water = await water_module(centre.y, centre.x, params, analysis_date, awc, HISTORY_YEARS)
+        return soil, water
+
+    (soil, water), satellite, hydro, terrain = await asyncio.gather(
+        soil_and_water(),
+        satellite_module(parcel.id, mapping(geom_wgs84), analysis_date, HISTORY_YEARS, budget),
+        hydro_module(parcel.voivodeship, analysis_date),
+        terrain_module(parcel.id, geom, budget),
+    )
+    diagnosis = diagnose(
+        params,
+        parcel.area_ha,
+        water.data,
+        soil.data or DEFAULT_PROFILE,
+        satellite.data,
+        hydro.data,
+        terrain.data,
+        _missing(
+            {"water": water, "soil": soil, "satellite": satellite, "hydro": hydro,
+             "terrain": terrain}
+        ),
+    )
     return AnalysisReport(
         parcel=parcel,
         crop=crop,
         analysis_date=analysis_date,
         generated_at=datetime.now(UTC),
+        diagnosis=diagnosis,
+        water=water,
+        soil=soil,
+        satellite=satellite,
+        hydro=hydro,
         terrain=terrain,
     )

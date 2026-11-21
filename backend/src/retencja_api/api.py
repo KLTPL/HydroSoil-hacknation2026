@@ -17,6 +17,9 @@ from retencja_api.report import build_report, terrain_module
 
 app = FastAPI(title="Retencja API")
 
+# Polling requests (poll=true) only collect results that finished in the background.
+POLL_BUDGET_S = 2.0
+
 
 def earliest_analysis_date(today: date) -> date:
     try:
@@ -59,6 +62,7 @@ async def analysis(
     parcel_id: str = Query(min_length=5, max_length=64),
     crop: str = Query(),
     analysis_date: date | None = Query(default=None, alias="date"),
+    poll: bool = Query(default=False),
 ) -> AnalysisReport:
     today = date.today()
     analysis_date = analysis_date or today
@@ -71,11 +75,8 @@ async def analysis(
         parcel, geom = await get_parcel_by_id(parcel_id)
     except ParcelNotFound:
         raise HTTPException(404, "Nie znaleziono działki") from None
-    return await build_report(parcel, geom, CROPS_BY_ID[crop], analysis_date)
-
-
-# Polling endpoint for a terrain result that was still pending in the report.
-TERRAIN_POLL_BUDGET_S = 2.0
+    budget = POLL_BUDGET_S if poll else None
+    return await build_report(parcel, geom, CROPS_BY_ID[crop], analysis_date, budget)
 
 
 @app.get("/api/terrain")
@@ -86,4 +87,4 @@ async def terrain(
         _, geom = await get_parcel_by_id(parcel_id)
     except ParcelNotFound:
         raise HTTPException(404, "Nie znaleziono działki") from None
-    return await terrain_module(parcel_id, geom, TERRAIN_POLL_BUDGET_S)
+    return await terrain_module(parcel_id, geom, POLL_BUDGET_S)

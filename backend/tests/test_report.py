@@ -63,7 +63,8 @@ def offline_modules(monkeypatch):
 
         return result()
 
-    for name in ("soil_module", "water_module", "satellite_module", "hydro_module", "land_module"):
+    for name in ("soil_module", "water_module", "satellite_module", "hydro_module", "land_module",
+                 "edo_module"):
         monkeypatch.setattr(report, name, unavailable)
 
 

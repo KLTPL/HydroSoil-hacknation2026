@@ -1,5 +1,9 @@
 // Mirrors backend/src/retencja_api/models.py.
 
+import type { EdoDrought, Scenarios } from './scenario-types'
+
+export type { EdoDrought, Scenario, Scenarios } from './scenario-types'
+
 /** GeoJSON geometry in WGS84 (Polygon or MultiPolygon from the backend). */
 export interface Geometry {
   type: 'Polygon' | 'MultiPolygon'
@@ -165,6 +169,7 @@ export interface WaterBalance {
   soil_moisture_source: string
   risk_calendar: RiskMonth[]
   critical_stage: string
+  scenarios: Scenarios | null
   grid_lat: number
   grid_lon: number
 }
@@ -258,6 +263,7 @@ export interface AnalysisReport {
   hydro: ModuleResult<HydroStatus>
   land: ModuleResult<LandCover>
   terrain: ModuleResult<RetentionAnalysis>
+  edo: ModuleResult<EdoDrought>
 }
 
 const query = (params: Record<string, string>) => new URLSearchParams(params).toString()

@@ -41,26 +41,37 @@ def compare(values: dict[int, float], year: int) -> Comparison:
     )
 
 
-def simulate_root_zone(
-    weather: DailyWeather, crop: CropParams, taw_mm: float
+def run_root_zone(
+    days: list[date],
+    precipitation: np.ndarray,
+    et0: np.ndarray,
+    crop: CropParams,
+    taw_mm: float,
+    start_depletion_mm: float = 0.0,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Daily root-zone depletion (mm below field capacity) and water stress coefficient Ks.
 
-    Starts at field capacity on the first day; winter recharge refills the soil anyway.
     Rain above what the soil can hold is lost to drainage or runoff.
     """
     raw = crop.depletion_p * taw_mm
-    precipitation = np.nan_to_num(weather.precipitation)
-    et0 = np.nan_to_num(weather.et0)
-    depletion = np.empty(len(weather.days))
-    ks = np.empty(len(weather.days))
-    dr = 0.0
-    for i, day in enumerate(weather.days):
+    precipitation = np.nan_to_num(precipitation)
+    et0 = np.nan_to_num(et0)
+    depletion = np.empty(len(days))
+    ks = np.empty(len(days))
+    dr = start_depletion_mm
+    for i, day in enumerate(days):
         k = 1.0 if dr <= raw else max(0.0, (taw_mm - dr) / (taw_mm - raw))
         dr = min(max(dr - precipitation[i] + k * crop.kc(day) * et0[i], 0.0), taw_mm)
         depletion[i] = dr
         ks[i] = k
     return depletion, ks
+
+
+def simulate_root_zone(
+    weather: DailyWeather, crop: CropParams, taw_mm: float
+) -> tuple[np.ndarray, np.ndarray]:
+    """Whole-series run starting at field capacity; winter recharge refills the soil anyway."""
+    return run_root_zone(weather.days, weather.precipitation, weather.et0, crop, taw_mm)
 
 
 def _window_sum(series: np.ndarray, end: int, days: int) -> float:

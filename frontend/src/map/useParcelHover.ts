@@ -29,7 +29,12 @@ export function useParcelHover(map: MapLibreMap | null, selectedId: string | nul
     const cache: Parcel[] = []
     let shown: string | null = null
     let timer: number | undefined
-    let request: AbortController | null = null
+    // Requests are never cancelled when the cursor moves: an answer still fills the cache,
+    // and cancelling made a parcel next to a known one never load. One request at a time;
+    // the latest resting point waits for it.
+    const unmount = new AbortController()
+    let pending = false
+    let queued: [number, number] | null = null
     let cursor: [number, number] | null = null
 
     const show = (parcel: Parcel | null) => {
@@ -45,22 +50,30 @@ export function useParcelHover(map: MapLibreMap | null, selectedId: string | nul
       cache.find((parcel) => contains(parcel.geometry, lon, lat)) ?? null
 
     const lookup = async (lon: number, lat: number) => {
-      request?.abort()
-      request = new AbortController()
+      if (pending) {
+        queued = [lon, lat]
+        return
+      }
+      pending = true
       try {
-        const parcel = await fetchParcelAt(lon, lat, request.signal)
+        const parcel = await fetchParcelAt(lon, lat, unmount.signal)
         cache.unshift(parcel)
         cache.length = Math.min(cache.length, CACHE_SIZE)
         // The cursor may have moved on while ULDK answered.
         if (cursor && contains(parcel.geometry, ...cursor)) show(parcel)
       } catch (error) {
         if (!isExpected(error)) throw error
+      } finally {
+        pending = false
       }
+      const next = queued
+      queued = null
+      if (next && !cached(...next)) void lookup(...next)
     }
 
     const stop = () => {
       window.clearTimeout(timer)
-      request?.abort()
+      queued = null
       cursor = null
       show(null)
     }
@@ -71,7 +84,7 @@ export function useParcelHover(map: MapLibreMap | null, selectedId: string | nul
       cursor = [lng, lat]
       const hit = cached(lng, lat)
       if (hit) {
-        request?.abort()
+        queued = null
         return show(hit)
       }
       show(null)
@@ -89,6 +102,7 @@ export function useParcelHover(map: MapLibreMap | null, selectedId: string | nul
       map.off('mouseout', stop)
       map.off('zoomend', onZoom)
       stop()
+      unmount.abort()
     }
   }, [map])
 

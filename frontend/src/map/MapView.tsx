@@ -15,7 +15,7 @@ import { PRINT_EVENT } from '../print'
 import { bounds, viewPadding } from './geometry'
 import { LayerSwitch, Legend, type BaseLayer } from './MapChrome'
 import { RainControl } from './RainControl'
-import { mapStyle, PARCEL_SOURCE, SITES_FILL_LAYER } from './style'
+import { mapStyle, PARCEL_SOURCE, PARCELS_MIN_ZOOM, SITES_FILL_LAYER } from './style'
 import { useOrthoLoading } from './useOrthoLoading'
 import { useTerrainLayers } from './useTerrainLayers'
 
@@ -82,6 +82,9 @@ export function MapView({ parcel, terrain, selectedSiteId, place, onPick, onSele
     instance.on('click', (event) => {
       const hit = instance.queryRenderedFeatures(event.point, { layers: [SITES_FILL_LAYER] })[0]
       if (hit?.id != null) handlers.current.onSelectSite(Number(hit.id))
+      // Zoomed out, a click cannot aim at one parcel: zoom in until parcel borders show.
+      else if (instance.getZoom() < PARCELS_MIN_ZOOM)
+        instance.flyTo({ center: event.lngLat, zoom: PARCELS_MIN_ZOOM + 1 })
       else handlers.current.onPick(event.lngLat.lng, event.lngLat.lat)
     })
     instance.on('mouseenter', SITES_FILL_LAYER, () => (instance.getCanvas().style.cursor = 'pointer'))

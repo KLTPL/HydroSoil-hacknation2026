@@ -23,6 +23,8 @@ function wmsTiles(base: string, layers: string, format: string, transparent: boo
 export const ORTHO_SOURCE = 'orto'
 /** From this zoom on, only the orthophoto is shown as the base map. */
 export const STREET_MAP_MAX_ZOOM = 13
+/** Parcel borders show from this zoom; below it a map click zooms in instead of picking. */
+export const PARCELS_MIN_ZOOM = 15
 export const PARCEL_SOURCE = 'parcel'
 export const SITES_SOURCE = 'sites'
 export const SITES_FILL_LAYER = 'sites-fill'
@@ -78,7 +80,7 @@ export const mapStyle: StyleSpecification = {
     { id: 'ground', type: 'background', paint: { 'background-color': '#c9cfc6' } },
     { id: 'osm', type: 'raster', source: 'osm', maxzoom: STREET_MAP_MAX_ZOOM },
     { id: 'orto', type: 'raster', source: ORTHO_SOURCE, minzoom: 12 },
-    { id: 'kieg', type: 'raster', source: 'kieg', minzoom: 15, paint: { 'raster-opacity': 0.85 } },
+    { id: 'kieg', type: 'raster', source: 'kieg', minzoom: PARCELS_MIN_ZOOM, paint: { 'raster-opacity': 0.85 } },
     {
       id: 'parcel-fill',
       type: 'fill',

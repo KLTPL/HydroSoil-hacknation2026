@@ -28,7 +28,7 @@ Raport można wydrukować lub zapisać jako PDF. Zawiera wszystkie źródła dan
 pobrania, a także ograniczenia i brakujące dane.
 
 Materiały zgłoszenia:
-- prezentacja: `presentation/zatrzymaj-wode-prezentacja.pdf` (źródło: `presentation/slides.html`);
+- prezentacja: `presentation/splyw-prezentacja.pdf` (źródło: `presentation/slides.html`);
 - scenariusz filmu: `presentation/video-script.md`;
 - przykładowe raporty wygenerowane przez działającą aplikację, w katalogu `reports/`:
   - Kujawy, czerwiec 2025,

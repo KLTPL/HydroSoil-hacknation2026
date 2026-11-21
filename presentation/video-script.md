@@ -1,13 +1,13 @@
 # Video script (max 3:00)
 
-Screen recording of https://splyw.kodlab.pl (browser full screen, 1920×1080) with voice-over.
+Screen recording of https://hydrosoil.kodlab.pl (browser full screen, 1920×1080) with voice-over.
 Narration is in Polish. Before recording, open the links below once, so that every result comes from the cache
 and appears instantly. Create a test account beforehand and save 3–4 parcels (e.g. A, C and
 `120206_2.0008.131`) so the account scene shows real content.
 
-- A: `https://splyw.kodlab.pl/#p=040706_5.0016.51%2F1&c=zboza_ozime&d=2025-06-15`
-- B: `https://splyw.kodlab.pl/#p=040706_5.0016.51%2F1&c=kukurydza_ziarno&d=2019-07-20`
-- C: `https://splyw.kodlab.pl/#p=061704_2.0003.2661&c=zboza_ozime&d=<today>`
+- A: `https://hydrosoil.kodlab.pl/#p=040706_5.0016.51%2F1&c=zboza_ozime&d=2025-06-15`
+- B: `https://hydrosoil.kodlab.pl/#p=040706_5.0016.51%2F1&c=kukurydza_ziarno&d=2019-07-20`
+- C: `https://hydrosoil.kodlab.pl/#p=061704_2.0003.2661&c=zboza_ozime&d=<today>`
 
 | Time | Screen | Narration (PL) |
 |---|---|---|
@@ -23,7 +23,7 @@ and appears instantly. Create a test account beforehand and save 3–4 parcels (
 | 2:15–2:27 | Expand „Dane i dowody”: EDO comparison „zgodne”, risk calendar | „Europejskie Obserwatorium Suszy potwierdza ocenę. Kalendarz ryzyka pokazuje, w których miesiącach susza wraca.” |
 | 2:27–2:40 | Header „Zaloguj się”; show „Moje działki” and „Analiza zbiorcza” with a few parcels | „Konto jest opcjonalne. Po zalogowaniu można zapisać swoje działki, przeanalizować je wszystkie naraz i trzymać archiwum raportów.” |
 | 2:40–2:50 | Click „Zapisz PDF”, show the print preview | „Raport można wydrukować albo zapisać jako PDF, ze źródłami danych, licencjami i ograniczeniami.” |
-| 2:50–3:00 | Sources list, then the title slide with the URL | „Trzynaście publicznych źródeł, opisane metody naukowe, bez instalacji, za darmo. Spływ: splyw.kodlab.pl.” |
+| 2:50–3:00 | Sources list, then the title slide with the URL | „Trzynaście publicznych źródeł, opisane metody naukowe, bez instalacji, za darmo. HydroSoil: hydrosoil.kodlab.pl.” |
 
 Tips:
 

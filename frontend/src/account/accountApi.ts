@@ -59,7 +59,7 @@ const BASE = '/api/account'
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   // The custom header marks the request as coming from this app (CSRF protection).
-  const headers: Record<string, string> = method === 'GET' ? {} : { 'X-Splyw': '1' }
+  const headers: Record<string, string> = method === 'GET' ? {} : { 'X-HydroSoil': '1' }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   const response = await fetch(`${BASE}${path}`, {
     method,

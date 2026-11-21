@@ -1,10 +1,10 @@
-# Spływ: dokumentacja techniczna
+# HydroSoil: dokumentacja techniczna
 
 Pełna dokumentacja wymagana regulaminem (pkt 4.2, punkty 1–9). Skrót: [README](../README.md).
 
 ## 1. Instrukcja uruchomienia
 
-**Bez instalacji:** otwórz https://splyw.kodlab.pl w dowolnej aktualnej przeglądarce (Chrome,
+**Bez instalacji:** otwórz https://hydrosoil.kodlab.pl w dowolnej aktualnej przeglądarce (Chrome,
 Firefox, Edge, Safari, Opera), na komputerze lub telefonie.
 
 Lokalnie, w Dockerze:
@@ -318,7 +318,7 @@ cd frontend && pnpm build && pnpm lint
 - Hasła: Argon2id (argon2-cffi); przy nieznanej nazwie też liczony jest skrót, więc czas
   odpowiedzi nie zdradza, czy konto istnieje. Sesja: losowy token w ciasteczku `HttpOnly`,
   `SameSite=Lax`, `Secure` w produkcji, ważny 30 dni; w bazie tylko jego skrót SHA-256;
-  wylogowanie usuwa sesję na serwerze. Zapisy wymagają nagłówka `X-Splyw` i zgodnego
+  wylogowanie usuwa sesję na serwerze. Zapisy wymagają nagłówka `X-HydroSoil` i zgodnego
   nagłówka `Origin` (ochrona CSRF). Limit: 5 błędnych haseł na konto w 15 min, 100 na
   serwer na minutę, 30 nowych kont na godzinę. Wszystkie zapytania SQL są parametryzowane
   i ograniczone do właściciela danych.

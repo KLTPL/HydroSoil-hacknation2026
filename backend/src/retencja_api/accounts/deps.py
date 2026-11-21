@@ -12,11 +12,11 @@ from retencja_api.accounts.auth import SESSION_TTL
 from retencja_api.accounts.schemas import User
 from retencja_api.models import AnalysisReport
 
-SESSION_COOKIE = "splyw_session"
+SESSION_COOKIE = "hydrosoil_session"
 # Browsers only send custom headers from this site's own scripts (other origins would
 # need a CORS preflight, which the API never grants), so requiring it on every write
 # blocks cross-site request forgery on top of the SameSite=Lax cookie.
-CSRF_HEADER = "X-Splyw"
+CSRF_HEADER = "X-HydroSoil"
 
 
 def optional_user(request: Request) -> User | None:

@@ -246,3 +246,112 @@ progress.loading-spinner:indeterminate {
     rotate: 1turn;
   }
 }
+
+/* Parcel search and analysis form */
+label {
+  display: block;
+  font-weight: 600;
+  margin-block-end: 4px;
+}
+
+input,
+select,
+button {
+  font: inherit;
+  color: inherit;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+button {
+  min-height: 44px;
+  padding: 8px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+button.primary {
+  width: 100%;
+  font-weight: 700;
+  color: #fff;
+  background: #1d6fd8;
+  border-color: #1d6fd8;
+}
+
+:is(input, select, button):focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.search {
+  margin-block-end: 1rem;
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.search-results {
+  display: grid;
+  gap: 6px;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.search-results button {
+  width: 100%;
+  text-align: start;
+}
+
+.analysis-form {
+  display: grid;
+  gap: 12px;
+  margin-block-start: 0.75rem;
+}
+
+.parcel code {
+  font-size: 0.85rem;
+}
+
+/* Report */
+.report-header {
+  margin-block: 1.25rem 0.5rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--border);
+}
+
+.report-section {
+  margin-block-end: 1.5rem;
+}
+
+.report-section h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.sources {
+  margin: 0.75rem 0 0;
+  padding-inline-start: 1.1rem;
+  font-size: 0.8rem;
+}
+
+.sources a {
+  color: inherit;
+}

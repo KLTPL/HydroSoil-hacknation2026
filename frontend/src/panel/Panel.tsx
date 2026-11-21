@@ -1,122 +1,72 @@
-import type { Parcel, RetentionAnalysis } from '../api'
+import type { Parcel } from '../api'
 import * as fmt from '../format'
-import { SiteCard } from './SiteCard'
-
-export type AnalysisState =
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
-  | { status: 'done'; analysis: RetentionAnalysis }
-
-export type PanelState =
-  | { status: 'idle' }
-  | { status: 'locating' }
-  | { status: 'error'; message: string }
-  | { status: 'parcel'; parcel: Parcel; analysis: AnalysisState }
+import type { Lookup, ReportState } from '../useParcelReport'
+import { AnalysisForm } from './AnalysisForm'
+import { Busy } from './Busy'
+import { ParcelSearch } from './ParcelSearch'
+import { Report } from './Report'
 
 interface Props {
-  state: PanelState
+  parcel: Parcel | null
+  lookup: Lookup
+  report: ReportState
+  crop: string
+  date: string
   selectedSiteId: number | null
+  onChooseParcel: (parcel: Parcel) => void
+  onCropChange: (crop: string) => void
+  onDateChange: (date: string) => void
+  onAnalyze: () => void
   onSelectSite: (id: number) => void
 }
 
-function Busy({ label, hint }: { label: string; hint?: string }) {
+export function Panel(props: Props) {
+  const { parcel, lookup, report } = props
   return (
-    <div className="busy" role="status">
-      <progress className="loading-spinner" aria-label={label} />
-      <div>
-        <p>{label}</p>
-        {hint && <p className="muted">{hint}</p>}
-      </div>
-    </div>
-  )
-}
-
-function Results({ analysis, selectedSiteId, onSelectSite }: {
-  analysis: RetentionAnalysis
-  selectedSiteId: number | null
-  onSelectSite: (id: number) => void
-}) {
-  const { summary, sites, assumptions } = analysis
-  if (sites.length === 0) {
-    return (
-      <p>
-        Nie znaleziono na tej działce zagłębień, które zatrzymają wodę. Teren jest płaski lub
-        woda spływa poza działkę. Wkrótce pokażemy tu inne działania, np. zastawki na rowach.
-      </p>
-    )
-  }
-  return (
-    <>
-      <section className="summary" aria-label="Podsumowanie">
-        <p className="summary-value">{fmt.m3Range(summary.retained_m3)}</p>
-        <p className="muted">
-          wody można zatrzymać z jednego deszczu {assumptions.design_rain_mm} mm w{' '}
-          {summary.site_count} {summary.site_count === 1 ? 'miejscu' : 'miejscach'}
-        </p>
-      </section>
-      <ol className="sites">
-        {sites.map((site) => (
-          <SiteCard
-            key={site.id}
-            site={site}
-            rainMm={assumptions.design_rain_mm}
-            selected={site.id === selectedSiteId}
-            onSelect={onSelectSite}
-          />
-        ))}
-      </ol>
-      <p className="assumptions muted">
-        To szacunek na podstawie {assumptions.dem_source} w siatce {assumptions.resolution_m} m.
-        Przyjęty współczynnik spływu to {assumptions.runoff_coeff.low}–
-        {assumptions.runoff_coeff.high}. Obliczenia nie uwzględniają drenażu ani wód
-        gruntowych.
-      </p>
-    </>
-  )
-}
-
-export function Panel({ state, selectedSiteId, onSelectSite }: Props) {
-  return (
-    <aside className="panel" aria-live="polite">
+    <aside className="panel">
       <header>
         <h1>Zatrzymaj wodę</h1>
-        <p className="muted">Gdzie na Twojej działce można zatrzymać wodę</p>
+        <p className="muted">Ocena wody na działce i co zrobić, żeby jej nie tracić</p>
       </header>
 
-      {state.status === 'idle' && (
-        <p>
-          Kliknij działkę na mapie albo użyj przycisku lokalizacji (◎), jeśli jesteś na polu.
-        </p>
-      )}
-      {state.status === 'locating' && <Busy label="Szukam działki…" />}
-      {state.status === 'error' && <p className="error">{state.message}</p>}
+      <ParcelSearch onChoose={props.onChooseParcel} />
+      <div aria-live="polite">
+        {lookup.status === 'loading' && <Busy label="Szukam działki…" />}
+        {lookup.status === 'error' && <p className="error">{lookup.message}</p>}
+      </div>
 
-      {state.status === 'parcel' && (
-        <>
-          <section className="parcel" aria-label="Działka">
-            <h2>Działka {state.parcel.number}</h2>
-            <p className="muted">
-              {state.parcel.region}, gm. {state.parcel.commune} · {fmt.ha(state.parcel.area_ha)}
-            </p>
-          </section>
-          {state.analysis.status === 'loading' && (
-            <Busy
-              label="Analizuję ukształtowanie terenu…"
-              hint="Przy pierwszej analizie w nowej okolicy pobieram model terenu, co trwa do ok. 2 minut."
-            />
-          )}
-          {state.analysis.status === 'error' && (
-            <p className="error">{state.analysis.message}</p>
-          )}
-          {state.analysis.status === 'done' && (
-            <Results
-              analysis={state.analysis.analysis}
-              selectedSiteId={selectedSiteId}
-              onSelectSite={onSelectSite}
-            />
-          )}
-        </>
+      {parcel && (
+        <section className="parcel" aria-label="Wybrana działka">
+          <h2>Działka {parcel.number}</h2>
+          <p className="muted">
+            {parcel.region}, gm. {parcel.commune} · {fmt.ha(parcel.area_ha)}
+            <br />
+            <code>{parcel.id}</code>
+          </p>
+          <AnalysisForm
+            crop={props.crop}
+            date={props.date}
+            busy={report.status === 'loading'}
+            onCropChange={props.onCropChange}
+            onDateChange={props.onDateChange}
+            onSubmit={props.onAnalyze}
+          />
+        </section>
       )}
+
+      <div aria-live="polite">
+        {report.status === 'loading' && (
+          <Busy label="Analizuję działkę…" hint="Pobieram dane i liczę wynik, zwykle do 30 s." />
+        )}
+        {report.status === 'error' && <p className="error">{report.message}</p>}
+        {report.status === 'done' && (
+          <Report
+            report={report.report}
+            selectedSiteId={props.selectedSiteId}
+            onSelectSite={props.onSelectSite}
+          />
+        )}
+      </div>
     </aside>
   )
 }

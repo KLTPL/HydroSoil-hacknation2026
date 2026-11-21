@@ -1,51 +1,25 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { ApiError, fetchParcelAt, fetchRetention } from './api'
+import { useEffect, useState } from 'react'
 import { MapView } from './map/MapView'
-import { Panel, type PanelState } from './panel/Panel'
-
-function errorMessage(error: unknown): string {
-  if (error instanceof ApiError) return error.message
-  return 'Nie udało się połączyć z serwerem. Spróbuj ponownie.'
-}
+import { Panel } from './panel/Panel'
+import { readHash, todayIso, useParcelReport } from './useParcelReport'
 
 export default function App() {
-  const [state, setState] = useState<PanelState>({ status: 'idle' })
+  const { parcel, lookup, report, choose, pickAt, loadById, analyze } = useParcelReport()
+  const [crop, setCrop] = useState(() => readHash().crop ?? '')
+  const [date, setDate] = useState(() => readHash().date ?? todayIso())
   const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null)
-  const inFlight = useRef<AbortController | null>(null)
 
-  const pick = useCallback(async (lon: number, lat: number) => {
-    inFlight.current?.abort()
-    const controller = new AbortController()
-    inFlight.current = controller
-    setSelectedSiteId(null)
-    setState({ status: 'locating' })
-    window.history.replaceState(null, '', `#${lat.toFixed(5)},${lon.toFixed(5)}`)
-
-    try {
-      const parcel = await fetchParcelAt(lon, lat, controller.signal)
-      setState({ status: 'parcel', parcel, analysis: { status: 'loading' } })
-      try {
-        const analysis = await fetchRetention(parcel.id, controller.signal)
-        setState({ status: 'parcel', parcel, analysis: { status: 'done', analysis } })
-      } catch (error) {
-        if (controller.signal.aborted) return
-        setState({ status: 'parcel', parcel, analysis: { status: 'error', message: errorMessage(error) } })
-      }
-    } catch (error) {
-      if (controller.signal.aborted) return
-      setState({ status: 'error', message: errorMessage(error) })
-    }
-  }, [])
-
-  // Demo/share links: #52.70,18.36 opens the parcel at that point.
+  // Share/demo links open the parcel and, when crop and date are given, run the analysis.
   useEffect(() => {
-    const match = /^#(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/.exec(window.location.hash)
-    if (match) void pick(Number(match[2]), Number(match[1]))
-  }, [pick])
+    const { parcelId, crop: hashCrop, date: hashDate } = readHash()
+    if (!parcelId) return
+    void loadById(parcelId).then((found) => {
+      if (found && hashCrop) void analyze(found, hashCrop, hashDate ?? todayIso())
+    })
+  }, [loadById, analyze])
 
-  const parcel = state.status === 'parcel' ? state.parcel : null
   const sites =
-    state.status === 'parcel' && state.analysis.status === 'done' ? state.analysis.analysis.sites : []
+    report.status === 'done' && report.report.terrain.data ? report.report.terrain.data.sites : []
 
   return (
     <div className="app">
@@ -53,10 +27,32 @@ export default function App() {
         parcel={parcel}
         sites={sites}
         selectedSiteId={selectedSiteId}
-        onPick={(lon, lat) => void pick(lon, lat)}
+        onPick={(lon, lat) => {
+          setSelectedSiteId(null)
+          void pickAt(lon, lat)
+        }}
         onSelectSite={setSelectedSiteId}
       />
-      <Panel state={state} selectedSiteId={selectedSiteId} onSelectSite={setSelectedSiteId} />
+      <Panel
+        parcel={parcel}
+        lookup={lookup}
+        report={report}
+        crop={crop}
+        date={date}
+        selectedSiteId={selectedSiteId}
+        onChooseParcel={(p) => {
+          setSelectedSiteId(null)
+          choose(p)
+        }}
+        onCropChange={setCrop}
+        onDateChange={setDate}
+        onAnalyze={() => {
+          if (!parcel) return
+          setSelectedSiteId(null)
+          void analyze(parcel, crop, date)
+        }}
+        onSelectSite={setSelectedSiteId}
+      />
     </div>
   )
 }

@@ -26,6 +26,9 @@ export const STREET_MAP_MAX_ZOOM = 13
 /** Parcel borders show from this zoom; below it a map click zooms in instead of picking. */
 export const PARCELS_MIN_ZOOM = 15
 export const PARCEL_SOURCE = 'parcel'
+/** The parcel under the cursor, outlined before it is clicked. */
+export const HOVER_SOURCE = 'hover'
+export const HOVER_LAYERS = ['hover-fill', 'hover-line']
 export const SITES_SOURCE = 'sites'
 export const SITES_FILL_LAYER = 'sites-fill'
 export const DITCHES_SOURCE = 'ditches'
@@ -40,6 +43,7 @@ export const COLORS = {
   wetDepression: '#4cc3e6',
   parcel: '#ffd23f',
   selected: '#ffffff',
+  hover: '#ffffff',
   ditch: '#5ee6ff',
   weir: '#ff4f7b',
   flow: '#e6f6ff',
@@ -70,6 +74,7 @@ export const mapStyle: StyleSpecification = {
       attribution: 'Działki © GUGiK (KIEG)',
     },
     [PARCEL_SOURCE]: { type: 'geojson', data: EMPTY },
+    [HOVER_SOURCE]: { type: 'geojson', data: EMPTY },
     [SITES_SOURCE]: { type: 'geojson', data: EMPTY, promoteId: 'id' },
     [DITCHES_SOURCE]: { type: 'geojson', data: EMPTY },
     [FLOW_SOURCE]: { type: 'geojson', data: EMPTY },
@@ -81,6 +86,18 @@ export const mapStyle: StyleSpecification = {
     { id: 'osm', type: 'raster', source: 'osm', maxzoom: STREET_MAP_MAX_ZOOM },
     { id: 'orto', type: 'raster', source: ORTHO_SOURCE, minzoom: 12 },
     { id: 'kieg', type: 'raster', source: 'kieg', minzoom: PARCELS_MIN_ZOOM, paint: { 'raster-opacity': 0.85 } },
+    {
+      id: 'hover-fill',
+      type: 'fill',
+      source: HOVER_SOURCE,
+      paint: { 'fill-color': COLORS.hover, 'fill-opacity': 0.1 },
+    },
+    {
+      id: 'hover-line',
+      type: 'line',
+      source: HOVER_SOURCE,
+      paint: { 'line-color': COLORS.hover, 'line-width': 2.5, 'line-opacity': 0.9 },
+    },
     {
       id: 'parcel-fill',
       type: 'fill',

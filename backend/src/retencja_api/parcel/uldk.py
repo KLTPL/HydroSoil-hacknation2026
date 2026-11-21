@@ -12,6 +12,7 @@ from retencja_api.models import Parcel
 
 _FIELDS = ["id", "voivodeship", "county", "commune", "region", "parcel", "geom_wkt"]
 MAX_SEARCH_RESULTS = 10
+_ATTEMPTS = 3
 
 
 class ParcelNotFound(Exception):
@@ -71,8 +72,12 @@ def parse_response(text: str) -> list[tuple[Parcel, BaseGeometry]]:
 async def _query(params: dict[str, str]) -> str:
     params = {**params, "result": ",".join(_FIELDS), "srid": str(CRS_METRIC)}
     async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.get(ULDK_URL, params=params)
-    response.raise_for_status()
+        # ULDK intermittently answers 200 with an empty body; a second request gets the data.
+        for _ in range(_ATTEMPTS):
+            response = await client.get(ULDK_URL, params=params)
+            response.raise_for_status()
+            if response.text.strip():
+                break
     return response.text
 
 

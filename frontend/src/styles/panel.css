@@ -242,6 +242,10 @@
 }
 
 /* Live analysis progress */
+.progress {
+  scroll-margin-block: 16px; /* keep a gap from the panel edge after scrolling into view */
+}
+
 .progress-head {
   display: flex;
   justify-content: space-between;

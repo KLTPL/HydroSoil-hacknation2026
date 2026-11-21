@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import * as fmt from '../format'
 import type { ModuleName, ModuleProgress, Parcel } from '../model'
 
@@ -29,11 +29,17 @@ export function Progress({
     const timer = window.setInterval(() => setNow(performance.now()), 100)
     return () => window.clearInterval(timer)
   }, [])
+  // The checklist appears below the form; bring all of it into view in the panel.
+  const section = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    section.current?.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' })
+  }, [])
   const done = new Map(progress.map((p) => [p.module, p]))
   const share = (done.size + 1) / (STEPS.length + 1)
 
   return (
-    <section className="progress card" aria-label="Postęp analizy">
+    <section ref={section} className="progress card" aria-label="Postęp analizy">
       <header className="progress-head">
         <div>
           <p className="eyebrow">Analizuję działkę {parcel.number}</p>

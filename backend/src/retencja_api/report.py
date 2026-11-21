@@ -13,6 +13,7 @@ from shapely.geometry.base import BaseGeometry
 
 from retencja_api.assessment.crop_params import CROP_PARAMS
 from retencja_api.assessment.diagnosis import diagnose
+from retencja_api.assessment.recommendations import recommend
 from retencja_api.background import shared_task
 from retencja_api.config import HISTORY_YEARS, TERRAIN_TIME_BUDGET_S
 from retencja_api.geo import geometry_to_wgs84
@@ -144,6 +145,9 @@ async def build_report(
         analysis_date=analysis_date,
         generated_at=datetime.now(UTC),
         diagnosis=diagnosis,
+        recommendations=recommend(
+            params, parcel.area_ha, water.data, soil.data, hydro.data, terrain.data
+        ),
         water=water,
         soil=soil,
         satellite=satellite,

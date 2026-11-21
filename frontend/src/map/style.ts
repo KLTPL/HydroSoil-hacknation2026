@@ -23,12 +23,15 @@ function wmsTiles(base: string, layers: string, format: string, transparent: boo
 export const PARCEL_SOURCE = 'parcel'
 export const SITES_SOURCE = 'sites'
 export const SITES_FILL_LAYER = 'sites-fill'
+export const DITCHES_SOURCE = 'ditches'
 
 export const COLORS = {
   pond: '#1d6fd8',
   wetDepression: '#45b6d9',
   parcel: '#ffd23f',
   selected: '#ffffff',
+  ditch: '#00e5ff',
+  weir: '#ff3d71',
 }
 
 const EMPTY = { type: 'FeatureCollection' as const, features: [] }
@@ -57,6 +60,7 @@ export const mapStyle: StyleSpecification = {
     },
     [PARCEL_SOURCE]: { type: 'geojson', data: EMPTY },
     [SITES_SOURCE]: { type: 'geojson', data: EMPTY, promoteId: 'id' },
+    [DITCHES_SOURCE]: { type: 'geojson', data: EMPTY },
   },
   layers: [
     { id: 'osm', type: 'raster', source: 'osm' },
@@ -101,6 +105,25 @@ export const mapStyle: StyleSpecification = {
           COLORS.pond,
         ],
         'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 3, 1],
+      },
+    },
+    {
+      id: 'ditches-line',
+      type: 'line',
+      source: DITCHES_SOURCE,
+      filter: ['==', ['geometry-type'], 'LineString'],
+      paint: { 'line-color': COLORS.ditch, 'line-width': 3, 'line-dasharray': [2, 1] },
+    },
+    {
+      id: 'weirs',
+      type: 'circle',
+      source: DITCHES_SOURCE,
+      filter: ['==', ['geometry-type'], 'Point'],
+      paint: {
+        'circle-radius': 6,
+        'circle-color': COLORS.weir,
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 2,
       },
     },
   ],

@@ -3,6 +3,7 @@ import * as fmt from '../format'
 import { Busy } from './Busy'
 import { DiagnosisSection, LimitationsSection } from './DiagnosisSection'
 import { HydroSection, SatelliteSection, SoilSection } from './FieldSections'
+import { RecommendationsSection } from './RecommendationsSection'
 import { SiteCard } from './SiteCard'
 import { Sources } from './Sources'
 import { WaterSection } from './WaterSection'
@@ -28,11 +29,20 @@ function TerrainSection({
       {terrain.status === 'pending' && <Busy label={terrain.message ?? 'Analizuję teren…'} />}
       {terrain.status === 'unavailable' && <p className="error">{terrain.message}</p>}
       {terrain.status === 'ok' && terrain.data && (
-        <TerrainResults
-          analysis={terrain.data}
-          selectedSiteId={selectedSiteId}
-          onSelectSite={onSelectSite}
-        />
+        <>
+          <TerrainResults
+            analysis={terrain.data}
+            selectedSiteId={selectedSiteId}
+            onSelectSite={onSelectSite}
+          />
+          <p className="muted">
+            {!terrain.data.ditches_checked
+              ? 'Mapa rowów (OpenStreetMap) była niedostępna, więc nie sprawdzono miejsc na zastawki.'
+              : terrain.data.ditches.length === 0
+                ? 'Na działce i przy jej granicy nie ma rowów w OpenStreetMap.'
+                : `Rowy przy działce: ${terrain.data.ditches.length} (OpenStreetMap, © współtwórcy OSM, ODbL).`}
+          </p>
+        </>
       )}
       <Sources sources={terrain.sources} />
     </section>
@@ -95,6 +105,10 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
         <p className="muted">Wygenerowano {fmt.dateTime(report.generated_at)}</p>
       </header>
       <DiagnosisSection diagnosis={report.diagnosis} />
+      <RecommendationsSection
+        recommendations={report.recommendations}
+        onSelectSite={onSelectSite}
+      />
       <WaterSection water={report.water} year={year} />
       <SatelliteSection satellite={report.satellite} year={year} />
       <SoilSection soil={report.soil} />

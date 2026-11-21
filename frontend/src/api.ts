@@ -37,6 +37,19 @@ export interface RetentionSite {
   geometry: Geometry
 }
 
+export interface DitchWeirs {
+  id: number
+  kind: string
+  length_m: number
+  slope_pct: number
+  weir_count: number
+  weir_head_m: number
+  channel_m3: number
+  soil_m3: Range
+  geometry: { type: 'LineString'; coordinates: number[][] }
+  weirs: { type: 'MultiPoint'; coordinates: number[][] }
+}
+
 export interface RetentionAnalysis {
   parcel_id: string
   computed_at: string
@@ -50,6 +63,8 @@ export interface RetentionAnalysis {
     min_depth_m: number
     min_area_m2: number
   }
+  ditches: DitchWeirs[]
+  ditches_checked: boolean
 }
 
 export class ApiError extends Error {
@@ -207,12 +222,28 @@ export interface Diagnosis {
   missing_data: string[]
 }
 
+export interface Recommendation {
+  key: string
+  category: 'retention' | 'soil' | 'crop' | 'irrigation'
+  title: string
+  action: string
+  why: string
+  effect_m3: Range | null
+  effect_note: string | null
+  when: string
+  cost: 'niski' | 'średni' | 'wysoki'
+  formalities: string | null
+  site_ids: number[]
+  ditch_ids: number[]
+}
+
 export interface AnalysisReport {
   parcel: Parcel
   crop: Crop
   analysis_date: string
   generated_at: string
   diagnosis: Diagnosis
+  recommendations: Recommendation[]
   water: ModuleResult<WaterBalance>
   soil: ModuleResult<SoilProfile>
   satellite: ModuleResult<VegetationState>

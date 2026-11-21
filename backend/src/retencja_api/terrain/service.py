@@ -1,9 +1,11 @@
 """Parcel retention analysis: DEM loading, site detection, response assembly, caching."""
 
 import asyncio
+import logging
 from datetime import UTC, datetime
 
-from shapely.geometry import mapping
+import httpx
+from shapely.geometry import MultiPoint, mapping
 from shapely.geometry.base import BaseGeometry
 
 from retencja_api import cache
@@ -19,11 +21,13 @@ from retencja_api.config import (
 from retencja_api.geo import geometry_to_wgs84
 from retencja_api.models import (
     Assumptions,
+    DitchWeirs,
     Range,
     RetentionAnalysis,
     RetentionSite,
     RetentionSummary,
 )
+from retencja_api.terrain.ditches import WEIR_HEAD_M, DitchPlan, fetch_waterways, plan_ditches
 from retencja_api.terrain.nmt import load_dem
 from retencja_api.terrain.retention import Site, find_sites
 
@@ -43,6 +47,24 @@ def _to_model(index: int, site: Site) -> RetentionSite:
     )
 
 
+log = logging.getLogger(__name__)
+
+
+def _ditch_model(index: int, plan: DitchPlan) -> DitchWeirs:
+    return DitchWeirs(
+        id=index,
+        kind=plan.kind,
+        length_m=round(plan.length_m),
+        slope_pct=round(plan.slope * 100, 2),
+        weir_count=len(plan.weirs),
+        weir_head_m=WEIR_HEAD_M,
+        channel_m3=round(plan.channel_m3),
+        soil_m3=Range(low=round(plan.soil_m3[0]), high=round(plan.soil_m3[1])),
+        geometry=mapping(geometry_to_wgs84(plan.line)),
+        weirs=mapping(geometry_to_wgs84(MultiPoint(plan.weirs))),
+    )
+
+
 def _cache_key(parcel_id: str) -> str:
     return f"{parcel_id}@v{ANALYSIS_VERSION}"
 
@@ -55,9 +77,16 @@ def cached_analysis(parcel_id: str) -> RetentionAnalysis | None:
 async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> RetentionAnalysis:
     """Download terrain, find retention sites and cache the result."""
     bounds = parcel_geom.buffer(PARCEL_BUFFER_M).bounds
-    dem = await load_dem(bounds, ANALYSIS_RESOLUTION_M)
+    dem_task = asyncio.ensure_future(load_dem(bounds, ANALYSIS_RESOLUTION_M))
+    try:
+        ways = await fetch_waterways(geometry_to_wgs84(parcel_geom.buffer(PARCEL_BUFFER_M)).bounds)
+    except httpx.HTTPError as exc:
+        log.warning("Ditch map unavailable: %r", exc)
+        ways = None
+    dem = await dem_task
     sites = await asyncio.to_thread(find_sites, dem, parcel_geom)
     models = [_to_model(i, s) for i, s in enumerate(sites, start=1)]
+    plans = await asyncio.to_thread(plan_ditches, ways or [], parcel_geom, dem)
 
     result = RetentionAnalysis(
         parcel_id=parcel_id,
@@ -79,6 +108,8 @@ async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> Retention
             min_depth_m=MIN_DEPRESSION_DEPTH_M,
             min_area_m2=MIN_DEPRESSION_AREA_M2,
         ),
+        ditches=[_ditch_model(i, p) for i, p in enumerate(plans, start=1)],
+        ditches_checked=ways is not None,
     )
     cache.write_json("retention", _cache_key(parcel_id), result.model_dump(mode="json"))
     return result

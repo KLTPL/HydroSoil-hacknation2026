@@ -44,4 +44,4 @@ DESIGN_RAIN_MM = 30.0
 RUNOFF_COEFF_RANGE = (0.05, 0.25)
 
 # Bump when analysis logic changes so cached results are recomputed.
-ANALYSIS_VERSION = 3
+ANALYSIS_VERSION = 4

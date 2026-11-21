@@ -108,6 +108,17 @@ def risk_calendar(
     return out
 
 
+def open_canopy_et0(weather: DailyWeather, crop: CropParams, last_year: int, years: int) -> float:
+    """Mean ET0 between sowing (or regrowth) and canopy closure, when bare soil evaporates."""
+    totals = []
+    for year in range(last_year - years + 1, last_year + 1):
+        start, _, mid, *_ = crop.stages(year)
+        i0, i1 = weather.index(start), weather.index(mid)
+        if 0 <= i0 and i1 <= len(weather.days):
+            totals.append(float(np.nansum(weather.et0[i0:i1])))
+    return round(float(np.mean(totals)), 1) if totals else 0.0
+
+
 def assess_water(
     weather: DailyWeather, crop: CropParams, awc_mm_per_m: float, day: date, years: int
 ) -> WaterBalance:
@@ -156,6 +167,7 @@ def assess_water(
         soil_moisture_source=weather.soil_moisture_source,
         risk_calendar=risk_calendar(weather, ks, crop, day.year - 1, years),
         critical_stage=crop.critical,
+        open_canopy_et0_mm=open_canopy_et0(weather, crop, day.year - 1, years),
         grid_lat=weather.latitude,
         grid_lon=weather.longitude,
     )

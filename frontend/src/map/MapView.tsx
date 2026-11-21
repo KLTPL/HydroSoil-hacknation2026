@@ -7,12 +7,13 @@ import {
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useLayoutEffect, useRef } from 'react'
-import type { Geometry, Parcel, RetentionSite } from '../api'
-import { mapStyle, PARCEL_SOURCE, SITES_FILL_LAYER, SITES_SOURCE } from './style'
+import type { DitchWeirs, Geometry, Parcel, RetentionSite } from '../api'
+import { DITCHES_SOURCE, mapStyle, PARCEL_SOURCE, SITES_FILL_LAYER, SITES_SOURCE } from './style'
 
 interface Props {
   parcel: Parcel | null
   sites: RetentionSite[]
+  ditches: DitchWeirs[]
   selectedSiteId: number | null
   onPick: (lon: number, lat: number) => void
   onSelectSite: (id: number) => void
@@ -29,7 +30,7 @@ function bounds(geometry: Geometry): LngLatBoundsLike {
   return [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]
 }
 
-export function MapView({ parcel, sites, selectedSiteId, onPick, onSelectSite }: Props) {
+export function MapView({ parcel, sites, ditches, selectedSiteId, onPick, onSelectSite }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const loaded = useRef<Promise<void> | null>(null)
@@ -95,6 +96,22 @@ export function MapView({ parcel, sites, selectedSiteId, onPick, onSelectSite }:
       map.getSource<GeoJSONSource>(SITES_SOURCE)!.setData(data as unknown as SourceData)
     })
   }, [sites])
+
+  useEffect(() => {
+    const map = mapRef.current!
+    void loaded.current!.then(() => {
+      const features = ditches.flatMap((d) => [
+        { type: 'Feature' as const, geometry: d.geometry, properties: { id: d.id } },
+        ...d.weirs.coordinates.map((point) => ({
+          type: 'Feature' as const,
+          geometry: { type: 'Point' as const, coordinates: point },
+          properties: { id: d.id },
+        })),
+      ])
+      const data = { type: 'FeatureCollection' as const, features }
+      map.getSource<GeoJSONSource>(DITCHES_SOURCE)!.setData(data as unknown as SourceData)
+    })
+  }, [ditches])
 
   useEffect(() => {
     const map = mapRef.current!

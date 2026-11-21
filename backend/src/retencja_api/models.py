@@ -55,12 +55,29 @@ class Assumptions(BaseModel):
     min_area_m2: float
 
 
+class DitchWeirs(BaseModel):
+    """Weirs proposed on one ditch on or along the parcel."""
+
+    id: int
+    kind: str  # OSM waterway type: ditch, drain, canal, stream
+    length_m: float
+    slope_pct: float
+    weir_count: int
+    weir_head_m: float
+    channel_m3: float  # held in the ditch behind the weirs
+    soil_m3: Range  # held in the soil of both banks by the raised groundwater table
+    geometry: GeoJSON  # WGS84 LineString
+    weirs: GeoJSON  # WGS84 MultiPoint
+
+
 class RetentionAnalysis(BaseModel):
     parcel_id: str
     computed_at: datetime  # when the terrain data was downloaded and analysed
     summary: RetentionSummary
     sites: list[RetentionSite]
     assumptions: Assumptions
+    ditches: list[DitchWeirs] = []
+    ditches_checked: bool = False  # False when the ditch map could not be downloaded
 
 
 class Crop(BaseModel):
@@ -151,6 +168,7 @@ class WaterBalance(BaseModel):
     soil_moisture_source: str  # e.g. ERA5-Land 0–100 cm (m³/m³) or MERRA-2 root-zone wetness
     risk_calendar: list[RiskMonth]
     critical_stage: str
+    open_canopy_et0_mm: float  # mean ET0 from sowing until the canopy closes
     grid_lat: float
     grid_lon: float
 
@@ -209,12 +227,28 @@ class Diagnosis(BaseModel):
     missing_data: list[str]
 
 
+class Recommendation(BaseModel):
+    key: str
+    category: Literal["retention", "soil", "crop", "irrigation"]
+    title: str
+    action: str  # what to do, concretely
+    why: str  # the data behind it
+    effect_m3: Range | None  # water kept or supplied on the parcel
+    effect_note: str | None  # what the effect refers to (per rain, per season, …)
+    when: str
+    cost: Literal["niski", "średni", "wysoki"]
+    formalities: str | None
+    site_ids: list[int] = []  # retention sites on the map
+    ditch_ids: list[int] = []
+
+
 class AnalysisReport(BaseModel):
     parcel: Parcel
     crop: Crop
     analysis_date: date
     generated_at: datetime
     diagnosis: Diagnosis
+    recommendations: list[Recommendation]
     water: ModuleResult[WaterBalance]
     soil: ModuleResult[SoilProfile]
     satellite: ModuleResult[VegetationState]

@@ -3,6 +3,7 @@ import * as fmt from '../format'
 import { errorMessage } from '../useParcelReport'
 import { removeSaved, updateSaved, type SavedParcel } from './accountApi'
 import { parcelLabel } from './labels'
+import { ParcelThumb } from './ParcelThumb'
 import type { Account } from './useAccount'
 
 interface Props {
@@ -86,6 +87,7 @@ export function MyParcels({ account, cropName, onOpen }: Props) {
       <ul className="saved-list">
         {account.saved.map((saved) => (
           <li key={saved.id} className="saved-item">
+            <ParcelThumb geometry={saved.geometry} />
             <div className="saved-text">
               <strong>{parcelLabel(saved)}</strong>
               <span className="muted fine">

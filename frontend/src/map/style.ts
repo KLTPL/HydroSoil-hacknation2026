@@ -1,6 +1,6 @@
 import type { StyleSpecification } from 'maplibre-gl'
 
-const GEOPORTAL = 'https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution'
+export const GEOPORTAL = 'https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution'
 const KIEG = 'https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow'
 
 function wmsTiles(base: string, layers: string, format: string, transparent: boolean): string[] {

@@ -1,6 +1,6 @@
 // Optional account API (mirrors backend/src/retencja_api/accounts/schemas.py).
 import { ApiError, parseEvent } from '../api'
-import type { AnalysisReport, DroughtLevel } from '../model'
+import type { AnalysisReport, DroughtLevel, Geometry } from '../model'
 
 export interface Me {
   username: string | null
@@ -16,6 +16,8 @@ export interface SavedParcel {
   commune: string
   area_ha: number
   created_at: string
+  /** WGS84 outline for the list thumbnail; null while ULDK could not supply it. */
+  geometry: Geometry | null
   last_analysed_at: string | null
 }
 

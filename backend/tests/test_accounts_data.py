@@ -1,5 +1,6 @@
 import asyncio
 import json
+import sqlite3
 from datetime import date
 
 import httpx
@@ -9,7 +10,7 @@ from fastapi.testclient import TestClient
 from shapely.geometry import box
 
 from retencja_api import api
-from retencja_api.accounts import auth, batch, data_routes, parcels
+from retencja_api.accounts import auth, batch, data_routes, db, parcels
 from retencja_api.parcel.uldk import ParcelNotFound
 
 PARCEL_ID = "040706_5.0016.51/1"
@@ -69,6 +70,47 @@ def test_saved_parcels_crud(client):
     assert [p["id"] for p in client.get("/api/account/parcels").json()] == [saved["id"]]
     assert client.delete(f"/api/account/parcels/{saved['id']}", headers=WRITE).status_code == 204
     assert client.get("/api/account/parcels").json() == []
+
+
+def test_saved_parcel_keeps_its_outline(client):
+    register(client)
+    save(client)
+    [listed] = client.get("/api/account/parcels").json()
+    assert listed["geometry"] == make_parcel().geometry
+
+
+def test_parcels_saved_without_an_outline_get_it_from_uldk_once(client, accounts_db, offline,
+                                                                  monkeypatch):
+    register(client)
+    save(client)
+    save(client, OTHER_ID)
+    with sqlite3.connect(accounts_db) as conn:
+        conn.execute("UPDATE saved_parcels SET geometry = NULL")
+    del offline[OTHER_ID]  # ULDK no longer knows this parcel: listed without a thumbnail
+
+    listed = client.get("/api/account/parcels").json()
+    assert [p["geometry"] for p in listed] == [make_parcel().geometry, None]
+
+    async def unreachable(parcel_id: str):
+        raise AssertionError("stored outlines are not looked up again")
+
+    monkeypatch.setattr(data_routes, "get_parcel_by_id", unreachable)
+    offline[OTHER_ID] = "severe"
+    with sqlite3.connect(accounts_db) as conn:
+        conn.execute("UPDATE saved_parcels SET geometry = ? WHERE parcel_id = ?",
+                     (json.dumps(make_parcel(OTHER_ID).geometry), OTHER_ID))
+    assert all(p["geometry"] for p in client.get("/api/account/parcels").json())
+
+
+def test_outline_column_is_added_to_an_existing_database(accounts_db):
+    with sqlite3.connect(accounts_db) as conn:
+        conn.executescript(db.SCHEMA.replace("    geometry TEXT,\n", ""))
+        old = {row[1] for row in conn.execute("PRAGMA table_info(saved_parcels)")}
+    assert "geometry" not in old
+    db._initialised.discard(accounts_db)
+    with db.connect() as conn:
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(saved_parcels)")}
+    assert "geometry" in columns
 
 
 def test_saving_validates_crop_and_parcel(client):

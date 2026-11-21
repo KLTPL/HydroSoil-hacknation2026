@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS saved_parcels (
     commune TEXT NOT NULL,
     area_ha REAL NOT NULL,
     created_at TEXT NOT NULL,
+    geometry TEXT,
     UNIQUE (user_id, parcel_id)
 );
 CREATE TABLE IF NOT EXISTS reports (
@@ -53,6 +54,13 @@ CREATE INDEX IF NOT EXISTS reports_user_parcel ON reports(user_id, parcel_id, ge
 """
 
 _initialised: set[Path] = set()
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Adds columns introduced after a database was created."""
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(saved_parcels)")}
+    if "geometry" not in columns:  # outline for the "Moje działki" thumbnail (GeoJSON, WGS84)
+        conn.execute("ALTER TABLE saved_parcels ADD COLUMN geometry TEXT")
 
 
 def now() -> datetime:
@@ -78,6 +86,7 @@ def connect() -> Iterator[sqlite3.Connection]:
         if path not in _initialised:
             conn.execute("PRAGMA journal_mode = WAL")
             conn.executescript(SCHEMA)
+            _migrate(conn)
             _initialised.add(path)
         with conn:
             yield conn

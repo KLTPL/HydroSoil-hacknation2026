@@ -5,7 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from retencja_api.models import AnalysisReport, DroughtLevel
+from retencja_api.models import AnalysisReport, DroughtLevel, GeoJSON
 
 USERNAME_PATTERN = r"^[A-Za-z0-9._-]+$"
 
@@ -46,6 +46,7 @@ class SavedParcel(BaseModel):
     commune: str
     area_ha: float
     created_at: datetime
+    geometry: GeoJSON | None = None  # WGS84 outline for the list thumbnail
     last_analysed_at: datetime | None = None
 
 

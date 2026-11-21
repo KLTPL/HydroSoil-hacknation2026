@@ -152,6 +152,11 @@
   font-size: 0.8rem;
 }
 
+.search-placed {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+
 .search-results {
   display: grid;
   gap: 6px;

@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import * as fmt from '../format'
+import type { Place } from '../geocode'
 import type { Parcel } from '../model'
 import type { Lookup, ReportState } from '../useParcelReport'
 import { AnalysisForm } from './AnalysisForm'
@@ -16,6 +17,8 @@ interface Props {
   date: string
   selectedSiteId: number | null
   onChooseParcel: (parcel: Parcel) => void
+  /** A town or address was found: the map flies there for the user to click their parcel. */
+  onPlace: (place: Place) => void
   onCropChange: (crop: string) => void
   onDateChange: (date: string) => void
   onAnalyze: () => void
@@ -65,7 +68,7 @@ function Analysis(props: Props) {
   const { parcel, lookup, report } = props
   return (
     <>
-      <ParcelSearch onChoose={props.onChooseParcel} />
+      <ParcelSearch onChoose={props.onChooseParcel} onPlace={props.onPlace} />
       <div aria-live="polite">
         {lookup.status === 'loading' && <Busy label="Szukam działki…" />}
         {lookup.status === 'error' && <p className="error">{lookup.message}</p>}

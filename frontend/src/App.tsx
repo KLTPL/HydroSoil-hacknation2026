@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAccountPanel } from './account/useAccountPanel'
+import type { Place } from './geocode'
 import { MapView } from './map/MapView'
 import { Panel } from './panel/Panel'
 import { readHash, todayIso, useParcelReport } from './useParcelReport'
@@ -9,6 +10,7 @@ export default function App() {
   const [crop, setCrop] = useState(() => readHash().crop ?? '')
   const [date, setDate] = useState(() => readHash().date ?? todayIso())
   const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null)
+  const [place, setPlace] = useState<Place | null>(null)
 
   // Share/demo links open the parcel and, when crop and date are given, run the analysis.
   useEffect(() => {
@@ -56,6 +58,7 @@ export default function App() {
         parcel={account.archived?.parcel ?? parcel}
         terrain={terrain}
         selectedSiteId={selectedSiteId}
+        place={place}
         onPick={(lon, lat) => {
           setSelectedSiteId(null)
           account.close()
@@ -74,6 +77,7 @@ export default function App() {
           setSelectedSiteId(null)
           choose(p)
         }}
+        onPlace={setPlace}
         onCropChange={setCrop}
         onDateChange={setDate}
         onAnalyze={() => {

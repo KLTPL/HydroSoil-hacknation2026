@@ -9,6 +9,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 // The production bundle does not emit MapLibre's worker by itself; ship it as an asset.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { Place } from '../geocode'
 import type { Parcel, RetentionAnalysis } from '../model'
 import { PRINT_EVENT } from '../print'
 import { bounds, viewPadding } from './geometry'
@@ -21,6 +22,8 @@ interface Props {
   parcel: Parcel | null
   terrain: RetentionAnalysis | null
   selectedSiteId: number | null
+  /** A searched town or address; each new object flies the map there. */
+  place: Place | null
   onPick: (lon: number, lat: number) => void
   onSelectSite: (id: number) => void
 }
@@ -44,7 +47,7 @@ const LOCALE = {
   'LogoControl.Title': 'Logo MapLibre',
 }
 
-export function MapView({ parcel, terrain, selectedSiteId, onPick, onSelectSite }: Props) {
+export function MapView({ parcel, terrain, selectedSiteId, place, onPick, onSelectSite }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<MapLibreMap | null>(null)
   const [base, setBase] = useState<BaseLayer>('photo')
@@ -121,6 +124,11 @@ export function MapView({ parcel, terrain, selectedSiteId, onPick, onSelectSite 
     map.getSource<GeoJSONSource>(PARCEL_SOURCE)!.setData(data as unknown as SourceData)
     if (parcel) map.fitBounds(bounds(parcel.geometry), { padding: viewPadding(), maxZoom: 17 })
   }, [map, parcel])
+
+  useEffect(() => {
+    if (!map || !place) return
+    map.flyTo({ center: [place.lon, place.lat], zoom: place.zoom, padding: viewPadding() })
+  }, [map, place])
 
   // Once terrain results arrive, reframe the parcel clear of the rain card.
   const hasTerrain = terrain !== null

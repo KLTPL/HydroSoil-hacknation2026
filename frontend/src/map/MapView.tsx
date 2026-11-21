@@ -12,6 +12,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Place } from '../geocode'
 import type { Parcel, RetentionAnalysis } from '../model'
 import { PRINT_EVENT } from '../print'
+import { frameClear } from './framing'
 import { bounds, viewPadding } from './geometry'
 import { LayerSwitch, Legend, type BaseLayer } from './MapChrome'
 import { RainControl } from './RainControl'
@@ -136,14 +137,11 @@ export function MapView({ parcel, terrain, selectedSiteId, place, onPick, onSele
     map.flyTo({ center: [place.lon, place.lat], zoom: place.zoom, padding: viewPadding() })
   }, [map, place])
 
-  // Once terrain results arrive, reframe the parcel clear of the rain card.
+  // Once terrain results arrive, reframe the parcel clear of the rain card and legend.
   const hasTerrain = terrain !== null
   useEffect(() => {
     if (!map || !hasTerrain || !printParcel.current) return
-    const card = document.querySelector('.rain-control')?.getBoundingClientRect()
-    const padding = viewPadding()
-    if (card && !window.matchMedia('(width < 720px)').matches) padding.bottom += card.height * 0.6
-    map.fitBounds(bounds(printParcel.current.geometry), { padding, maxZoom: 17 })
+    frameClear(map, printParcel.current.geometry, 17)
   }, [map, hasTerrain])
 
   useTerrainLayers(map, terrain, selectedSiteId, base, raining, onSelectSite)

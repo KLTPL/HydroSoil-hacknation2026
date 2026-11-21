@@ -5,8 +5,8 @@ Zobacz, dokąd ucieka woda z Twojej działki, i zatrzymaj ją.
 HackNation 2026, zadanie KOWR „Zatrzymaj wodę, chroń plony”.
 Zespół: _do uzupełnienia_
 
-**Działająca wersja:** https://woda.kodlab.pl · przykładowy raport:
-https://woda.kodlab.pl/#p=040706_5.0016.51%2F1&c=zboza_ozime&d=2025-06-15
+**Działająca wersja:** https://splyw.kodlab.pl · przykładowy raport:
+https://splyw.kodlab.pl/#p=040706_5.0016.51%2F1&c=zboza_ozime&d=2025-06-15
 
 Rolnik wpisuje numer działki ewidencyjnej (albo klika na mapie lub używa GPS), wybiera uprawę
 i datę analizy (dziś lub do 10 lat wstecz). W około 30 sekund dostaje raport, który
@@ -39,7 +39,7 @@ Materiały zgłoszenia:
 
 ## 1. Instrukcja uruchomienia
 
-**Bez instalacji:** otwórz https://woda.kodlab.pl w dowolnej aktualnej przeglądarce (Chrome,
+**Bez instalacji:** otwórz https://splyw.kodlab.pl w dowolnej aktualnej przeglądarce (Chrome,
 Firefox, Edge, Safari, Opera), na komputerze lub telefonie.
 
 Lokalnie, w Dockerze:

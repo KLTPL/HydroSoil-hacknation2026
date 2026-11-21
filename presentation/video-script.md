@@ -1,12 +1,12 @@
 # Video script (max 3:00)
 
-Screen recording of https://woda.kodlab.pl (browser full screen, 1920×1080) with voice-over.
+Screen recording of https://splyw.kodlab.pl (browser full screen, 1920×1080) with voice-over.
 Narration is in Polish. Before recording, open the three links below once, so that every
 result comes from the cache and appears instantly.
 
-- A: `https://woda.kodlab.pl/#p=040706_5.0016.51%2F1&c=zboza_ozime&d=2025-06-15`
-- B: `https://woda.kodlab.pl/#p=040706_5.0016.51%2F1&c=kukurydza_ziarno&d=2019-07-20`
-- C: `https://woda.kodlab.pl/#p=061704_2.0003.2661&c=zboza_ozime&d=<today>`
+- A: `https://splyw.kodlab.pl/#p=040706_5.0016.51%2F1&c=zboza_ozime&d=2025-06-15`
+- B: `https://splyw.kodlab.pl/#p=040706_5.0016.51%2F1&c=kukurydza_ziarno&d=2019-07-20`
+- C: `https://splyw.kodlab.pl/#p=061704_2.0003.2661&c=zboza_ozime&d=<today>`
 
 | Time | Screen | Narration (PL) |
 |---|---|---|
@@ -20,7 +20,7 @@ result comes from the cache and appears instantly.
 | 2:05–2:18 | Scroll to „Co jeśli: najbliższe 30 dni” | „A co, jeśli przez miesiąc nie spadnie deszcz? Scenariusze pokazują, kiedy zacznie się stres i co da nawadnianie albo więcej próchnicy.” |
 | 2:18–2:35 | Open link B (2019): „Silny niedobór”; expand „Dane i dowody”: EDO comparison, risk calendar | „Ta sama działka w lipcu 2019: silny niedobór. Europejskie Obserwatorium Suszy potwierdza. Kalendarz ryzyka pokazuje, w których miesiącach susza wraca.” |
 | 2:35–2:47 | Click „Drukuj / zapisz jako PDF”, show the print preview | „Raport można wydrukować albo zapisać jako PDF, ze źródłami danych, licencjami i ograniczeniami.” |
-| 2:47–3:00 | Sources list, then the title slide with the URL | „Jedenaście publicznych źródeł, liczone na żywo, bez instalacji, za darmo. Spływ: woda.kodlab.pl.” |
+| 2:47–3:00 | Sources list, then the title slide with the URL | „Jedenaście publicznych źródeł, liczone na żywo, bez instalacji, za darmo. Spływ: splyw.kodlab.pl.” |
 
 Tips:
 

@@ -17,6 +17,7 @@ export type ReportState =
   | { status: 'done'; report: AnalysisReport }
 
 const POLL_MS = 4000
+const MAX_POLL_FAILURES = 5
 
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError) return error.message
@@ -111,6 +112,8 @@ export function useParcelReport() {
     (report.report.terrain.status === 'pending' || report.report.satellite.status === 'pending')
       ? report.report
       : null
+  // Transient failures (server restarting, flaky network) are retried before giving up.
+  const [pollFailures, setPollFailures] = useState(0)
   useEffect(() => {
     if (!pending) return
     const controller = new AbortController()
@@ -118,6 +121,7 @@ export function useParcelReport() {
     const timer = window.setTimeout(async () => {
       try {
         const next = await fetchAnalysis(target.id, crop.id, analysis_date, controller.signal, true)
+        setPollFailures(0)
         setReport((current) =>
           current.status === 'done' && current.report === pending
             ? { status: 'done', report: next }
@@ -125,6 +129,11 @@ export function useParcelReport() {
         )
       } catch (error) {
         if (controller.signal.aborted) return
+        if (isTransient(error) && pollFailures < MAX_POLL_FAILURES) {
+          setPollFailures((n) => n + 1) // re-runs this effect: next attempt
+          return
+        }
+        setPollFailures(0)
         const message = errorMessage(error)
         setReport((current) =>
           current.status === 'done' && current.report === pending
@@ -144,11 +153,16 @@ export function useParcelReport() {
       controller.abort()
       window.clearTimeout(timer)
     }
-  }, [pending])
+  }, [pending, pollFailures])
 
   return { parcel, lookup, report, choose, pickAt, loadById, analyze }
 }
 
 function settle<T>(module: ModuleResult<T>, message: string): ModuleResult<T> {
   return module.status === 'pending' ? { ...module, status: 'unavailable', message } : module
+}
+
+function isTransient(error: unknown): boolean {
+  if (error instanceof ApiError) return [502, 503, 504].includes(error.status)
+  return true // network error
 }

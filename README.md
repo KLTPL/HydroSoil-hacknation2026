@@ -76,11 +76,11 @@ cd backend && uv run python -m retencja_api.warm_cache [id_działki ...]
 | Krok | Co dostaje rolnik |
 |---|---|
 | Działka | Wyszukiwanie po pełnym identyfikatorze (`040706_5.0016.51/1`) lub obrębie i numerze (`Karczyn 51/1`); kliknięcie na mapie; GPS. Granica działki na ortofotomapie z nakładką ewidencyjną. |
-| Dane wejściowe | Uprawa (14 grup upraw z monitoringu suszy IUNG) i data analizy (od dziś do 10 lat wstecz). |
+| Dane wejściowe | Uprawa (14 grup upraw z monitoringu suszy IUNG oraz trwałe użytki zielone: łąki i pastwiska) i data analizy (od dziś do 10 lat wstecz). |
 | Postęp analizy | Zamiast samego wskaźnika ładowania lista źródeł danych odhaczana na żywo (strumień SSE), z tym, co każde źródło znalazło, i czasem pobrania. |
 | Ocena | Werdykt w 4 stopniach: brak / uwaga / niedobór / silny niedobór. Wskaźnik „zbiornika” wody w strefie korzeni z progiem stresu uprawy i poziomem typowym dla tej daty. Zdanie oddziela stan uprawy dziś od porównania z 10 latami. „Głosowanie źródeł”: każde źródło (model wody w glebie, KBW, reanaliza, NDMI z satelity, IMGW) mówi osobno: suszej / typowo / wilgotniej / brak danych. Do tego poziom wiarygodności, niższy, gdy źródła się nie zgadzają. |
 | Przyczyny | Uszeregowane, w mm: brak opadów, większe parowanie, słaba gleba, próchnica, spływ, susza hydrologiczna. |
-| Zalecenia | W kolejności z „Podstaw naukowych” KOWR: najpierw retencja, potem gleba i uprawa, nawadnianie na końcu (tylko gdy uprawa cierpi na stres wodny). Zastawki na rowach, oczka wodne i podmokłe łąki w zagłębieniach, próchnica, mulcz i uprawa bez orki, odmiana i termin siewu. Każde z efektem w m³, uzasadnieniem danymi, terminem, kosztem i formalnościami. |
+| Zalecenia | W kolejności z „Podstaw naukowych” KOWR: najpierw retencja, potem gleba i uprawa, nawadnianie na końcu (tylko gdy uprawa cierpi na stres wodny). Zastawki na rowach, oczka wodne i podmokłe łąki w zagłębieniach, wysoki poziom wody na glebach organicznych i w dnie doliny, zadrzewienia śródpolne (od strony wiatru lub wzdłuż poziomicy), pas trawy przy rowie i u podnóża stoku, zadarnienie stromych miejsc, orka w poprzek stoku, międzyplony i resztki pożniwne, próchnica, mulcz i uprawa bez orki, odmiana i termin siewu, użytkowanie łąki i pastwiska. Każde zalecenie pojawia się tylko wtedy, gdy wynika z danych działki (spadek z LIDAR, rowy, gleba, kształt, uprawa). Dla wąskich, długich pasów (typowych na południu) zamiast oczka i orki w poprzek stoku: miedze w poprzek pasa i współpraca z sąsiadami. Sad: ściółka pod rzędami i nawadnianie kroplowe. Każde z efektem w m³ (gdy da się go policzyć), uzasadnieniem danymi, terminem, kosztem i formalnościami. Przy nawadnianiu: ilość wody na całą działkę, orientacyjny koszt pracy i ostrzeżenie o limicie poboru bez pozwolenia wodnoprawnego. |
 | Mapa retencji | Zagłębienia (oczko wodne / podmokła łąka) z numerami, pojemnością, zlewnią i ilością wody zatrzymanej z deszczu obliczeniowego. Rowy (LIDAR + OpenStreetMap) z proponowanymi zastawkami. Legenda. |
 | Rzeźba terenu | Przełącznik podkładu „Zdjęcie / Rzeźba terenu”: cieniowana mikrorzeźba z LIDAR (wysokość względem otoczenia ±kilkadziesiąt cm) i drogi spływu wody. Widać niecki, bruzdy i rowy, których nie widać na zdjęciu. |
 | Symulacja ulewy | Przycisk „Puść ulewę 30 mm”: animacja deszczu spływającego po drogach spływu z LIDAR do niecek i poza działkę, z licznikami: ile spada, ile spływa, ile zatrzyma plan (oczka, obniżenia, zastawki). Wariant „Dziś / Z planem”. Objętości pochodzą z analizy; animacja tylko je ilustruje. Przy ustawieniu „ogranicz ruch” pokazuje od razu stan końcowy. |
@@ -136,13 +136,15 @@ Kod: `backend/src/retencja_api/` (`api.py`, `report.py`, `modules.py`, `assessme
 | Kategoria gleby IUNG | Przybliżenie z uziarnienia: od I (piasek luźny i słabogliniasty) do IV (glina średnia i ciężka, ił). |
 | Werdykt | Bezwzględny stres uprawy (woda dostępna poniżej progu 1 − p), stopniowany liczbą niezależnych sygnałów suszy: model wody w glebie, KBW, wilgotność gleby z reanalizy (ERA5-Land lub MERRA-2), NDMI z satelity. „Sucho” oznacza: wśród 3 najsuchszych z ok. 11 lat albo co najmniej 15 % poniżej średniej. |
 | Silny stres / kalendarz ryzyka | Ks < 0,5; miesiąc liczy się jako suchy przy co najmniej 15 takich dniach. Próg dobrano tak, by wyróżniały się znane susze 2015, 2018 i 2019. |
-| Satelita | Sentinel-2 L2A: najnowsze zdjęcie z 20 dni przed datą, na którym co najmniej 60 % działki jest bez chmur (maska SCL). To samo okno w każdym wcześniejszym roku od 2017. NDVI = (B08−B04)/(B08+B04), NDMI = (B08−B11)/(B08+B11), siatka 20 m, z korektą przesunięcia BOA. |
+| Satelita | Sentinel-2 L2A: najnowsze zdjęcie z 20 dni przed datą, na którym co najmniej 60 % działki jest bez chmur (maska SCL). To samo okno w każdym wcześniejszym roku od 2017. NDVI = (B08−B04)/(B08+B04), NDMI = (B08−B11)/(B08+B11), siatka 20 m, z korektą przesunięcia BOA. Na łące i pastwisku spadek NDMI liczy się jako sygnał suszy tylko wtedy, gdy potwierdza go bilans wody w glebie (inaczej to zwykle pokos lub wypas); w sadzie raport zaznacza, że piksel łączy drzewa z murawą. |
+| Łąki i pastwiska | Parametry FAO-56 (tab. 12 i 22): Kc 0,40 / 0,90 / 0,85 (łąka, uśrednione pokosy) i 0,40 / 0,85 / 0,75 (pastwisko), korzenie 0,5 m, p = 0,6; wegetacja od 1 kwietnia do 31 października. |
+| Spadek i kształt działki | Spadek z NMT wygładzonego w oknie 10 m (spadek pola, nie bruzdy), kierunek spływu, udział powierzchni powyżej 10 % (silna erozja wg IUNG), wysokość działki względem otoczenia, krawędź, przez którą spływa woda (D8). Kształt: prostokąt o tym samym polu i obwodzie (szerokość robocza, także dla krętych pasów), minimalny prostokąt obejmujący, zwartość 4πA/P². Wąski pas: szerokość < 40 m i długość ≥ 5 × szerokość. |
 | Zagłębienia | Wypełnianie zagłębień metodą priority-flood (Barnes i in. 2014) na NMT LIDAR 1 m przepróbkowanym do 2 m, kierunki spływu D8. Zagłębienia o głębokości co najmniej 0,15 m i powierzchni co najmniej 300 m², w co najmniej 30 % na działce. Zatrzymana woda = min(pojemność, zlewnia × 30 mm × współczynnik spływu 0,05–0,25). |
 | Drogi spływu | Akumulacja przepływu D8 na powierzchni po wypełnieniu zagłębień; linie tam, gdzie spływa woda z co najmniej 800 m². Sieć dzielona przy połączeniach; linia kończy się w niecce (wypełnienie > 0,1 m) albo poza obszarem analizy. |
 | Rzeźba terenu (obraz) | Wysokość minus średnia z okna 80 m (rzeźba lokalna), skala barw do 97. percentyla, przemnożona przez cieniowanie wielokierunkowe z przewyższeniem 3×. PNG liczony z tego samego NMT co analiza. |
 | Rowy | Komórki leżące co najmniej 0,25 m poniżej średniej z otoczenia 20 m, do których spływa woda z co najmniej 0,2 ha, prowadzone w dół spływu (D8) w linie. Gdy działa OpenStreetMap, dochodzą zapisane tam cieki. |
 | Zastawki | Piętrzenie 0,5 m; odstęp = piętrzenie / spadek rowu (co najmniej 50 m), tak by cofka sięgała do następnej zastawki. Woda zatrzymana w rowie plus podniesienie wód gruntowych w pasie 2 × 50 m (średnio 0,25 m × odsączalność 0,05–0,15). |
-| Efekty zaleceń | Nawadnianie: uzupełnienie niedoboru w strefie korzeni. Mulcz: 25–50 % parowania z gołej gleby (Kc 0,3 × ET0 od siewu do zwarcia łanu, średnia z 10 lat). Próchnica: +0,5–1 % w warstwie ornej 0,3 m według Saxtona i Rawlsa. |
+| Efekty zaleceń | Nawadnianie: uzupełnienie niedoboru w strefie korzeni. Mulcz: 25–50 % parowania z gołej gleby (Kc 0,3 × ET0 od siewu do zwarcia łanu, średnia z 10 lat). Próchnica: +0,5–1 % w warstwie ornej 0,3 m według Saxtona i Rawlsa. Zadrzewienia: 5–15 % mniej parowania uprawy (ETc z FAO-56, średnia z 10 lat) w pasie do 15 wysokości drzew (badania IŚRiL PAN w Turwi). Pas trawy u podnóża stoku: 20–50 % spływu z deszczu 30 mm. Zadarnienie stromych miejsc: współczynnik spływu niższy o 0,10–0,20. Orka w poprzek stoku: 10–50 % spływu (czynnik P w USLE 0,5–0,9). Gleba organiczna lub dno doliny: woda gruntowa wyżej o 0,2 m × odsączalność 0,1–0,2. Nawadnianie: dawka × powierzchnia, koszt pracy 0,5–2 zł/m³ (szacunek: energia i obsługa przy własnym źródle, bez sprzętu). |
 
 ## 4. Źródła i zakres danych
 
@@ -264,7 +266,12 @@ powtarzalne i możliwe do wyjaśnienia.
 - **Konta nie mają odzyskiwania hasła**: nie zbieramy e-maila, więc zapomniane hasło oznacza
   nowe konto. Limit prób logowania jest trzymany w pamięci serwera (zeruje się po restarcie).
   Analiza zbiorcza wielu nowych działek może trwać kilka minut (pobieranie terenu z GUGiK).
-- **Formalności** w zaleceniach (zgłoszenie wodnoprawne, zarządca rowu) to ogólne wskazówki, a nie
+- **Zalecenia krajobrazowe** (zadrzewienia, pasy trawy, miedze) opierają się na typowych wartościach
+  z literatury i na modelu terenu; nie uwzględniają granic własności sąsiadów ani istniejących
+  zadrzewień poza działką. Gleba organiczna jest rozpoznawana z SoilGrids (250 m), a nie z mapy
+  glebowej. Koszt nawadniania to orientacyjny koszt pracy, bez sprzętu i opłat za wodę.
+- **Formalności** w zaleceniach (zgłoszenie wodnoprawne, zarządca rowu, limit 5 m³ na dobę
+  z art. 33 Prawa wodnego) to ogólne wskazówki, a nie
   porada prawna.
 
 ## 9. Weryfikacja wyników i zaleceń
@@ -286,7 +293,7 @@ powtarzalne i możliwe do wyjaśnienia.
   - działka z Kujaw w lipcu 2019 daje „silny niedobór”;
   - próba na 10 działkach z różnych regionów, upraw i dat (2019–2026): wszystkie raporty
     kompletne, pierwsza odpowiedź w 4–13 s.
-- **Testy automatyczne** (`cd backend && uv run pytest`, 94 testy):
+- **Testy automatyczne** (`cd backend && uv run pytest`, 109 testów):
   - promieniowanie FAO-56 sprawdzone na przykładzie z podręcznika FAO;
   - wiarygodność wyników Penmana-Monteitha;
   - zachowanie bilansu wody w glebie;
@@ -295,6 +302,8 @@ powtarzalne i możliwe do wyjaśnienia.
   - wypełnianie zagłębień i objętości retencji;
   - wykrywanie rowów i odstępy zastawek na sztucznym terenie;
   - zalecenia i scenariusze „co jeśli”;
+  - zalecenia dopasowane do kształtu, spadku, gleby i uprawy (wąskie pasy, łąki, sady, gleby
+    organiczne), spadek i kształt działki na sztucznym terenie;
   - pamięć podręczna i limit Open-Meteo;
   - działanie raportu przy awarii źródeł;
   - konta: rejestracja, logowanie, wylogowanie, wygasanie sesji, limit prób, ochrona CSRF,

@@ -42,6 +42,7 @@ from retencja_api.terrain.ditches import (
 from retencja_api.terrain.flow import encode_png, flow_lines, relief_rgba
 from retencja_api.terrain.nmt import Dem, load_dem
 from retencja_api.terrain.retention import Site, find_sites
+from retencja_api.terrain.slope import slope_stats
 
 
 def _to_model(index: int, site: Site) -> RetentionSite:
@@ -127,6 +128,7 @@ async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> Retention
     plans = await asyncio.to_thread(plan_ditches, lines, parcel_geom, dem)
     flows = await asyncio.to_thread(flow_lines, dem)
     relief = await asyncio.to_thread(_save_relief, parcel_id, dem)
+    slope = await asyncio.to_thread(slope_stats, dem, parcel_geom)
 
     result = RetentionAnalysis(
         parcel_id=parcel_id,
@@ -158,6 +160,7 @@ async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> Retention
             for f in flows
         ],
         relief=relief,
+        slope=slope,
     )
     cache.write_json("retention", _cache_key(parcel_id), result.model_dump(mode="json"))
     return result

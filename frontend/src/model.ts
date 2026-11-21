@@ -84,6 +84,20 @@ export interface RetentionAnalysis {
   ditches_checked: boolean
   flow: FlowPath[]
   relief: ReliefImage | null
+  slope: TerrainSlope | null
+}
+
+export interface TerrainSlope {
+  mean_pct: number
+  p90_pct: number
+  steep_share: number
+  steep_ha: number
+  /** mean downhill direction, 0 = north, clockwise; null on flat ground */
+  fall_azimuth_deg: number | null
+  relative_height_m: number
+  outflow_edge_m: number
+  outflow_area_ha: number
+  runon_area_ha: number
 }
 
 
@@ -267,6 +281,27 @@ export interface Recommendation {
   formalities: string | null
   site_ids: number[]
   ditch_ids: number[]
+  irrigation: IrrigationEstimate | null
+}
+
+/** Water and rough running cost of one irrigation dose on the whole parcel (estimate). */
+export interface IrrigationEstimate {
+  water_m3: number
+  cost_pln: Range
+  /** abstraction allowed without a water-law permit (5 m³/day yearly average) */
+  yearly_limit_m3: number
+  over_limit: boolean
+}
+
+export interface ParcelShape {
+  length_m: number
+  width_m: number
+  box_width_m: number
+  elongation: number
+  compactness: number
+  axis_azimuth_deg: number
+  narrow_strip: boolean
+  winding: boolean
 }
 
 export interface AnalysisReport {
@@ -283,4 +318,5 @@ export interface AnalysisReport {
   land: ModuleResult<LandCover>
   terrain: ModuleResult<RetentionAnalysis>
   edo: ModuleResult<EdoDrought>
+  shape: ParcelShape | null
 }

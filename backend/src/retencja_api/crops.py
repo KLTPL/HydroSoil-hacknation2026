@@ -1,5 +1,6 @@
 """Crop catalogue: the 14 crop groups assessed by the IUNG-PIB agricultural drought
-monitoring system (SMSR). Agronomic parameters are added by the assessment module."""
+monitoring system (SMSR), plus permanent grassland (meadows and pastures). Agronomic
+parameters are added by the assessment module."""
 
 from retencja_api.models import Crop
 
@@ -18,6 +19,8 @@ CROPS: list[Crop] = [
     Crop(id="drzewa_owocowe", name="Drzewa owocowe"),
     Crop(id="tyton", name="Tytoń"),
     Crop(id="chmiel", name="Chmiel"),
+    Crop(id="laki", name="Łąki trwałe (koszone)"),
+    Crop(id="pastwiska", name="Pastwiska trwałe"),
 ]
 
 CROPS_BY_ID = {crop.id: crop for crop in CROPS}

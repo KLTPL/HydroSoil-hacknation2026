@@ -354,6 +354,16 @@ ol.recs {
   }
 }
 
+.rec-irrigation {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.rec-warning {
+  display: block;
+  margin-top: 2px;
+}
+
 .rec-sites {
   display: flex;
   flex-wrap: wrap;

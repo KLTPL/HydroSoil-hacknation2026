@@ -130,6 +130,20 @@ def open_canopy_et0(weather: DailyWeather, crop: CropParams, last_year: int, yea
     return round(float(np.mean(totals)), 1) if totals else 0.0
 
 
+def season_etc(weather: DailyWeather, crop: CropParams, last_year: int, years: int) -> float:
+    """Mean crop water use without stress (Kc × ET0) over the growing season."""
+    totals = []
+    for year in range(last_year - years + 1, last_year + 1):
+        start, *_, end = crop.stages(year)
+        i0, i1 = weather.index(start), weather.index(end) + 1
+        if 0 <= i0 and i1 <= len(weather.days):
+            totals.append(sum(
+                crop.kc(weather.days[i]) * float(np.nan_to_num(weather.et0[i]))
+                for i in range(i0, i1)
+            ))
+    return round(float(np.mean(totals)), 1) if totals else 0.0
+
+
 def assess_water(
     weather: DailyWeather, crop: CropParams, awc_mm_per_m: float, day: date, years: int
 ) -> WaterBalance:
@@ -179,6 +193,7 @@ def assess_water(
         risk_calendar=risk_calendar(weather, ks, crop, day.year - 1, years),
         critical_stage=crop.critical,
         open_canopy_et0_mm=open_canopy_et0(weather, crop, day.year - 1, years),
+        season_etc_mm=season_etc(weather, crop, day.year - 1, years),
         grid_lat=weather.latitude,
         grid_lon=weather.longitude,
     )

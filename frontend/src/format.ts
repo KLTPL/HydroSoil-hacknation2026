@@ -5,6 +5,7 @@ const decimal = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 1 })
 const percent = new Intl.NumberFormat('pl-PL', { style: 'percent', maximumFractionDigits: 0 })
 
 export const m3 = (value: number) => `${integer.format(value)} m³`
+export const whole = (value: number) => integer.format(value)
 export const m2 = (value: number) => `${integer.format(value)} m²`
 export const ha = (value: number) => `${decimal.format(value)} ha`
 export const meters = (value: number) => `${decimal.format(value)} m`

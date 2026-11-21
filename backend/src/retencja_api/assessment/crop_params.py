@@ -6,11 +6,15 @@ FAO-56 Tables 12 and 22, adjusted to the crop groups of the IUNG drought monitor
 
 from dataclasses import dataclass
 from datetime import date
+from typing import Literal
 
 # Bare soil / stubble outside the growing season: evaporation from the topsoil only.
 KC_OFF_SEASON = 0.3
 
 MonthDay = tuple[int, int]
+# arable: tilled and sown every year; grassland: permanent sward, mown or grazed;
+# orchard: trees or bushes in rows with a grass inter-row.
+CropGroup = Literal["arable", "grassland", "orchard"]
 
 
 @dataclass(frozen=True)
@@ -26,6 +30,7 @@ class CropParams:
     root_depth_m: float
     depletion_p: float  # fraction of available water used before stress starts
     critical: str  # stage most sensitive to water shortage (shown to the farmer)
+    group: CropGroup = "arable"
 
     def stages(self, year: int) -> list[date]:
         return [
@@ -97,11 +102,11 @@ CROP_PARAMS: dict[str, CropParams] = {
     ),
     "krzewy_owocowe": CropParams(
         (4, 1), (5, 1), (6, 1), (8, 15), (10, 15), 0.3, 1.05, 0.5, 0.6, 0.5,
-        "wzrost owoców (czerwiec–lipiec)",
+        "wzrost owoców (czerwiec–lipiec)", "orchard",
     ),
     "drzewa_owocowe": CropParams(
         (4, 10), (5, 10), (6, 15), (9, 15), (10, 31), 0.45, 0.95, 0.7, 1.0, 0.5,
-        "wzrost owoców (czerwiec–sierpień)",
+        "wzrost owoców (czerwiec–sierpień)", "orchard",
     ),
     "tyton": CropParams(
         (5, 20), (6, 15), (7, 15), (8, 25), (9, 20), 0.5, 1.15, 0.8, 0.8, 0.5,
@@ -110,5 +115,18 @@ CROP_PARAMS: dict[str, CropParams] = {
     "chmiel": CropParams(
         (4, 15), (5, 20), (7, 1), (8, 25), (9, 15), 0.3, 1.05, 0.85, 1.0, 0.5,
         "kwitnienie i tworzenie szyszek (lipiec)",
+    ),
+    # Permanent grassland (beyond the 14 SMSR groups), FAO-56 Tables 12 and 22. Regrowth
+    # starts when the mean air temperature passes 5 °C (early April in Poland) and the sward
+    # stays green until the end of October. Single Kc values average the cutting or grazing
+    # cycles ("averaged cutting effects"). Most grass roots in Polish meadows lie in the top
+    # 30 cm, so the root zone is the shallow end of the FAO-56 range (0.5 m).
+    "laki": CropParams(
+        (4, 1), (4, 20), (5, 10), (9, 15), (10, 31), 0.4, 0.9, 0.85, 0.5, 0.6,
+        "odrastanie runi po I i II pokosie (czerwiec–sierpień)", "grassland",
+    ),
+    "pastwiska": CropParams(
+        (4, 1), (4, 20), (5, 10), (9, 15), (10, 31), 0.4, 0.85, 0.75, 0.5, 0.6,
+        "odrastanie runi między wypasami (czerwiec–sierpień)", "grassland",
     ),
 }

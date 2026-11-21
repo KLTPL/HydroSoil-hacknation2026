@@ -14,6 +14,7 @@ from shapely.geometry.base import BaseGeometry
 
 from retencja_api.assessment.crop_params import CROP_PARAMS
 from retencja_api.assessment.diagnosis import diagnose, land_warnings
+from retencja_api.assessment.parcel_shape import parcel_shape
 from retencja_api.assessment.recommendations import recommend
 from retencja_api.background import shared_task
 from retencja_api.config import HISTORY_YEARS, TERRAIN_MAX_AREA_HA, TERRAIN_TIME_BUDGET_S
@@ -182,6 +183,7 @@ async def build_report(
     )
     if warnings := land_warnings(land.data):
         diagnosis = diagnosis.model_copy(update={"warnings": warnings, "confidence": "low"})
+    shape = parcel_shape(geom)
     if edo.data is not None:
         agrees = edo.data.drought == (diagnosis.level != "none")
         edo = edo.model_copy(update={"data": edo.data.model_copy(update={"agrees": agrees})})
@@ -192,7 +194,8 @@ async def build_report(
         generated_at=datetime.now(UTC),
         diagnosis=diagnosis,
         recommendations=recommend(
-            params, parcel.area_ha, water.data, soil.data, hydro.data, terrain.data
+            params, parcel.area_ha, water.data, soil.data, hydro.data, terrain.data, shape,
+            land.data,
         ),
         water=water,
         soil=soil,
@@ -201,4 +204,5 @@ async def build_report(
         land=land,
         terrain=terrain,
         edo=edo,
+        shape=shape,
     )

@@ -1,7 +1,7 @@
 from datetime import UTC, date, datetime
 
 from retencja_api.assessment.crop_params import CROP_PARAMS
-from retencja_api.assessment.recommendations import recommend
+from retencja_api.assessment.recommendations import CATEGORY_ORDER, recommend
 from retencja_api.models import (
     Assumptions,
     Comparison,
@@ -70,7 +70,11 @@ def test_irrigation_only_when_crop_is_stressed_and_comes_last():
     # KOWR sequence: retention and agrotechnics first, irrigation only as the last resort.
     stressed = recommend(CROP, 10, _water(20), SANDY, None, _terrain([DITCH]))
     assert stressed[-1].key == "irrigation"
-    assert [r.category for r in stressed[:2]] == ["retention", "soil"]
+    # A ditch now yields two retention measures (weirs, grass buffer), so check the whole
+    # sequence rather than the first two items.
+    categories = [r.category for r in stressed]
+    assert categories[0] == "retention" and "soil" in categories
+    assert categories == sorted(categories, key=CATEGORY_ORDER.__getitem__)
     assert stressed[-1].effect_m3.high == round(120 * 0.8 * 10 * 10)
     assert all(r.key != "irrigation" for r in recommend(CROP, 10, _water(80), None, None, None))
     off = recommend(CROP, 10, _water(20, in_season=False), None, None, None)

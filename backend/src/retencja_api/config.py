@@ -8,6 +8,16 @@ NMT_WCS_URL = (
     "https://mapy.geoportal.gov.pl/wss/service/PZGIK/NMT/GRID1/WCS/DigitalTerrainModelFormatTIFF"
 )
 NMT_COVERAGE_ID = "DTM_PL-KRON86-NH_TIFF"
+# Index of the pre-cut NMT sheets (static .asc files on opendata.geoportal.gov.pl).
+NMT_SHEET_INDEX_URL = (
+    "https://mapy.geoportal.gov.pl/wss/service/PZGIK/NMT/WMS/SkorowidzeUkladEVRF2007"
+)
+NMT_SHEET_LAYERS = (
+    "SkorowidzeNMT2023iStarsze",
+    "SkorowidzeNMT2024",
+    "SkorowidzeNMT2025",
+    "SkorowidzeNMT2026",
+)
 
 # Polish national grid (PL-1992); NMT, ULDK and all metric computations use it.
 CRS_METRIC = 2180
@@ -28,6 +38,13 @@ DEM_STRIP_MAX_M2 = 250_000
 DEM_FETCH_CONCURRENCY = 4
 DEM_FETCH_ATTEMPTS = 4
 DEM_FETCH_TIMEOUT_S = 180.0
+# Sheets (~35 MB each) are throttled per connection (~0.3 MB/s), so they are fetched
+# as parallel byte ranges.
+DEM_SHEET_CHUNK_BYTES = 2_000_000
+DEM_SHEET_CONCURRENCY = 16
+DEM_SHEET_TIMEOUT_S = 60.0
+# Sheets are ~2.2 × 2.3 km; index points this far apart cannot miss one.
+DEM_SHEET_PROBE_STEP_M = 1000
 
 # Analysis grid: 1 m LIDAR is block-averaged to this resolution (speed, less noise).
 ANALYSIS_RESOLUTION_M = 2

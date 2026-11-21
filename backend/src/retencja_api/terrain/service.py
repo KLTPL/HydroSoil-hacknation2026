@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
+from rasterio.errors import RasterioIOError
 from shapely.geometry import MultiPoint, Polygon, mapping
 from shapely.geometry.base import BaseGeometry
 
@@ -41,6 +42,7 @@ from retencja_api.terrain.ditches import (
 )
 from retencja_api.terrain.flow import encode_png, flow_lines, relief_rgba
 from retencja_api.terrain.nmt import Dem, load_dem
+from retencja_api.terrain.nmt_sheets import load_sheet_dem
 from retencja_api.terrain.retention import Site, find_sites
 from retencja_api.terrain.slope import slope_stats
 
@@ -102,6 +104,15 @@ def _save_relief(parcel_id: str, dem: Dem) -> ReliefImage:
     )
 
 
+async def _load_dem(bounds: tuple[float, float, float, float]) -> Dem:
+    """Static NMT sheets first; the (slower, load-sensitive) WCS if they fail."""
+    try:
+        return await load_sheet_dem(bounds, ANALYSIS_RESOLUTION_M)
+    except (httpx.HTTPError, RuntimeError, RasterioIOError) as exc:  # NoSheets too
+        log.warning("NMT sheets unavailable, falling back to WCS: %r", exc)
+    return await load_dem(bounds, ANALYSIS_RESOLUTION_M)
+
+
 def _cache_key(parcel_id: str) -> str:
     return f"{parcel_id}@v{ANALYSIS_VERSION}"
 
@@ -114,7 +125,7 @@ def cached_analysis(parcel_id: str) -> RetentionAnalysis | None:
 async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> RetentionAnalysis:
     """Download terrain, find retention sites and cache the result."""
     bounds = parcel_geom.buffer(PARCEL_BUFFER_M).bounds
-    dem_task = asyncio.ensure_future(load_dem(bounds, ANALYSIS_RESOLUTION_M))
+    dem_task = asyncio.ensure_future(_load_dem(bounds))
     try:
         ways = await fetch_waterways(geometry_to_wgs84(parcel_geom.buffer(PARCEL_BUFFER_M)).bounds)
     except httpx.HTTPError as exc:

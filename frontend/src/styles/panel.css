@@ -28,8 +28,9 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
+  font-size: var(--text-md);
   background: var(--glass);
-  backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-edge);
   border-radius: 24px;
   box-shadow: var(--shadow);
@@ -114,14 +115,14 @@
   align-items: center;
 
   h1 {
-    font-size: 1.2rem;
+    font-size: var(--text-lg);
     font-weight: 750;
     letter-spacing: -0.02em;
   }
 
   p {
     margin: 0;
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     color: var(--muted);
   }
 }
@@ -155,7 +156,7 @@
 
 .search .muted {
   margin-block-end: 0;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
 }
 
 .search-suggestions {
@@ -175,7 +176,7 @@
   li {
     padding: 8px 10px;
     border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: var(--text-md);
     cursor: pointer;
   }
 
@@ -187,7 +188,7 @@
 
 .search-placed {
   margin: 0.5rem 0 0;
-  font-size: 0.9rem;
+  font-size: var(--text-md);
 }
 
 .search-results {
@@ -205,6 +206,14 @@
 }
 
 /* Parcel card */
+.parcel {
+  padding-block-start: 4px;
+
+  .fine {
+    margin-block: 2px 0;
+  }
+}
+
 .parcel-head {
   display: flex;
   justify-content: space-between;
@@ -218,7 +227,7 @@
 
 .parcel-area {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: var(--text-lg);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -257,7 +266,7 @@
     grid-template-columns: 28px 1fr;
     gap: 10px;
     align-items: baseline;
-    font-size: 0.92rem;
+    font-size: var(--text-md);
     color: var(--muted);
     counter-increment: step;
 
@@ -296,12 +305,12 @@
 
 .progress-count {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   font-weight: 700;
 }
 
 .progress-time {
-  font-size: 1.6rem;
+  font-size: var(--text-xl);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -347,13 +356,13 @@
 }
 
 .step-label {
-  font-size: 0.92rem;
+  font-size: var(--text-md);
   font-weight: 600;
 }
 
 .step-fact,
 .step-time {
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--muted);
 }
 

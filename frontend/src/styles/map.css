@@ -45,7 +45,7 @@
 
 .glass {
   background: var(--glass);
-  backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-edge);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -105,7 +105,7 @@
   justify-self: start;
   align-self: start;
   background: var(--glass);
-  backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: var(--glass-blur);
 }
 
 .legend {

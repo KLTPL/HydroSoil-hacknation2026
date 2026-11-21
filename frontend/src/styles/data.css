@@ -2,7 +2,7 @@
 .facts {
   width: 100%;
   margin-block: 0.5rem;
-  font-size: 0.86rem;
+  font-size: var(--text-sm);
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
 
@@ -29,7 +29,7 @@
     margin: 4px 0 0;
     padding: 0;
     list-style: none;
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
 
@@ -76,7 +76,7 @@
 
 .risk-calendar {
   margin: 0.75rem 0;
-  font-size: 0.84rem;
+  font-size: var(--text-sm);
 
   ol {
     display: grid;
@@ -138,12 +138,12 @@
 }
 
 .site-headline {
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 
   small {
-    font-size: 0.8rem;
+    font-size: var(--text-sm);
     font-weight: 400;
     color: var(--muted);
   }
@@ -154,7 +154,7 @@
   grid-template-columns: repeat(4, auto);
   gap: 2px 12px;
   margin: 0;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
 
   /* label above value, one column per stat */
   > span {
@@ -172,7 +172,7 @@
 
 .site-advice,
 .site-note {
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
 }
 
 .site-note {
@@ -197,7 +197,7 @@
 
 .scenario-label {
   grid-column: 1 / -1;
-  font-size: 0.88rem;
+  font-size: var(--text-md);
   font-weight: 600;
 }
 
@@ -238,7 +238,7 @@
 }
 
 .scenario-value {
-  font-size: 0.88rem;
+  font-size: var(--text-md);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   text-align: end;
@@ -250,7 +250,7 @@
 
 .scenario-note {
   grid-column: 1 / -1;
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   color: var(--muted);
 }

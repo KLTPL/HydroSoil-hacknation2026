@@ -124,7 +124,7 @@ function IrrigationNote({ estimate }: { estimate: IrrigationEstimate }) {
       </span>{' '}
       {over_limit && (
         <span className="rec-warning">
-          ⚠ {fmt.m3(water_m3)} to więcej niż {fmt.m3(yearly_limit_m3)} rocznie (średnio 5 m³ na dobę), które można
+          {fmt.m3(water_m3)} to więcej niż {fmt.m3(yearly_limit_m3)} rocznie (średnio 5 m³ na dobę), które można
           pobrać bez pozwolenia wodnoprawnego.
         </span>
       )}

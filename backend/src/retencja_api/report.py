@@ -23,6 +23,7 @@ from retencja_api.config import (
     TERRAIN_MAX_AREA_HA,
     TERRAIN_TIME_BUDGET_S,
 )
+from retencja_api.drought.smsr_gmina import gmina_table, with_official
 from retencja_api.geo import geometry_to_wgs84
 from retencja_api.models import (
     AnalysisReport,
@@ -42,10 +43,23 @@ from retencja_api.modules import (
     soil_module,
     water_module,
 )
+from retencja_api.soil.iung import iung_code, with_iung_category
 from retencja_api.soil.soilgrids import DEFAULT_PROFILE, humus_water_gain_mm
 from retencja_api.terrain.service import analyze_parcel, cached_analysis
 
 log = logging.getLogger(__name__)
+
+IUNG_SOIL_SOURCE = (
+    "Mapa kategorii glebowych SMSR (IUNG-PIB)",
+    "https://susza.iung.pulawy.pl/kategorie/",
+    "Dane publiczne IUNG-PIB",
+)
+
+SMSR_SOURCE = (
+    "System Monitoringu Suszy Rolniczej, tabele dla gmin (IUNG-PIB)",
+    "https://susza.iung.pulawy.pl/wykazy/",
+    "Dane publiczne IUNG-PIB (na zlecenie MRiRW)",
+)
 
 NMT_SOURCE = (
     "Numeryczny Model Terenu (GUGiK, LIDAR)",
@@ -98,6 +112,54 @@ async def terrain_module(
         return _terrain_failed(elapsed())
 
     return _terrain_ok(data, "live", elapsed())
+
+
+async def soil_with_category(
+    parcel_id: str, geom: BaseGeometry, bounds_wgs84: tuple[float, float, float, float]
+) -> ModuleResult[SoilProfile]:
+    """SoilGrids texture and water capacity, with the soil category from the IUNG map
+    (the one the official drought criterion uses) when that map answers."""
+    soil, code = await asyncio.gather(
+        soil_module(bounds_wgs84), iung_code(parcel_id, geom), return_exceptions=True
+    )
+    if isinstance(soil, BaseException):
+        raise soil
+    if isinstance(code, httpx.HTTPError):
+        log.warning("IUNG soil category unavailable for %s: %r", parcel_id, code)
+        return soil
+    if isinstance(code, BaseException):
+        raise code
+    if soil.data is None:
+        return soil
+    profile = with_iung_category(soil.data, code)
+    if profile.category_source != "IUNG":
+        return soil
+    name, url, licence = IUNG_SOIL_SOURCE
+    source = DataSource(name=name, url=url, license=licence, retrieved="live",
+                        retrieved_at=datetime.now(UTC))
+    return soil.model_copy(update={"data": profile, "sources": [*soil.sources, source]})
+
+
+async def with_official_smsr(
+    water: ModuleResult[WaterBalance], parcel_id: str, crop_id: str
+) -> ModuleResult[WaterBalance]:
+    """Replace the computed SMSR verdict with the official one for the gmina, if published."""
+    check = water.data.smsr if water.data else None
+    if check is None:
+        return water
+    try:
+        table = await gmina_table(parcel_id, check.period_end.year)
+    except httpx.HTTPError as exc:
+        log.warning("SMSR gmina table unavailable for %s: %r", parcel_id, exc)
+        return water
+    official = with_official(check, table, crop_id)
+    if not official.official:
+        return water
+    name, url, licence = SMSR_SOURCE
+    source = DataSource(name=name, url=url, license=licence, retrieved="live",
+                        retrieved_at=datetime.now(UTC))
+    data = water.data.model_copy(update={"smsr": official})
+    return water.model_copy(update={"data": data, "sources": [*water.sources, source]})
 
 
 def _terrain_failed(duration_ms: int) -> ModuleResult[RetentionAnalysis]:
@@ -160,16 +222,17 @@ async def build_report(
         return result
 
     async def soil_and_water() -> tuple[ModuleResult[SoilProfile], ModuleResult[WaterBalance]]:
-        soil = await report("soil", soil_module(geom_wgs84.bounds))
+        soil = await report("soil", soil_with_category(parcel.id, geom, geom_wgs84.bounds))
         profile = soil.data or DEFAULT_PROFILE
         water = await report(
             "water",
             water_module(
                 centre.y, centre.x, params, analysis_date, profile.awc_mm_per_m, HISTORY_YEARS,
                 humus_water_gain_mm(profile) if soil.data else 0.0,
+                (crop.id, profile.category),
             ),
         )
-        return soil, water
+        return soil, await with_official_smsr(water, parcel.id, crop.id)
 
     (soil, water), satellite, hydro, land, terrain, edo = await asyncio.gather(
         soil_and_water(),

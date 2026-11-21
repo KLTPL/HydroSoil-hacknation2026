@@ -115,7 +115,7 @@ def wetland(ctx: ParcelContext) -> Recommendation | None:
     destroys the soil; keeping the water table high is the retention measure."""
     soil, slope, terrain = ctx.soil, ctx.slope, ctx.terrain
     organic = soil is not None and not soil.assumed and (
-        soil.organic_carbon_pct >= ORGANIC_SOIL_SOC_PCT
+        soil.organic_soil or soil.organic_carbon_pct >= ORGANIC_SOIL_SOC_PCT
     )
     valley = (
         slope is not None and terrain is not None and bool(terrain.ditches)

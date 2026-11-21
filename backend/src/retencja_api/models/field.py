@@ -25,6 +25,8 @@ class SoilProfile(BaseModel):
     layers: list[SoilLayer]
     resolution_m: float
     assumed: bool = False  # True when soil data was missing and a default was used
+    category_source: str = "SoilGrids"  # "IUNG" when read from the IUNG soil category map
+    organic_soil: bool = False  # peat or muck on the IUNG map
 
 
 class WeatherWindow(BaseModel):
@@ -62,6 +64,21 @@ class Scenarios(BaseModel):
     items: list[Scenario]
 
 
+class SmsrCheck(BaseModel):
+    """Official agricultural drought criterion (IUNG SMSR): climatic water balance of the
+    last complete six-dekad period against the threshold for the crop and soil category."""
+
+    period_start: date
+    period_end: date
+    soil_category: str
+    kbw_mm: float
+    threshold_mm: float | None  # None: no yield loss from drought in this period
+    drought: bool
+    # True when `drought` comes from the official IUNG table for the gmina (2020 onwards);
+    # False when computed here from reanalysis weather.
+    official: bool = False
+
+
 class WaterBalance(BaseModel):
     window: WeatherWindow
     in_season: bool
@@ -77,6 +94,7 @@ class WaterBalance(BaseModel):
     open_canopy_et0_mm: float  # mean ET0 from sowing until the canopy closes
     season_etc_mm: float = 0.0  # mean crop water use over the growing season (10 years)
     scenarios: Scenarios | None = None  # None outside the growing season
+    smsr: SmsrCheck | None = None  # None outside 21 March – 30 September or for grassland
     grid_lat: float
     grid_lon: float
 

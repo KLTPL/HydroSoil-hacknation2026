@@ -6,6 +6,7 @@ from retencja_api.models import (
     Comparison,
     HydroStatus,
     SignalVerdict,
+    SmsrCheck,
     SourceSignal,
     VegetationState,
     WaterBalance,
@@ -148,6 +149,8 @@ def source_signals(
     else:
         out.append(SourceSignal(key="satellite", source="Uwodnienie roślin z satelity",
                                 verdict="missing", value="nie porównano", note=skip or ""))
+    if water.smsr is not None:
+        out.append(smsr_signal(water.smsr))
     if hydro is not None:
         n = len(hydro.drought_warnings)
         out.append(
@@ -162,7 +165,27 @@ def source_signals(
     return out
 
 
+# Not a comparison with earlier years: IMGW warnings are current-only, and the SMSR criterion
+# is an absolute threshold on the same water balance the KBW comparison already counts.
+NOT_VOTING = ("hydro", "smsr")
+
+
+def smsr_signal(check: SmsrCheck) -> SourceSignal:
+    period = f"{check.period_start:%d.%m}–{check.period_end:%d.%m}"
+    if check.threshold_mm is None:
+        value = f"KBW {check.kbw_mm:+.0f} mm; w tym okresie susza nie obniża plonu"
+    else:
+        value = f"KBW {check.kbw_mm:+.0f} mm, próg suszy {check.threshold_mm:.0f} mm"
+    return SourceSignal(
+        key="smsr",
+        source="Kryterium suszy rolniczej IUNG (SMSR)",
+        verdict="dry" if check.drought else "normal",
+        value=value,
+        note=f"okres {period}, kategoria gleby {check.soil_category}; "
+        + ("wynik IUNG dla gminy" if check.official else "obliczone z reanalizy pogody"),
+    )
+
+
 def dry_signals(signals: list[SourceSignal]) -> list[str]:
-    """Names of the 10-year comparisons pointing to a drier than usual date.
-    IMGW warnings are current-only, so they do not count for historical dates."""
-    return [s.source.lower() for s in signals if s.verdict == "dry" and s.key != "hydro"]
+    """Names of the 10-year comparisons pointing to a drier than usual date."""
+    return [s.source.lower() for s in signals if s.verdict == "dry" and s.key not in NOT_VOTING]

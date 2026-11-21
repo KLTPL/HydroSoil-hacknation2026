@@ -125,6 +125,23 @@ w Łącku 2022 (pkt d1).
 Wszystkie pierwsze zapytania trwały 19–30 s (teren czeka pełne 25 s). Mieści się to w 30 s, ale
 na granicy; strumień SSE pokazuje postęp, więc w praktyce nie jest to problem.
 
+### Stan poprawek (21.11.2026)
+
+Poprawione punkty 1–9 i 13:
+
+- Werdykt stosuje kryterium SMSR: progi z rozporządzenia, a od 2020 r. oficjalny wynik IUNG dla gminy. Łącko 2022 daje teraz „uwagę”, a nie „niedobór”.
+- Kategoria gleby pochodzi z mapy IUNG; kod 5 oznacza glebę organiczną.
+- Remisy w rankingu dostają środkową pozycję, a dochodzi minimalna różnica.
+- NDMI porównujemy tylko przy co najmniej 3 latach i zwartym łanie.
+- Sady nie są już oznaczane jako teren nierolny.
+- Na terenie nierolnym zostają tylko zalecenia retencji.
+- Nie ma już zalecenia próchnicy z efektem 0 m³.
+- Liczba dawek nawadniania wynika z wielkości dawki.
+- Błąd pobierania terenu jest zapamiętywany na 10 minut, a limit powierzchni liczymy z prostokąta pobierania.
+- Sygnały „mokro” znoszą sygnały „sucho”.
+
+Otwarte pozostają punkty 10–12, 14 i 15.
+
 ## (e) Ściąga do obrony: pytania jury o metody
 
 | # | Pytanie | Krótka, uczciwa odpowiedź (źródło) |

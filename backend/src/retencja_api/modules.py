@@ -9,6 +9,7 @@ import httpx
 
 from retencja_api.assessment.crop_params import CropParams
 from retencja_api.assessment.scenarios import build_scenarios
+from retencja_api.assessment.smsr import smsr_check
 from retencja_api.assessment.water_balance import assess_water
 from retencja_api.background import run_within
 from retencja_api.drought.edo import CDI_CLASSES, CdiNotPublishedError, fetch_cdi
@@ -125,7 +126,9 @@ async def water_module(
     awc_mm_per_m: float,
     years: int,
     humus_gain_mm: float = 0.0,
+    smsr_crop: tuple[str, str] | None = None,
 ) -> ModuleResult[WaterBalance]:
+    """`smsr_crop`: (crop id, IUNG soil category) for the official drought criterion."""
     timer = _Timer()
     yesterday = date.today() - timedelta(days=1)
     effective = min(day, yesterday)  # today's weather is not complete yet
@@ -147,6 +150,8 @@ async def water_module(
             )
     effective = min(effective, weather.last_complete_day())
     data = assess_water(weather, crop, awc_mm_per_m, effective, years)
+    if smsr_crop is not None:
+        data.smsr = smsr_check(weather, *smsr_crop, effective)
     depletion_mm = data.taw_mm * (1 - data.available_pct.value / 100)
     scenarios = build_scenarios(
         weather, crop, data.taw_mm, depletion_mm, effective, years, humus_gain_mm

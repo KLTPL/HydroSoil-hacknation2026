@@ -2,12 +2,17 @@
 Each statement names the numbers it is based on; missing inputs lower the confidence."""
 
 from retencja_api.assessment.crop_params import CropParams
-from retencja_api.assessment.signals import SATELLITE_LIMITATIONS, dry_signals, source_signals
+from retencja_api.assessment.level import drought_level
+from retencja_api.assessment.signals import (
+    NOT_VOTING,
+    SATELLITE_LIMITATIONS,
+    dry_signals,
+    source_signals,
+)
 from retencja_api.landcover.worldcover import farmland_share, is_farmland
 from retencja_api.models import (
     Cause,
     Diagnosis,
-    DroughtLevel,
     HydroStatus,
     LandCover,
     RetentionAnalysis,
@@ -28,25 +33,10 @@ LIMITATIONS = [
     "Gleba z modelu SoilGrids (250 m), a nie z odkrywki; mapa glebowo-rolnicza może się różnić.",
     "Bilans wody w glebie nie uwzględnia wód gruntowych, drenowania ani nawadniania.",
     "Fazy rozwojowe uprawy przyjęto dla typowych terminów siewu w Polsce.",
-    "Progi suszy są przybliżeniem metody IUNG (KBW), a nie oficjalnym komunikatem SMSR.",
+    "Kryterium suszy SMSR: od 2020 r. wynik IUNG dla gminy (cała gmina, nie działka); "
+    "dla wcześniejszych lat liczone tu z reanalizy, która daje zwykle mniej ujemny KBW niż "
+    "stacje IUNG, więc susza może zostać niedoszacowana.",
 ]
-
-
-def _level(water: WaterBalance, crop: CropParams, readings: list[SourceSignal]) -> DroughtLevel:
-    """Absolute crop stress from the soil water balance, graded by how unusual it is.
-    Sources saying "wetter than usual" cancel those saying "drier"."""
-    stressed = water.available_pct.value < 100 * (1 - crop.depletion_p)
-    compared = [r for r in readings if r.key != "hydro"]
-    net = sum(r.verdict == "dry" for r in compared) - sum(r.verdict == "wet" for r in compared)
-    if not water.in_season:
-        return "watch" if net >= 2 else "none"
-    if stressed and net >= 2:
-        return "severe"
-    if (stressed and net >= 1) or net >= 2:
-        return "moderate"
-    if stressed or net >= 1:
-        return "watch"
-    return "none"
 
 
 def _headline(water: WaterBalance, crop: CropParams, signals: list[SourceSignal]) -> str:
@@ -68,7 +58,7 @@ def _headline(water: WaterBalance, crop: CropParams, signals: list[SourceSignal]
             f"Uprawa ma wodę: w strefie korzeni jest {left:.0f} % wody dostępnej "
             f"(stres poniżej {threshold:.0f} %)."
         )
-    compared = [s for s in signals if s.verdict != "missing" and s.key != "hydro"]
+    compared = [s for s in signals if s.verdict != "missing" and s.key not in NOT_VOTING]
     dry = [s.source.lower() for s in compared if s.verdict == "dry"]
     wet = [s.source.lower() for s in compared if s.verdict == "wet"]
     if dry and wet:
@@ -239,7 +229,7 @@ def diagnose(
         )
     readings = source_signals(water, vegetation, hydro, crop)
     signals = dry_signals(readings)
-    level = _level(water, crop, readings)
+    level = drought_level(water, crop, readings)
     causes = _weather_causes(water)
     if soil is not None:
         causes += _soil_causes(soil, crop, water.taw_mm)

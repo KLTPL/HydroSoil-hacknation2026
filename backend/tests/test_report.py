@@ -70,6 +70,11 @@ def offline_modules(monkeypatch):
                  "edo_module"):
         monkeypatch.setattr(report, name, unavailable)
 
+    async def no_category(_id, _geom):
+        return None
+
+    monkeypatch.setattr(report, "iung_code", no_category)
+
 
 async def test_terrain_ok_reports_live_source(monkeypatch):
     async def fast(_id, _geom):

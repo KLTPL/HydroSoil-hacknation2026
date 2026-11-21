@@ -164,6 +164,19 @@ export interface SoilProfile {
   layers: SoilLayer[]
   resolution_m: number
   assumed: boolean
+  category_source: string
+  organic_soil: boolean
+}
+
+/** Official agricultural drought criterion (IUNG SMSR) for the last six-dekad period. */
+export interface SmsrCheck {
+  period_start: string
+  period_end: string
+  soil_category: string
+  kbw_mm: number
+  threshold_mm: number | null
+  drought: boolean
+  official: boolean
 }
 
 export interface RiskMonth {
@@ -193,6 +206,7 @@ export interface WaterBalance {
   risk_calendar: RiskMonth[]
   critical_stage: string
   scenarios: Scenarios | null
+  smsr: SmsrCheck | null
   grid_lat: number
   grid_lon: number
 }

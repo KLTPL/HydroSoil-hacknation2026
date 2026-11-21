@@ -50,7 +50,9 @@ export function SoilSection({ soil }: { soil: ModuleResult<SoilProfile> }) {
       {(s) => (
         <>
           <p>
-            <strong>{s.texture}</strong>: kategoria {s.category}, {s.category_label}. Woda
+            <strong>{s.texture}</strong>: kategoria {s.category}, {s.category_label}
+            {s.category_source === 'IUNG' ? ' (mapa kategorii glebowych IUNG)' : ''}
+            {s.organic_soil ? '; gleba organiczna (torf lub mursz) wg IUNG' : ''}. Woda
             dostępna dla roślin ok. {fmt.mm(s.awc_mm_per_m)} na 1 m profilu, węgiel organiczny w
             warstwie ornej {fmt.num(s.organic_carbon_pct)} %.
           </p>

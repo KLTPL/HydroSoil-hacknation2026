@@ -85,6 +85,7 @@ cd backend && uv run python -m retencja_api.warm_cache [id_działki ...]
 | Rzeźba terenu | Przełącznik podkładu „Zdjęcie / Rzeźba terenu”: cieniowana mikrorzeźba z LIDAR (wysokość względem otoczenia ±kilkadziesiąt cm) i drogi spływu wody. Widać niecki, bruzdy i rowy, których nie widać na zdjęciu. |
 | Symulacja ulewy | Przycisk „Puść ulewę 30 mm”: animacja deszczu spływającego po drogach spływu z LIDAR do niecek i poza działkę, z licznikami: ile spada, ile spływa, ile zatrzyma plan (oczka, obniżenia, zastawki). Wariant „Dziś / Z planem”. Objętości pochodzą z analizy; animacja tylko je ilustruje. Przy ustawieniu „ogranicz ruch” pokazuje od razu stan końcowy. |
 | Co jeśli | Scenariusze na 30 dni od daty analizy: bez deszczu, sucho / typowo / mokro (pogoda tych samych dni z lat poprzednich), nawadnianie teraz, +1 % próchnicy. Dla każdego: kiedy zacznie się silny stres, ile dni potrwa, ile wody zostanie w glebie, jaka dawka ją uzupełni. |
+| Kryterium suszy IUNG (SMSR) | Oficjalny wynik IUNG dla gminy, uprawy i kategorii gleby (od 2020 r.) albo próg KBW z rozporządzenia MRiRW liczony dla działki; widoczny w „głosowaniu źródeł”. |
 | Porównanie z EDO | Klasa wskaźnika CDI Europejskiego Obserwatorium Suszy dla tego miejsca i dekady oraz informacja, czy zgadza się z naszą oceną. |
 | Kalendarz ryzyka | W ilu z ostatnich 10 lat uprawa miała co najmniej 15 dni silnego stresu wodnego, osobno dla każdego miesiąca od kwietnia do września. |
 | Raport | Druk i zapis do PDF (A4, mapa działki, źródła z adresami); link do udostępnienia. |
@@ -133,10 +134,11 @@ Kod: `backend/src/retencja_api/` (`api.py`, `report.py`, `modules.py`, `assessme
 | Klimatyczny bilans wodny (KBW) | Opad minus ewapotranspiracja wskaźnikowa ET0 (FAO-56) z 60 dni, czyli sześciu dekad, jak w Systemie Monitoringu Suszy Rolniczej IUNG. |
 | Woda w glebie | Dobowy bilans wody w strefie korzeni metodą FAO-56 z pojedynczym współczynnikiem uprawowym (Allen i in.). Dla każdej uprawy: krzywa Kc z typowymi w Polsce terminami faz, głębokość korzeni i współczynnik p. Całkowita woda dostępna = pojemność wodna × głębokość korzeni. Liczony jest też współczynnik stresu Ks. Symulacja startuje w listopadzie roku poprzedzającego najstarszy porównywany rok. |
 | Pojemność wodna gleby | Funkcja pedotransferowa Saxtona i Rawlsa (2006) z zawartości piasku, iłu i węgla organicznego (SoilGrids), 0–100 cm. |
-| Kategoria gleby IUNG | Przybliżenie z uziarnienia: od I (piasek luźny i słabogliniasty) do IV (glina średnia i ciężka, ił). |
-| Werdykt | Bezwzględny stres uprawy (woda dostępna poniżej progu 1 − p), stopniowany liczbą niezależnych sygnałów suszy: model wody w glebie, KBW, wilgotność gleby z reanalizy (ERA5-Land lub MERRA-2), NDMI z satelity. „Sucho” oznacza: wśród 3 najsuchszych z ok. 11 lat albo co najmniej 15 % poniżej średniej. |
+| Kategoria gleby IUNG | Z mapy kategorii glebowych SMSR (IUNG-PIB, warstwa `katgl_landuse2024`): dominanta z do 9 punktów działki; kod 5 oznacza glebę organiczną. Gdy mapa nie odpowiada: przybliżenie z uziarnienia SoilGrids, od I (piasek luźny) do IV (glina średnia i ciężka, ił). |
+| Kryterium suszy rolniczej (SMSR) | Rozporządzenie MRiRW z 11.04.2019 (Dz.U. 2019 poz. 739): KBW ostatniego pełnego okresu sześciodekadowego (21.III–30.IX) poniżej progu dla uprawy i kategorii gleby (tabela progów IUNG). Od 2020 r. wynik bierzemy z oficjalnej tabeli IUNG dla gminy; dla wcześniejszych lat liczymy go z reanalizy. Susza wg SMSR daje co najmniej „niedobór”; gdy IUNG suszy w gminie nie stwierdził, werdykt kończy się na „uwadze”. |
+| Werdykt | Najpierw kryterium SMSR (wyżej). Poza nim: bezwzględny stres uprawy (woda dostępna poniżej progu 1 − p), stopniowany liczbą niezależnych sygnałów suszy pomniejszoną o sygnały „mokro”: model wody w glebie, KBW, wilgotność gleby z reanalizy (ERA5-Land lub MERRA-2), NDMI z satelity. „Sucho” oznacza: wśród 3 najsuchszych z ok. 11 lat albo co najmniej 15 % poniżej średniej; różnice mniejsze niż 5 pkt proc. wody w glebie i 10 mm KBW liczą się jako typowe. Remisy dostają środkową pozycję. |
 | Silny stres / kalendarz ryzyka | Ks < 0,5; miesiąc liczy się jako suchy przy co najmniej 15 takich dniach. Próg dobrano tak, by wyróżniały się znane susze 2015, 2018 i 2019. |
-| Satelita | Sentinel-2 L2A: najnowsze zdjęcie z 20 dni przed datą, na którym co najmniej 60 % działki jest bez chmur (maska SCL). To samo okno w każdym wcześniejszym roku od 2017. NDVI = (B08−B04)/(B08+B04), NDMI = (B08−B11)/(B08+B11), siatka 20 m, z korektą przesunięcia BOA. Na łące i pastwisku spadek NDMI liczy się jako sygnał suszy tylko wtedy, gdy potwierdza go bilans wody w glebie (inaczej to zwykle pokos lub wypas); w sadzie raport zaznacza, że piksel łączy drzewa z murawą. |
+| Satelita | Sentinel-2 L2A: najnowsze zdjęcie z 20 dni przed datą, na którym co najmniej 60 % działki jest bez chmur (maska SCL). To samo okno w każdym wcześniejszym roku od 2017. Porównanie liczy się tylko przy co najmniej 3 latach porównania i zwartym łanie (NDVI ≥ 0,4 teraz i średnio), a dla upraw polowych nie w fazie dojrzewania. NDVI = (B08−B04)/(B08+B04), NDMI = (B08−B11)/(B08+B11), siatka 20 m, z korektą przesunięcia BOA. Na łące i pastwisku spadek NDMI liczy się jako sygnał suszy tylko wtedy, gdy potwierdza go bilans wody w glebie (inaczej to zwykle pokos lub wypas); w sadzie raport zaznacza, że piksel łączy drzewa z murawą. |
 | Łąki i pastwiska | Parametry FAO-56 (tab. 12 i 22): Kc 0,40 / 0,90 / 0,85 (łąka, uśrednione pokosy) i 0,40 / 0,85 / 0,75 (pastwisko), korzenie 0,5 m, p = 0,6; wegetacja od 1 kwietnia do 31 października. |
 | Spadek i kształt działki | Spadek z NMT wygładzonego w oknie 10 m (spadek pola, nie bruzdy), kierunek spływu, udział powierzchni powyżej 10 % (silna erozja wg IUNG), wysokość działki względem otoczenia, krawędź, przez którą spływa woda (D8). Kształt: prostokąt o tym samym polu i obwodzie (szerokość robocza, także dla krętych pasów), minimalny prostokąt obejmujący, zwartość 4πA/P². Wąski pas: szerokość < 40 m i długość ≥ 5 × szerokość. |
 | Zagłębienia | Wypełnianie zagłębień metodą priority-flood (Barnes i in. 2014) na NMT LIDAR 1 m przepróbkowanym do 2 m, kierunki spływu D8. Zagłębienia o głębokości co najmniej 0,15 m i powierzchni co najmniej 300 m², w co najmniej 30 % na działce. Zatrzymana woda = min(pojemność, zlewnia × 30 mm × współczynnik spływu 0,05–0,25). |
@@ -240,12 +242,13 @@ powtarzalne i możliwe do wyjaśnienia.
   aplikacja sama przechodzi na NASA POWER. ET0 z NASA POWER (własne obliczenie FAO-56) jest
   o ok. 10 % niższe niż z Open-Meteo. Porównanie z wcześniejszymi latami pozostaje spójne, bo
   obie strony porównania pochodzą z tego samego źródła.
-- **Gleba jest modelowana** (SoilGrids, 250 m), a nie badana w terenie. Kategoria IUNG to
-  przybliżenie z uziarnienia, nie oficjalna mapa podatności gleb na suszę.
+- **Gleba jest modelowana** (SoilGrids, 250 m), a nie badana w terenie. Kategoria gleby
+  pochodzi z mapy IUNG; przybliżenie z uziarnienia służy tylko jako zapas.
 - **Model wody w glebie** nie uwzględnia wód gruntowych, drenowania ani nawadniania. Korzysta
   z typowych terminów faz, a nie z rzeczywistej daty siewu.
-- **Progi suszy przybliżają metodę IUNG.** Nie są oficjalnym komunikatem SMSR. Skalibrowano je
-  na znanych latach suszy i sprawdzono na niewielkiej liczbie działek.
+- **Kryterium SMSR dla lat 2016–2019 liczymy sami** z reanalizy (ET0 FAO-56). Nasz KBW bywa
+  mniej ujemny niż KBW IUNG ze stacji, więc susza z tamtych lat może być niedoszacowana. Od
+  2020 r. używamy oficjalnej tabeli IUNG, która opisuje całą gminę, a nie samą działkę.
 - **Teren:** usługa WCS GUGiK potrzebuje ok. 10 s plus 20–40 s na każdy km², a przy dużym
   obciążeniu znacznie dłużej. Dla działek większych niż kilka hektarów teren może pojawić się
   po raporcie (strona uzupełni się sama). Dla działek powyżej 250 ha analiza terenu jest
@@ -293,7 +296,7 @@ powtarzalne i możliwe do wyjaśnienia.
   - działka z Kujaw w lipcu 2019 daje „silny niedobór”;
   - próba na 10 działkach z różnych regionów, upraw i dat (2019–2026): wszystkie raporty
     kompletne, pierwsza odpowiedź w 4–13 s.
-- **Testy automatyczne** (`cd backend && uv run pytest`, 109 testów):
+- **Testy automatyczne** (`cd backend && uv run pytest`, 125 testów):
   - promieniowanie FAO-56 sprawdzone na przykładzie z podręcznika FAO;
   - wiarygodność wyników Penmana-Monteitha;
   - zachowanie bilansu wody w glebie;

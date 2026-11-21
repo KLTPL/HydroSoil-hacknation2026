@@ -8,14 +8,17 @@ from datetime import UTC, date, datetime, timedelta
 import httpx
 
 from retencja_api.assessment.crop_params import CropParams
+from retencja_api.assessment.scenarios import build_scenarios
 from retencja_api.assessment.water_balance import assess_water
 from retencja_api.background import run_within
+from retencja_api.drought.edo import CDI_CLASSES, CdiNotPublishedError, fetch_cdi
 from retencja_api.hydro.imgw import fetch_warnings, warnings_for
 from retencja_api.landcover.worldcover import land_cover
 from retencja_api.meteo.nasa_power import fetch_daily_power
 from retencja_api.meteo.openmeteo import fetch_daily
 from retencja_api.models import (
     DataSource,
+    EdoDrought,
     HydroStatus,
     LandCover,
     ModuleResult,
@@ -53,6 +56,11 @@ SOURCES = {
         "ESA WorldCover 2021 (10 m) przez Microsoft Planetary Computer",
         "https://esa-worldcover.org",
         "CC BY 4.0 © ESA WorldCover project",
+    ),
+    "edo": (
+        "Europejskie Obserwatorium Suszy (EDO, Copernicus EMS), wskaźnik CDI v4.1",
+        "https://drought.emergency.copernicus.eu/data/wcs-service",
+        "Dane Copernicus: bezpłatne i otwarte (rozp. UE 1159/2013), wymagane podanie źródła",
     ),
     "hydro": (
         "IMGW-PIB, ostrzeżenia hydrologiczne (dane publiczne)",
@@ -110,7 +118,13 @@ def weather_period(day: date, years: int) -> tuple[date, date]:
 
 
 async def water_module(
-    lat: float, lon: float, crop: CropParams, day: date, awc_mm_per_m: float, years: int
+    lat: float,
+    lon: float,
+    crop: CropParams,
+    day: date,
+    awc_mm_per_m: float,
+    years: int,
+    humus_gain_mm: float = 0.0,
 ) -> ModuleResult[WaterBalance]:
     timer = _Timer()
     yesterday = date.today() - timedelta(days=1)
@@ -133,6 +147,11 @@ async def water_module(
             )
     effective = min(effective, weather.last_complete_day())
     data = assess_water(weather, crop, awc_mm_per_m, effective, years)
+    depletion_mm = data.taw_mm * (1 - data.available_pct.value / 100)
+    scenarios = build_scenarios(
+        weather, crop, data.taw_mm, depletion_mm, effective, years, humus_gain_mm
+    )
+    data = data.model_copy(update={"scenarios": scenarios})
     message = (
         f"Najnowsze dostępne dane pogodowe są z {effective:%d.%m.%Y}; ocena dotyczy tego dnia."
         if effective != day
@@ -206,6 +225,42 @@ async def hydro_module(voivodeship: str, day: date) -> ModuleResult[HydroStatus]
         status="ok",
         data=warnings_for(voivodeship, warnings),
         sources=[_source("hydro")],
+        duration_ms=timer.ms(),
+    )
+
+
+EDO_RECENT_CAVEAT = date(2025, 5, 15)  # JRC: soil moisture inputs uncertain since then
+
+
+async def edo_module(lat: float, lon: float, day: date) -> ModuleResult[EdoDrought]:
+    timer = _Timer()
+    try:
+        dekad, value, downloaded = await fetch_cdi(lat, lon, day)
+    except (httpx.HTTPError, CdiNotPublishedError) as exc:
+        log.warning("EDO CDI unavailable: %r", exc)
+        return ModuleResult(
+            status="unavailable",
+            message="Europejskie Obserwatorium Suszy nie odpowiada lub nie ma mapy dla tej daty.",
+            duration_ms=timer.ms(),
+        )
+    if value not in CDI_CLASSES:
+        return ModuleResult(
+            status="unavailable",
+            message="Brak wartości wskaźnika CDI w tym miejscu.",
+            duration_ms=timer.ms(),
+        )
+    label, drought = CDI_CLASSES[value]
+    message = (
+        "JRC zaleca ostrożność przy interpretacji CDI od połowy maja 2025 r. "
+        "(niepewne dane o wilgotności gleby)."
+        if dekad >= EDO_RECENT_CAVEAT
+        else None
+    )
+    return ModuleResult(
+        status="ok",
+        message=message,
+        data=EdoDrought(dekad=dekad, cdi_class=value, label=label, drought=drought),
+        sources=[_source("edo", downloaded)],
         duration_ms=timer.ms(),
     )
 

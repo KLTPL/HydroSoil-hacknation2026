@@ -15,10 +15,11 @@ result comes from the cache and appears instantly.
 | 0:35–1:00 | Report top: verdict badge, evidence list | „Po kilkunastu sekundach mamy ocenę: niedobór wody. Każde zdanie ma liczby: ile wody zostało w glebie, bilans opadów i parowania, zdjęcie satelitarne. Wszystko porównane z tym samym dniem w poprzednich dziesięciu latach.” |
 | 1:00–1:15 | Causes with mm bars | „Przyczyny w milimetrach: tutaj gleba magazynuje mało wody, a woda z ulew spływa z pola.” |
 | 1:15–1:50 | Map: zoom to the parcel, retention sites (blue), ditches and weirs (red points); click a site card | „To jest nasz wyróżnik. Z lotniczego skanowania LIDAR znajdujemy zagłębienia, w których zbiera się woda, i rowy, nawet takie, których nie ma na żadnej mapie. Aplikacja proponuje cztery zastawki, rozmieszczone według spadku rowu, i liczy, ile wody zatrzymają: od dwóch do sześciu tysięcy metrów sześciennych na sezon.” |
-| 1:50–2:15 | Recommendations list, scroll | „Każde zalecenie ma efekt w metrach sześciennych, uzasadnienie, termin, koszt i formalności, na przykład zgłoszenie wodnoprawne albo ekoschemat.” |
-| 2:15–2:30 | Open link B (2019): „Silny niedobór”, risk calendar | „Ta sama działka w lipcu 2019: silny niedobór, zgodnie z tym, co rolnicy pamiętają. Kalendarz ryzyka pokazuje, w których miesiącach susza wraca.” |
-| 2:30–2:45 | Click „Drukuj / zapisz jako PDF”, show the print preview | „Raport można wydrukować albo zapisać jako PDF, ze źródłami danych, licencjami i ograniczeniami.” |
-| 2:45–3:00 | Sources list, then the title slide with the URL | „Dziesięć publicznych źródeł, liczone na żywo, bez instalacji, za darmo. Zatrzymaj wodę: woda.kodlab.pl.” |
+| 1:50–2:05 | Recommendations list, scroll | „Każde zalecenie ma efekt w metrach sześciennych, uzasadnienie, termin, koszt i formalności, na przykład zgłoszenie wodnoprawne albo ekoschemat.” |
+| 2:05–2:20 | Scroll to „Co jeśli: najbliższe 30 dni” | „A co, jeśli przez miesiąc nie spadnie deszcz? Scenariusze pokazują, kiedy zacznie się stres, ile wody trzeba dolać i co da nawadnianie teraz.” |
+| 2:20–2:35 | Open link B (2019): „Silny niedobór”, „Porównanie z Europejskim Obserwatorium Suszy”, risk calendar | „Ta sama działka w lipcu 2019: silny niedobór. Europejskie Obserwatorium Suszy potwierdza. Kalendarz ryzyka pokazuje, w których miesiącach susza wraca.” |
+| 2:35–2:47 | Click „Drukuj / zapisz jako PDF”, show the print preview | „Raport można wydrukować albo zapisać jako PDF, ze źródłami danych, licencjami i ograniczeniami.” |
+| 2:47–3:00 | Sources list, then the title slide with the URL | „Jedenaście publicznych źródeł, liczone na żywo, bez instalacji, za darmo. Zatrzymaj wodę: woda.kodlab.pl.” |
 
 Tips:
 

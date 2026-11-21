@@ -19,6 +19,8 @@ DEPTHS = (("0-5cm", 5), ("5-15cm", 10), ("15-30cm", 15), ("30-60cm", 30), ("60-1
 RESOLUTION_M = 250.0
 _BUFFER_DEG = 0.003  # at least one full 250 m cell around small parcels
 _CONCURRENCY = 8
+PLOUGH_LAYER_M = 0.3
+OM_GAIN_PCT = 1.0  # realistic organic-matter gain from years of manure, straw, cover crops
 
 Bounds = tuple[float, float, float, float]  # lon/lat
 
@@ -84,6 +86,18 @@ def available_water(sand: float, clay: float, organic_matter_pct: float) -> floa
     fc_t += 0.452 * s * c + 0.299
     fc = fc_t + (1.283 * fc_t**2 - 0.374 * fc_t - 0.015)
     return max(fc - wp, 0.02)
+
+
+def humus_water_gain_mm(soil: SoilProfile) -> float:
+    """Extra plant-available water (mm) in the plough layer when organic matter rises by
+    OM_GAIN_PCT percentage points."""
+    if not soil.layers:
+        return 0.0
+    top = soil.layers[0]
+    sand, clay = top.sand_pct / 100, top.clay_pct / 100
+    om = soil.organic_carbon_pct * 1.724
+    gain = available_water(sand, clay, om + OM_GAIN_PCT) - available_water(sand, clay, om)
+    return gain * PLOUGH_LAYER_M * 1000
 
 
 def soil_category(sand_pct: float, clay_pct: float) -> tuple[str, str, str]:

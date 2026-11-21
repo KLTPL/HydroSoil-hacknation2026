@@ -10,10 +10,8 @@ from retencja_api.models import (
     SoilProfile,
     WaterBalance,
 )
-from retencja_api.soil.soilgrids import available_water
+from retencja_api.soil.soilgrids import humus_water_gain_mm
 
-PLOUGH_LAYER_M = 0.3
-OM_GAIN_PCT = 1.0  # realistic organic-matter gain from years of manure, straw, cover crops
 TARGET_SOC_PCT = 2.0  # below this, building organic matter is worth recommending
 MULCH_EVAPORATION_CUT = (0.25, 0.5)  # share of bare-soil evaporation saved by mulch / no-till
 RISK_SHARE = 0.3  # month with strong stress in ≥ 3 of 10 years
@@ -120,11 +118,7 @@ def _organic_matter(soil: SoilProfile, area_ha: float) -> Recommendation | None:
         return None
     if not soil.layers:
         return None
-    top = soil.layers[0]
-    sand, clay = top.sand_pct / 100, top.clay_pct / 100
-    om = soil.organic_carbon_pct * 1.724
-    gain = available_water(sand, clay, om + OM_GAIN_PCT) - available_water(sand, clay, om)
-    mm = gain * PLOUGH_LAYER_M * 1000
+    mm = humus_water_gain_mm(soil)
     return Recommendation(
         key="organic_matter",
         category="soil",

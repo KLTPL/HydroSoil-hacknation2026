@@ -3,8 +3,10 @@ import * as fmt from '../format'
 import { requestPrint } from '../print'
 import { Busy } from './Busy'
 import { DiagnosisSection, LimitationsSection } from './DiagnosisSection'
+import { EdoSection } from './EdoSection'
 import { HydroSection, LandSection, SatelliteSection, SoilSection } from './FieldSections'
 import { RecommendationsSection } from './RecommendationsSection'
+import { ScenariosSection } from './ScenariosSection'
 import { SiteCard } from './SiteCard'
 import { Sources } from './Sources'
 import { WaterSection } from './WaterSection'
@@ -123,10 +125,12 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
         </button>
       </header>
       <DiagnosisSection diagnosis={report.diagnosis} />
+      <EdoSection edo={report.edo} />
       <RecommendationsSection
         recommendations={report.recommendations}
         onSelectSite={onSelectSite}
       />
+      <ScenariosSection water={report.water} />
       <WaterSection water={report.water} year={year} />
       <SatelliteSection satellite={report.satellite} year={year} />
       <SoilSection soil={report.soil} />

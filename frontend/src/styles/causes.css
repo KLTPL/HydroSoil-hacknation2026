@@ -1,0 +1,98 @@
+/* 2 · Causes */
+ol.causes {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+
+  p {
+    margin: 2px 0 0;
+    font-size: 0.86rem;
+  }
+}
+
+/* The whole cause (title, size, bar) is the toggle for its explanation */
+.cause-toggle {
+  display: grid;
+  width: 100%;
+  min-height: 0;
+  padding: 6px 0;
+  font-weight: inherit;
+  text-align: start;
+  background: none;
+  border-radius: 0;
+
+  &:hover {
+    background: none;
+
+    .cause-title {
+      color: var(--accent);
+    }
+  }
+
+  &:active:not(:disabled) {
+    scale: 1;
+  }
+}
+
+.cause-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 650;
+
+  /* Chevron after the size: points down when closed, up when open */
+  &::after {
+    content: '';
+    flex: none;
+    width: 7px;
+    height: 7px;
+    margin-inline: 4px 2px;
+    border: solid var(--muted);
+    border-width: 0 2px 2px 0;
+    rotate: 45deg;
+    translate: 0 -2px;
+
+    @media (prefers-reduced-motion: no-preference) {
+      transition: rotate 0.2s var(--ease-out), translate 0.2s var(--ease-out);
+    }
+  }
+}
+
+[aria-expanded='true'] > .cause-head::after {
+  rotate: 225deg;
+  translate: 0 2px;
+}
+
+.cause-title {
+  flex: 1;
+  transition: color 0.15s;
+}
+
+.cause-detail[hidden] {
+  display: none;
+}
+
+.cause-mm {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cause-bar {
+  display: block;
+  height: 6px;
+  margin-block: 5px 2px;
+  background: linear-gradient(90deg, var(--moderate), var(--severe));
+  border-radius: 3px;
+  scale: var(--share) 1;
+  transform-origin: left;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: scale 0.8s var(--ease-out);
+
+    @starting-style {
+      scale: 0 1;
+    }
+  }
+}

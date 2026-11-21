@@ -174,50 +174,6 @@
   color: var(--muted);
 }
 
-/* 2 · Causes */
-ol.causes {
-  display: grid;
-  gap: 12px;
-  margin: 6px 0 0;
-  padding: 0;
-  list-style: none;
-
-  p {
-    margin: 2px 0 0;
-    font-size: 0.86rem;
-  }
-}
-
-.cause-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-weight: 650;
-}
-
-.cause-mm {
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.cause-bar {
-  display: block;
-  height: 6px;
-  margin-block: 5px 2px;
-  background: linear-gradient(90deg, var(--moderate), var(--severe));
-  border-radius: 3px;
-  scale: var(--share) 1;
-  transform-origin: left;
-
-  @media (prefers-reduced-motion: no-preference) {
-    transition: scale 0.8s var(--ease-out);
-
-    @starting-style {
-      scale: 0 1;
-    }
-  }
-}
-
 .tab-panel-data {
   font-size: 0.92rem;
 

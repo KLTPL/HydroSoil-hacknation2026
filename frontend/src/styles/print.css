@@ -88,8 +88,13 @@
     display: grid !important;
   }
 
+  .cause-detail[hidden] {
+    display: block !important;
+  }
+
   .rec-toggle::after,
-  .data-row-heading button::after {
+  .data-row-heading button::after,
+  .cause-head::after {
     display: none;
   }
 

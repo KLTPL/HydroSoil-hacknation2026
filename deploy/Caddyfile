@@ -1,0 +1,4 @@
+woda.kodlab.pl {
+	encode gzip
+	reverse_proxy frontend:80
+}

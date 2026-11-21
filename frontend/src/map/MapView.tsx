@@ -2,23 +2,30 @@ import {
   GeolocateControl,
   Map as MapLibreMap,
   NavigationControl,
+  setWorkerUrl,
   type GeoJSONSource,
   type LngLatBoundsLike,
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { useEffect, useLayoutEffect, useRef } from 'react'
-import type { Geometry, Parcel, RetentionSite } from '../api'
-import { mapStyle, PARCEL_SOURCE, SITES_FILL_LAYER, SITES_SOURCE } from './style'
+// The production bundle does not emit MapLibre's worker by itself; ship it as an asset.
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { DitchWeirs, Geometry, Parcel, RetentionSite } from '../api'
+import { PRINT_EVENT } from '../print'
+import { DITCHES_SOURCE, mapStyle, PARCEL_SOURCE, SITES_FILL_LAYER, SITES_SOURCE } from './style'
 
 interface Props {
   parcel: Parcel | null
   sites: RetentionSite[]
+  ditches: DitchWeirs[]
   selectedSiteId: number | null
   onPick: (lon: number, lat: number) => void
   onSelectSite: (id: number) => void
 }
 
 type SourceData = Parameters<GeoJSONSource['setData']>[0]
+
+setWorkerUrl(workerUrl)
 
 const POLAND_CENTER: [number, number] = [19.3, 52.1]
 
@@ -29,7 +36,7 @@ function bounds(geometry: Geometry): LngLatBoundsLike {
   return [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]
 }
 
-export function MapView({ parcel, sites, selectedSiteId, onPick, onSelectSite }: Props) {
+export function MapView({ parcel, sites, ditches, selectedSiteId, onPick, onSelectSite }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const loaded = useRef<Promise<void> | null>(null)
@@ -46,6 +53,8 @@ export function MapView({ parcel, sites, selectedSiteId, onPick, onSelectSite }:
       center: POLAND_CENTER,
       zoom: 6,
       maxZoom: 19,
+      // Keeps the last frame readable, so the map can be copied into the printed report.
+      canvasContextAttributes: { preserveDrawingBuffer: true },
     })
     mapRef.current = map
     loaded.current = new Promise((resolve) => map.once('load', () => resolve()))
@@ -69,6 +78,33 @@ export function MapView({ parcel, sites, selectedSiteId, onPick, onSelectSite }:
     map.on('mouseleave', SITES_FILL_LAYER, () => (map.getCanvas().style.cursor = ''))
 
     return () => map.remove()
+  }, [])
+
+  // Printing: frame the parcel, wait for tiles, snapshot the canvas, then print.
+  const [snapshot, setSnapshot] = useState<string | null>(null)
+  const printParcel = useRef(parcel)
+  useLayoutEffect(() => {
+    printParcel.current = parcel
+  })
+  useEffect(() => {
+    const map = mapRef.current!
+    const capture = () => setSnapshot(map.getCanvas().toDataURL('image/png'))
+    const onPrint = () => {
+      const target = printParcel.current
+      if (target) map.fitBounds(bounds(target.geometry), { padding: 40, maxZoom: 18, duration: 0 })
+      map.once('idle', () => {
+        capture()
+        // Let React swap in the snapshot before the print dialog freezes the page.
+        window.setTimeout(() => window.print(), 100)
+      })
+      map.triggerRepaint()
+    }
+    window.addEventListener(PRINT_EVENT, onPrint)
+    window.addEventListener('beforeprint', capture) // Ctrl+P: current view
+    return () => {
+      window.removeEventListener(PRINT_EVENT, onPrint)
+      window.removeEventListener('beforeprint', capture)
+    }
   }, [])
 
   useEffect(() => {
@@ -99,6 +135,22 @@ export function MapView({ parcel, sites, selectedSiteId, onPick, onSelectSite }:
   useEffect(() => {
     const map = mapRef.current!
     void loaded.current!.then(() => {
+      const features = ditches.flatMap((d) => [
+        { type: 'Feature' as const, geometry: d.geometry, properties: { id: d.id } },
+        ...d.weirs.coordinates.map((point) => ({
+          type: 'Feature' as const,
+          geometry: { type: 'Point' as const, coordinates: point },
+          properties: { id: d.id },
+        })),
+      ])
+      const data = { type: 'FeatureCollection' as const, features }
+      map.getSource<GeoJSONSource>(DITCHES_SOURCE)!.setData(data as unknown as SourceData)
+    })
+  }, [ditches])
+
+  useEffect(() => {
+    const map = mapRef.current!
+    void loaded.current!.then(() => {
       map.removeFeatureState({ source: SITES_SOURCE })
       if (selectedSiteId == null) return
       map.setFeatureState({ source: SITES_SOURCE, id: selectedSiteId }, { selected: true })
@@ -107,5 +159,18 @@ export function MapView({ parcel, sites, selectedSiteId, onPick, onSelectSite }:
     })
   }, [selectedSiteId, sites])
 
-  return <div ref={container} className="map" aria-label="Mapa działek" role="region" />
+  return (
+    <>
+      <div ref={container} className="map" aria-label="Mapa działek" role="region" />
+      {snapshot && (
+        <figure className="print-map">
+          <img src={snapshot} alt="Mapa działki z miejscami retencji, rowami i zastawkami" />
+          <figcaption>
+            Granica działki (żółta), miejsca zatrzymania wody (niebieskie), rowy (turkusowe
+            przerywane), proponowane zastawki (czerwone punkty). Podkład: ortofotomapa GUGiK.
+          </figcaption>
+        </figure>
+      )}
+    </>
+  )
 }

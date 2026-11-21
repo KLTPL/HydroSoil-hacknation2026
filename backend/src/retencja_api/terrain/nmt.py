@@ -1,4 +1,10 @@
-"""Digital terrain model (NMT, 1 m LIDAR) from the GUGiK WCS, cached as aligned tiles."""
+"""Digital terrain model (NMT, LIDAR) from the GUGiK WCS, fetched per area and cached.
+
+The WCS reads full 1 m data server-side, so response time grows with the requested
+area (~20–40 s per km²) regardless of output resolution. We therefore request only
+the parcel's bounding box (plus a small buffer), resampled server-side to the
+analysis resolution, split into strips fetched concurrently.
+"""
 
 import asyncio
 import math
@@ -14,7 +20,7 @@ from retencja_api.config import (
     DEM_FETCH_ATTEMPTS,
     DEM_FETCH_CONCURRENCY,
     DEM_FETCH_TIMEOUT_S,
-    DEM_TILE_SIZE_M,
+    DEM_STRIP_MAX_M2,
     NMT_COVERAGE_ID,
     NMT_WCS_URL,
 )
@@ -24,6 +30,7 @@ _NODATA_BELOW = -1000.0
 _NATIVE_RES_M = 1
 
 _Params = list[tuple[str, str]]
+Bounds = tuple[float, float, float, float]
 
 
 @dataclass(frozen=True)
@@ -36,16 +43,30 @@ class Dem:
         return self.transform.a
 
 
-def tiles_for_bbox(minx: float, miny: float, maxx: float, maxy: float) -> list[tuple[int, int]]:
-    """Lower-left corners (easting, northing) of grid tiles covering the bbox."""
-    t = DEM_TILE_SIZE_M
-    xs = range(math.floor(minx / t) * t, math.ceil(maxx / t) * t, t)
-    ys = range(math.floor(miny / t) * t, math.ceil(maxy / t) * t, t)
-    return [(x, y) for x in xs for y in ys]
+def snap_bounds(bounds: Bounds, resolution: int) -> tuple[int, int, int, int]:
+    minx, miny, maxx, maxy = bounds
+    r = resolution
+    return (
+        math.floor(minx / r) * r,
+        math.floor(miny / r) * r,
+        math.ceil(maxx / r) * r,
+        math.ceil(maxy / r) * r,
+    )
 
 
-def _tile_path(x: int, y: int):
-    return cache_path("nmt", f"{x}_{y}_{DEM_TILE_SIZE_M}", ".tif")
+def split_strips(bounds: tuple[int, int, int, int], resolution: int) -> list[tuple[int, ...]]:
+    """Horizontal strips (north → south) no larger than DEM_STRIP_MAX_M2 each."""
+    minx, miny, maxx, maxy = bounds
+    width, height = maxx - minx, maxy - miny
+    count = max(1, math.ceil(width * height / DEM_STRIP_MAX_M2))
+    step = math.ceil(height / count / resolution) * resolution
+    strips = []
+    top = maxy
+    while top > miny:
+        bottom = max(miny, top - step)
+        strips.append((minx, bottom, maxx, top))
+        top = bottom
+    return strips
 
 
 async def _get_with_retry(client: httpx.AsyncClient, params: _Params) -> httpx.Response:
@@ -67,69 +88,58 @@ async def _get_with_retry(client: httpx.AsyncClient, params: _Params) -> httpx.R
     raise AssertionError("unreachable")
 
 
-async def _fetch_tile(client: httpx.AsyncClient, sem: asyncio.Semaphore, x: int, y: int) -> None:
-    path = _tile_path(x, y)
+async def _fetch_strip(
+    client: httpx.AsyncClient, sem: asyncio.Semaphore, strip: tuple[int, ...], resolution: int
+) -> bytes:
+    minx, miny, maxx, maxy = strip
+    path = cache_path("nmt-strip", f"{minx}_{miny}_{maxx}_{maxy}@{resolution}", ".tif")
     if path.exists():
-        return
-    t = DEM_TILE_SIZE_M
+        return path.read_bytes()
     params = [
         ("SERVICE", "WCS"),
         ("VERSION", "2.0.1"),
         ("REQUEST", "GetCoverage"),
         ("COVERAGEID", NMT_COVERAGE_ID),
         ("FORMAT", "image/tiff"),
-        # Server axis "x" = easting, "y" = northing (verified against known summit).
-        ("SUBSET", f"x({x},{x + t})"),
-        ("SUBSET", f"y({y},{y + t})"),
+        # Server axis "x" = easting, "y" = northing (verified against a known summit).
+        ("SUBSET", f"x({minx},{maxx})"),
+        ("SUBSET", f"y({miny},{maxy})"),
+        ("SCALEFACTOR", str(_NATIVE_RES_M / resolution)),
     ]
     async with sem:
         response = await _get_with_retry(client, params)
     if not response.content.startswith((b"II*\x00", b"MM\x00*")):
-        raise RuntimeError(f"NMT WCS returned non-TIFF for tile {x},{y}: {response.text[:200]}")
+        raise RuntimeError(f"NMT WCS returned non-TIFF for {strip}: {response.text[:200]}")
     tmp = path.with_suffix(".part")
     tmp.write_bytes(response.content)
     tmp.replace(path)
+    return response.content
 
 
-async def ensure_tiles(tiles: list[tuple[int, int]]) -> None:
+def _mosaic(strips: list[bytes], bounds: tuple[int, int, int, int], resolution: int) -> Dem:
+    minx, miny, maxx, maxy = bounds
+    shape = ((maxy - miny) // resolution, (maxx - minx) // resolution)
+    out = np.full(shape, np.nan)
+    for content in strips:
+        with rasterio.MemoryFile(content) as memfile, memfile.open() as src:
+            data = src.read(1).astype(np.float64)
+            # Place by the strip's own georeference; the server may round edges by a cell.
+            row = round((maxy - src.bounds.top) / resolution)
+            col = round((src.bounds.left - minx) / resolution)
+        rows = slice(max(row, 0), min(row + data.shape[0], shape[0]))
+        cols = slice(max(col, 0), min(col + data.shape[1], shape[1]))
+        out[rows, cols] = data[
+            rows.start - row : rows.stop - row, cols.start - col : cols.stop - col
+        ]
+    out[out < _NODATA_BELOW] = np.nan
+    return Dem(out, Affine(resolution, 0, minx, 0, -resolution, maxy))
+
+
+async def load_dem(bounds: Bounds, resolution: int) -> Dem:
+    """DEM covering `bounds` (PL-1992) at `resolution` metres."""
+    snapped = snap_bounds(bounds, resolution)
+    strips = split_strips(snapped, resolution)
     sem = asyncio.Semaphore(DEM_FETCH_CONCURRENCY)
     async with httpx.AsyncClient(timeout=DEM_FETCH_TIMEOUT_S) as client:
-        await asyncio.gather(*(_fetch_tile(client, sem, x, y) for x, y in tiles))
-
-
-def _mosaic(tiles: list[tuple[int, int]]) -> tuple[np.ndarray, float, float]:
-    t = DEM_TILE_SIZE_M
-    x0 = min(x for x, _ in tiles)
-    y1 = max(y for _, y in tiles) + t
-    width = max(x for x, _ in tiles) + t - x0
-    height = y1 - min(y for _, y in tiles)
-    out = np.full((height, width), np.nan)
-    for x, y in tiles:
-        with rasterio.open(_tile_path(x, y)) as src:
-            if src.res != (_NATIVE_RES_M, _NATIVE_RES_M):
-                raise RuntimeError(f"Unexpected NMT resolution {src.res}")
-            data = src.read(1).astype(np.float64)
-            left, top = src.bounds.left, src.bounds.top
-        row, col = round(y1 - top), round(left - x0)
-        out[row : row + data.shape[0], col : col + data.shape[1]] = data
-    out[out < _NODATA_BELOW] = np.nan
-    return out, float(x0), float(y1)
-
-
-def _block_mean(a: np.ndarray, factor: int) -> np.ndarray:
-    if factor == 1:
-        return a
-    h, w = a.shape[0] // factor, a.shape[1] // factor
-    blocks = a[: h * factor, : w * factor].reshape(h, factor, w, factor)
-    return blocks.mean(axis=(1, 3))  # NaN propagates: partial-coverage cells stay missing
-
-
-async def load_dem(bounds: tuple[float, float, float, float], resolution_m: int) -> Dem:
-    """DEM covering `bounds` (PL-1992), snapped outward to the tile grid."""
-    if DEM_TILE_SIZE_M % resolution_m:
-        raise ValueError("Tile size must be a multiple of the analysis resolution")
-    tiles = tiles_for_bbox(*bounds)
-    await ensure_tiles(tiles)
-    native, x0, y1 = await asyncio.to_thread(_mosaic, tiles)
-    elevation = _block_mean(native, resolution_m // _NATIVE_RES_M)
-    return Dem(elevation, Affine(resolution_m, 0, x0, 0, -resolution_m, y1))
+        contents = await asyncio.gather(*(_fetch_strip(client, sem, s, resolution) for s in strips))
+    return await asyncio.to_thread(_mosaic, list(contents), snapped, resolution)

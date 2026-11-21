@@ -1,0 +1,21 @@
+# Production overrides: Caddy terminates HTTPS (automatic Let's Encrypt certificate).
+# Run from the repository root: docker compose -f docker-compose.yml -f deploy/compose.prod.yml up -d --build
+services:
+  backend:
+    restart: unless-stopped
+  frontend:
+    restart: unless-stopped
+    ports: !reset []
+  caddy:
+    image: caddy:2.10.2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - frontend
+volumes:
+  caddy_data:

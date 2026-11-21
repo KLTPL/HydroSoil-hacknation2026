@@ -24,14 +24,20 @@ export const PARCEL_SOURCE = 'parcel'
 export const SITES_SOURCE = 'sites'
 export const SITES_FILL_LAYER = 'sites-fill'
 export const DITCHES_SOURCE = 'ditches'
+export const FLOW_SOURCE = 'flow'
+export const FLOW_LAYER = 'flow-line'
+export const RELIEF_SOURCE = 'relief'
+/** The relief image is inserted below this layer (above the orthophoto). */
+export const RELIEF_BEFORE = 'kieg'
 
 export const COLORS = {
-  pond: '#1d6fd8',
-  wetDepression: '#45b6d9',
+  pond: '#1f7cf0',
+  wetDepression: '#4cc3e6',
   parcel: '#ffd23f',
   selected: '#ffffff',
-  ditch: '#00e5ff',
-  weir: '#ff3d71',
+  ditch: '#5ee6ff',
+  weir: '#ff4f7b',
+  flow: '#e6f6ff',
 }
 
 const EMPTY = { type: 'FeatureCollection' as const, features: [] }
@@ -61,6 +67,7 @@ export const mapStyle: StyleSpecification = {
     [PARCEL_SOURCE]: { type: 'geojson', data: EMPTY },
     [SITES_SOURCE]: { type: 'geojson', data: EMPTY, promoteId: 'id' },
     [DITCHES_SOURCE]: { type: 'geojson', data: EMPTY },
+    [FLOW_SOURCE]: { type: 'geojson', data: EMPTY },
   },
   layers: [
     { id: 'osm', type: 'raster', source: 'osm' },
@@ -73,10 +80,23 @@ export const mapStyle: StyleSpecification = {
       paint: { 'fill-color': COLORS.parcel, 'fill-opacity': 0.12 },
     },
     {
-      id: 'parcel-line',
+      id: FLOW_LAYER,
       type: 'line',
-      source: PARCEL_SOURCE,
-      paint: { 'line-color': COLORS.parcel, 'line-width': 3 },
+      source: FLOW_SOURCE,
+      layout: { 'line-cap': 'round', 'line-join': 'round', visibility: 'none' },
+      paint: {
+        'line-color': COLORS.flow,
+        'line-opacity': 0.7,
+        // Width grows with the area draining through the line (log scale).
+        'line-width': [
+          'interpolate',
+          ['linear'],
+          ['ln', ['get', 'area']],
+          6.7, 0.6,
+          9, 1.6,
+          11.5, 3.5,
+        ],
+      },
     },
     {
       id: SITES_FILL_LAYER,
@@ -90,7 +110,8 @@ export const mapStyle: StyleSpecification = {
           COLORS.pond,
           COLORS.wetDepression,
         ],
-        'fill-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.85, 0.6],
+        'fill-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.85, 0.55],
+        'fill-opacity-transition': { duration: 600 },
       },
     },
     {
@@ -113,6 +134,12 @@ export const mapStyle: StyleSpecification = {
       source: DITCHES_SOURCE,
       filter: ['==', ['geometry-type'], 'LineString'],
       paint: { 'line-color': COLORS.ditch, 'line-width': 3, 'line-dasharray': [2, 1] },
+    },
+    {
+      id: 'parcel-line',
+      type: 'line',
+      source: PARCEL_SOURCE,
+      paint: { 'line-color': COLORS.parcel, 'line-width': 3 },
     },
     {
       id: 'weirs',

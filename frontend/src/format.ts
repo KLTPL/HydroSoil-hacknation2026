@@ -36,3 +36,10 @@ export const dayMonth = (iso: string) => dateShort.format(new Date(iso))
 export const longDate = (iso: string) => dateLong.format(new Date(iso))
 export const dateTime = (iso: string) => dateTimeFmt.format(new Date(iso))
 export const month = (m: number) => monthName.format(new Date(2025, m - 1, 1))
+
+/** Polish noun form for a count: 1 uwaga, 2–4 uwagi, 5+ uwag. */
+export function plural(n: number, one: string, few: string, many: string): string {
+  if (n === 1) return one
+  const tens = n % 100
+  return n % 10 >= 2 && n % 10 <= 4 && !(tens >= 12 && tens <= 14) ? few : many
+}

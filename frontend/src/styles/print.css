@@ -1,0 +1,152 @@
+/* Printed report (A4); also used for "save as PDF". */
+.print-only,
+.print-map {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 12mm;
+  }
+
+  :root {
+    --glass: #fff !important;
+    --surface: #fff !important;
+    --card: #f3f5f6 !important;
+    --card-strong: #e6eaec !important;
+    --hairline: #c4c9cc !important;
+    --text: #000 !important;
+    --muted: #444 !important;
+    --water: #1d5fc4 !important;
+    --water-deep: #1d4f9c !important;
+    --accent: #1d4f9c !important;
+
+    color-scheme: light;
+    font-size: 10.5pt;
+    background: #fff;
+  }
+
+  html,
+  body,
+  #root,
+  .app {
+    display: block;
+    height: auto;
+    overflow: visible;
+    background: #fff;
+  }
+
+  .map-stage {
+    position: static;
+  }
+
+  .map,
+  .map-overlay,
+  .search,
+  .analysis-form,
+  .intro,
+  .sheet-grabber,
+  .no-print,
+  .rec-sites,
+  .busy progress {
+    display: none !important;
+  }
+
+  .panel {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    overflow: visible;
+    background: none;
+    backdrop-filter: none;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .report > * {
+    animation: none !important;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  .report-header {
+    display: block;
+  }
+
+  .print-map {
+    display: block;
+    margin: 0 0 8mm;
+    break-inside: avoid;
+
+    img {
+      display: block;
+      width: 100%;
+      max-height: 120mm;
+      object-fit: contain;
+      border: 1px solid #999;
+    }
+
+    figcaption {
+      margin-top: 2mm;
+      font-size: 8.5pt;
+      color: #444;
+    }
+  }
+
+  details > summary::before {
+    display: none;
+  }
+
+  .more > summary {
+    padding-inline: 0;
+    font-size: 1.1rem;
+  }
+
+  .more-hint {
+    display: none;
+  }
+
+  .more-body {
+    padding-inline: 0;
+  }
+
+  .rec,
+  .verdict,
+  .site-card,
+  .year-bars,
+  .facts,
+  .risk-calendar,
+  .causes li,
+  .votes,
+  .warnings li {
+    break-inside: avoid;
+  }
+
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+
+  .verdict,
+  .rec,
+  .rec-step,
+  .cause-bar,
+  .year-bars .bar,
+  .risk-cell,
+  .vote-dot,
+  .tank *,
+  .site-card {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .sources a::after {
+    content: ' (' attr(href) ')';
+    word-break: break-all;
+  }
+}

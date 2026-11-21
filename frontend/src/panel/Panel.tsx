@@ -66,9 +66,11 @@ export function Panel(props: Props) {
 
 function Analysis(props: Props) {
   const { parcel, lookup, report } = props
+  // While a report runs or is shown, the controls above it shrink so it starts high up.
+  const compact = report.status === 'loading' || report.status === 'done'
   return (
     <>
-      <ParcelSearch onChoose={props.onChooseParcel} onPlace={props.onPlace} />
+      <ParcelSearch compact={parcel !== null} onChoose={props.onChooseParcel} onPlace={props.onPlace} />
       <div aria-live="polite">
         {lookup.status === 'loading' && <Busy label="Szukam działki…" />}
         {lookup.status === 'error' && <p className="error">{lookup.message}</p>}
@@ -77,12 +79,9 @@ function Analysis(props: Props) {
       {parcel && (
         <section className="parcel card" aria-label="Wybrana działka">
           <div className="parcel-head">
-            <div>
-              <p className="eyebrow">Działka ewidencyjna</p>
-              <h2>
-                {parcel.number} <span className="muted">· {parcel.region}</span>
-              </h2>
-            </div>
+            <h2>
+              {parcel.number} <span className="muted">· {parcel.region}</span>
+            </h2>
             <p className="parcel-area">{fmt.ha(parcel.area_ha)}</p>
           </div>
           <p className="muted fine">
@@ -92,6 +91,7 @@ function Analysis(props: Props) {
             crop={props.crop}
             date={props.date}
             busy={report.status === 'loading'}
+            compact={compact}
             current={
               report.status === 'done' &&
               report.report.parcel.id === parcel.id &&

@@ -162,15 +162,6 @@ button.chip {
   }
 }
 
-/* Disabled because there is nothing to do, not because something is wrong: keep it readable. */
-button.primary.is-current:disabled {
-  color: var(--text);
-  background: var(--card-strong);
-  box-shadow: none;
-  opacity: 1;
-  cursor: default;
-}
-
 :is(input, select, button, summary, a):focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;

@@ -1,0 +1,99 @@
+/* Report tabs: Ocena / Plan / Dane under a bar that sticks to the top of the panel */
+.tab-bar {
+  position: sticky;
+  z-index: 1;
+  /* Sticky offsets count from inside the panel's padding: pull the bar up to its edge */
+  inset-block-start: calc(-1 * var(--panel-pad-top));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  margin-inline: calc(-1 * var(--panel-pad-x));
+  padding: 0 var(--panel-pad-x);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  backdrop-filter: blur(16px);
+  border-block-end: 1px solid var(--hairline);
+}
+
+.tab-list {
+  display: flex;
+  gap: 20px;
+}
+
+.report-tab {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 0;
+  color: var(--muted);
+  background: none;
+  border-block-end: 2px solid transparent;
+  border-radius: 0;
+  /* Sits on the bar's bottom border, so the active underline replaces it */
+  margin-block-end: -1px;
+
+  &:hover {
+    color: var(--text);
+    background: none;
+  }
+
+  &[aria-selected='true'] {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  &:active:not(:disabled) {
+    scale: 1;
+  }
+}
+
+.tab-count {
+  min-width: 1.5em;
+  padding: 0 6px;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  text-align: center;
+  background: var(--card-strong);
+  border-radius: 999px;
+}
+
+.tab-bar .print-button {
+  min-height: 36px;
+  padding-inline: 12px;
+  /* Text lines up with the panel content's right edge; the hover fill overhangs */
+  margin-inline-end: -12px;
+  font-size: 0.88rem;
+}
+
+.tabbed {
+  display: grid;
+  gap: 18px;
+}
+
+.tab-panel {
+  display: grid;
+  gap: 22px;
+
+  &[hidden] {
+    display: none;
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  /* A tab's sections arrive one after another, top to bottom */
+  @media (prefers-reduced-motion: no-preference) {
+    > * {
+      animation: rise 0.4s var(--ease-out) both;
+    }
+
+    > :nth-child(2) { animation-delay: 0.04s; }
+    > :nth-child(3) { animation-delay: 0.08s; }
+    > :nth-child(n + 4) { animation-delay: 0.12s; }
+  }
+}

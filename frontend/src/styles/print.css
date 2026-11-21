@@ -66,8 +66,26 @@
     box-shadow: none;
   }
 
-  .report > * {
+  .tab-panel > *,
+  .rec-body {
     animation: none !important;
+  }
+
+  /* Every tab and every plan step is printed, open or not */
+  .tab-panel[hidden] {
+    display: grid !important;
+  }
+
+  .tabbed {
+    gap: 22px;
+  }
+
+  .rec-body[hidden] {
+    display: grid !important;
+  }
+
+  .rec-toggle::after {
+    display: none;
   }
 
   .print-only {
@@ -96,23 +114,6 @@
       font-size: 8.5pt;
       color: #444;
     }
-  }
-
-  details > summary::before {
-    display: none;
-  }
-
-  .more > summary {
-    padding-inline: 0;
-    font-size: 1.1rem;
-  }
-
-  .more-hint {
-    display: none;
-  }
-
-  .more-body {
-    padding-inline: 0;
   }
 
   .rec,

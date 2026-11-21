@@ -2,6 +2,8 @@
 @import './styles/base.css';
 @import './styles/panel.css';
 @import './styles/report.css';
+@import './styles/tabs.css';
+@import './styles/plan.css';
 @import './styles/data.css';
 @import './styles/account.css';
 @import './styles/map.css';

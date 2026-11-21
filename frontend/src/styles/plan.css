@@ -1,0 +1,172 @@
+/* 3 · Plan: one row per step, opened one at a time */
+ol.recs {
+  display: grid;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rec {
+  --cat: var(--water);
+  border-block-start: 1px solid var(--hairline);
+
+  &:last-child {
+    border-block-end: 1px solid var(--hairline);
+  }
+
+  &.rec-soil { --cat: var(--soil); }
+  &.rec-crop { --cat: var(--crop); }
+  &.rec-irrigation { --cat: var(--muted); }
+
+  p {
+    margin: 0;
+  }
+}
+
+.rec-heading {
+  font: inherit;
+}
+
+.rec-toggle {
+  display: grid;
+  grid-template-columns: 28px 1fr 12px;
+  gap: 2px 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px 4px;
+  font-weight: inherit;
+  text-align: start;
+  background: none;
+  border-radius: 0;
+
+  &:hover {
+    background: none;
+
+    .rec-title {
+      color: var(--accent);
+    }
+  }
+
+  &:active:not(:disabled) {
+    scale: 1;
+  }
+
+  /* Chevron: points down when closed, up when open */
+  &::after {
+    content: '';
+    grid-area: 1 / 3 / 3 / 4;
+    width: 8px;
+    height: 8px;
+    border: solid var(--muted);
+    border-width: 0 2px 2px 0;
+    rotate: 45deg;
+    translate: 0 -2px;
+
+    @media (prefers-reduced-motion: no-preference) {
+      transition: rotate 0.2s var(--ease-out), translate 0.2s var(--ease-out);
+    }
+  }
+
+  &[aria-expanded='true']::after {
+    rotate: 225deg;
+    translate: 0 2px;
+  }
+}
+
+.rec-step {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-size: 0.85rem;
+  font-weight: 750;
+  color: #fff;
+  background: var(--cat);
+  border-radius: 50%;
+}
+
+.rec-title,
+.rec-meta {
+  grid-column: 2;
+}
+
+.rec-title {
+  font-weight: 650;
+  line-height: 1.3;
+  transition: color 0.15s;
+}
+
+.rec-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.rec-effect {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--water-deep);
+
+  @media (prefers-color-scheme: dark) {
+    color: var(--water);
+  }
+
+  /* Irrigation's figure is water used, not water kept: no "benefit" blue */
+  .rec-irrigation & {
+    color: var(--muted);
+  }
+}
+
+/* Opened step: aligned under the title */
+.rec-body {
+  display: grid;
+  gap: 8px;
+  padding: 0 4px 14px 44px;
+  font-size: 0.9rem;
+
+  &[hidden] {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: rise 0.3s var(--ease-out) both;
+  }
+}
+
+.rec-effect-note,
+.rec-irrigation-note {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.rec-warning {
+  display: block;
+  margin-top: 2px;
+}
+
+.rec-sites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.rec-why {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 0.85rem;
+
+  dt {
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--muted);
+  }
+}

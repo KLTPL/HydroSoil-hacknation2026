@@ -9,12 +9,14 @@ interface Props {
   busy: boolean
   /** The report below is for exactly this crop and date: nothing to rerun. */
   current: boolean
+  /** A report is shown or running: one row without labels, the button only when needed. */
+  compact: boolean
   onCropChange: (crop: string) => void
   onDateChange: (date: string) => void
   onSubmit: () => void
 }
 
-export function AnalysisForm({ crop, date, busy, current, onCropChange, onDateChange, onSubmit }: Props) {
+export function AnalysisForm({ crop, date, busy, current, compact, onCropChange, onDateChange, onSubmit }: Props) {
   const cropId = useId()
   const dateId = useId()
   const [crops, setCrops] = useState<Crop[]>([])
@@ -33,9 +35,11 @@ export function AnalysisForm({ crop, date, busy, current, onCropChange, onDateCh
   }
 
   return (
-    <form className="analysis-form" onSubmit={submit}>
+    <form className={compact ? 'analysis-form compact' : 'analysis-form'} onSubmit={submit}>
       <div className="field">
-        <label htmlFor={cropId}>Uprawa na działce</label>
+        <label htmlFor={cropId} className={compact ? 'visually-hidden' : undefined}>
+          Uprawa na działce
+        </label>
         <select id={cropId} value={crop} required onChange={(e) => onCropChange(e.target.value)}>
           <option value="" disabled>
             Wybierz uprawę…
@@ -49,7 +53,9 @@ export function AnalysisForm({ crop, date, busy, current, onCropChange, onDateCh
         {cropsError && <p className="error fine" role="alert">{cropsError}</p>}
       </div>
       <div className="field">
-        <label htmlFor={dateId}>Data analizy</label>
+        <label htmlFor={dateId} className={compact ? 'visually-hidden' : undefined}>
+          Data analizy
+        </label>
         <input
           id={dateId}
           type="date"
@@ -60,9 +66,11 @@ export function AnalysisForm({ crop, date, busy, current, onCropChange, onDateCh
           onChange={(e) => onDateChange(e.target.value)}
         />
       </div>
-      <button type="submit" className={current ? 'primary is-current' : 'primary'} disabled={busy || current}>
-        {busy ? 'Analizuję…' : current ? '✓ Raport poniżej jest aktualny' : 'Analizuj działkę'}
-      </button>
+      {!current && (
+        <button type="submit" className="primary" disabled={busy}>
+          {busy ? 'Analizuję…' : compact ? 'Analizuj ponownie' : 'Analizuj działkę'}
+        </button>
+      )}
     </form>
   )
 }

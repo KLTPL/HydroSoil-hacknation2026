@@ -23,6 +23,15 @@ MONTHS_IN = ["", "styczniu", "lutym", "marcu", "kwietniu", "maju", "czerwcu", "l
              "sierpniu", "wrześniu", "październiku", "listopadzie", "grudniu"]
 
 
+def plural(n: int, one: str, few: str, many: str) -> str:
+    """Polish noun form for a count: 1 zastawka, 2–4 zastawki, 5+ zastawek."""
+    if n == 1:
+        return one
+    if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14:
+        return few
+    return many
+
+
 def _m3(mm_low: float, mm_high: float, area_ha: float) -> Range:
     return Range(low=round(mm_low * area_ha * 10), high=round(mm_high * area_ha * 10))
 
@@ -75,9 +84,9 @@ def _weirs(terrain: RetentionAnalysis) -> Recommendation | None:
     )
     slopes = ", ".join(f"{d.slope_pct:.2f} %" for d in terrain.ditches[:3])
     lidar = sum(d.kind == "lidar" for d in terrain.ditches)
-    found = (
-        f"{lidar} rowów wykryto w modelu terenu LIDAR, {len(terrain.ditches) - lidar} "
-        "pochodzi z OpenStreetMap. "
+    osm = len(terrain.ditches) - lidar
+    found = f"Rowy wykryte w modelu terenu LIDAR: {lidar}" + (
+        f", z OpenStreetMap: {osm}. " if osm else ". "
     )
     return Recommendation(
         key="weirs",
@@ -85,7 +94,7 @@ def _weirs(terrain: RetentionAnalysis) -> Recommendation | None:
         title="Postaw zastawki na rowach",
         action=(
             f"Na {length:.0f} m rowów przy działce postaw {weirs} "
-            f"{'zastawkę' if weirs == 1 else 'zastawek'} (piętrzenie ok. "
+            f"{plural(weirs, 'zastawkę', 'zastawki', 'zastawek')} (piętrzenie ok. "
             f"{terrain.ditches[0].weir_head_m:.1f} m), w miejscach zaznaczonych na mapie. "
             "Zamykaj je po roztopach i po ulewach, otwieraj przy podtopieniu pola."
         ),

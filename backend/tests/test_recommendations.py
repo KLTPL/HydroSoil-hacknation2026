@@ -91,3 +91,12 @@ def test_crop_timing_needs_frequent_stress():
     risky = recommend(CROP, 1, _water(80, risky=4), None, None, None)
     timing = next(r for r in risky if r.key == "crop_timing")
     assert "czerwcu" in timing.why
+
+
+def test_polish_plural():
+    from retencja_api.assessment.recommendations import plural
+
+    forms = ("zastawkę", "zastawki", "zastawek")
+    assert [plural(n, *forms) for n in (1, 2, 4, 5, 12, 22, 25)] == [
+        "zastawkę", "zastawki", "zastawki", "zastawek", "zastawek", "zastawki", "zastawek",
+    ]

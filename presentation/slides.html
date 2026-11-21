@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Zatrzymaj wodę — prezentacja</title>
+<style>
+  @page { size: 1600px 900px; margin: 0; }
+  :root {
+    --ink: #12202b; --muted: #55636e; --blue: #1d6fd8; --deep: #0b3b6f; --sky: #e8f1fb;
+    --orange: #d4561c; --green: #2e7d32; --paper: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #ddd; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; color: var(--ink); }
+  .slide {
+    position: relative; width: 1600px; height: 900px; padding: 80px 96px; overflow: hidden;
+    background: var(--paper); break-after: page; margin: 0 auto 24px;
+  }
+  @media print { .slide { margin: 0; } body { background: #fff; } }
+  h1 { font-size: 96px; line-height: 1; margin: 0 0 24px; letter-spacing: -2px; }
+  h2 { font-size: 56px; line-height: 1.1; margin: 0 0 36px; letter-spacing: -1px; }
+  p, li { font-size: 30px; line-height: 1.4; }
+  ul { padding-left: 1.1em; margin: 0; }
+  li { margin-bottom: 14px; }
+  .kicker { font-size: 24px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--blue); margin-bottom: 16px; }
+  .muted { color: var(--muted); }
+  .num { position: absolute; right: 48px; bottom: 32px; font-size: 20px; color: var(--muted); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+  .cols-wide { display: grid; grid-template-columns: 560px 1fr; gap: 56px; align-items: start; }
+  .shot { width: 100%; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.18); display: block; }
+  .shot-crop { width: 100%; height: 640px; object-fit: cover; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.18); }
+  .big { font-size: 120px; font-weight: 800; color: var(--blue); line-height: 1; letter-spacing: -3px; }
+  .stat { margin-bottom: 36px; }
+  .stat span { display: block; font-size: 28px; color: var(--muted); margin-top: 8px; }
+  .title-slide { background: linear-gradient(135deg, var(--deep), var(--blue)); color: #fff; display: flex; flex-direction: column; justify-content: center; }
+  .title-slide p { font-size: 40px; max-width: 1150px; }
+  .title-slide .url { font-size: 34px; font-weight: 700; margin-top: 48px; }
+  .flow { display: flex; gap: 24px; align-items: stretch; margin-top: 24px; }
+  .step { flex: 1; background: var(--sky); border-radius: 18px; padding: 32px; }
+  .step b { display: block; font-size: 34px; margin-bottom: 12px; color: var(--deep); }
+  .step p { font-size: 26px; margin: 0; }
+  .arrow { align-self: center; font-size: 48px; color: var(--blue); }
+  table { border-collapse: collapse; width: 100%; font-size: 24px; }
+  td, th { text-align: left; padding: 10px 12px; border-bottom: 1px solid #dde3e8; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .tag { display: inline-block; padding: 4px 14px; border-radius: 999px; font-size: 20px; font-weight: 700; color: #fff; }
+  .cause { display: grid; grid-template-columns: 330px 1fr 110px; gap: 16px; align-items: center; margin-bottom: 18px; font-size: 28px; }
+  .bar { height: 22px; background: var(--blue); border-radius: 11px; }
+  .pill { display: inline-block; background: var(--sky); color: var(--deep); border-radius: 999px; padding: 6px 18px; margin: 0 10px 12px 0; font-size: 24px; font-weight: 600; }
+  .quote { font-size: 44px; line-height: 1.3; font-weight: 600; max-width: 1300px; }
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="slide title-slide">
+  <div class="kicker" style="color:#cfe3ff">HackNation 2026 · KOWR</div>
+  <h1>Zatrzymaj wodę</h1>
+  <p>Numer działki, uprawa i data. W 30 sekund rolnik wie, czy brakuje mu wody, dlaczego,
+     i <b>gdzie dokładnie na swoim polu ile wody może zatrzymać</b>.</p>
+  <div class="url">woda.kodlab.pl</div>
+  <div class="num" style="color:#cfe3ff">1</div>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <div class="kicker">Problem</div>
+  <h2>Rolnik wie, że jest susza.<br>Nie wie, co zrobić na swoim polu.</h2>
+  <div class="cols">
+    <ul>
+      <li>Susze rolnicze w Polsce są coraz częstsze: 2015, 2018, 2019, 2023, 2025.</li>
+      <li>Woda z roztopów i ulew spływa z pola rowami, zanim wsiąknie.</li>
+      <li>Istniejące narzędzia (IUNG, EDO, IMGW) <b>monitorują</b> suszę dla gminy lub regionu.</li>
+    </ul>
+    <ul>
+      <li>Nikt nie mówi rolnikowi: <b>to zagłębienie, ten rów, tyle m³</b>.</li>
+      <li>Dane są publiczne, ale rozproszone w kilkunastu serwisach i wymagają GIS.</li>
+      <li>Decyzje o retencji to inwestycja: potrzebne liczby, nie ogólniki.</li>
+    </ul>
+  </div>
+  <div class="num">2</div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="kicker">Rozwiązanie</div>
+  <h2>Od numeru działki do planu działań</h2>
+  <div class="flow">
+    <div class="step"><b>1. Działka</b><p>Numer, nazwa obrębu, kliknięcie na mapie albo GPS. Uprawa i data: dziś lub do 10 lat wstecz.</p></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>2. Ocena</b><p>Czy brakuje wody i jak bardzo nietypowo na tle 10 lat. Wiarygodność oceny.</p></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>3. Przyczyny</b><p>Ile milimetrów zabrał brak deszczu, upał, słaba gleba, spływ.</p></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>4. Działania</b><p>Zastawki, oczka, próchnica, mulcz, nawadnianie: z efektem w m³, terminem, kosztem.</p></div>
+  </div>
+  <p class="muted" style="margin-top:48px">Przeglądarka na komputerze lub telefonie, bez instalacji i bez konta. Raport do druku i PDF.</p>
+  <div class="num">3</div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="kicker">Wyróżnik</div>
+  <h2>Mapa retencji z lotniczego skanowania LIDAR</h2>
+  <div class="cols-wide">
+    <div>
+      <div class="stat"><div class="big">13</div><span>zagłębień, w których zbiera się woda (Karczyn, 17 ha)</span></div>
+      <div class="stat"><div class="big" style="font-size:90px">4 rowy</div><span>wykryte w modelu terenu, nawet gdy nie ma ich na żadnej mapie</span></div>
+      <p style="font-size:26px">Zastawki rozmieszczone według spadku rowu, tak by cofka wody sięgała do następnej.</p>
+    </div>
+    <img class="shot-crop" src="img/map.png" alt="Mapa działki z miejscami retencji i zastawkami" style="object-position: 0 50%;">
+  </div>
+  <div class="num">4</div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="kicker">Ocena i przyczyny</div>
+  <h2>Ile wody brakuje i dlaczego, w milimetrach</h2>
+  <div class="cols-wide">
+    <div>
+      <p><span class="tag" style="background:var(--orange)">Woda: niedobór</span></p>
+      <ul style="font-size:26px">
+        <li>Woda w strefie korzeni na tle 10 lat</li>
+        <li>Klimatyczny bilans wodny (metoda IUNG)</li>
+        <li>Wilgotność gleby z reanalizy ERA5-Land</li>
+        <li>Uwodnienie roślin z Sentinel-2</li>
+        <li>Ostrzeżenia IMGW o suszy hydrologicznej</li>
+      </ul>
+      <p style="font-size:26px">Źródła się sprawdzają nawzajem: zgodność podnosi wiarygodność oceny.</p>
+    </div>
+    <img class="shot-crop" src="img/diagnosis.png" alt="Ocena sytuacji wodnej w raporcie" style="object-position: 100% 0;">
+  </div>
+  <div class="num">5</div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="kicker">Działania</div>
+  <h2>Każde zalecenie: ile m³, dlaczego, kiedy, za ile</h2>
+  <div class="cols-wide">
+    <div>
+      <p class="pill">Zastawki na rowach</p><p class="pill">Oczka i podmokłe łąki</p>
+      <p class="pill">Próchnica</p><p class="pill">Mulcz, bez orki</p>
+      <p class="pill">Odmiana i termin siewu</p><p class="pill">Dawka nawadniania</p>
+      <p style="font-size:26px;margin-top:24px">Z formalnościami (zgłoszenie wodnoprawne, zarządca rowu) i dopłatami (ekoschemat „Rolnictwo węglowe”).</p>
+    </div>
+    <img class="shot-crop" src="img/recs.png" alt="Zalecenia w raporcie" style="object-position: 100% 0;">
+  </div>
+  <div class="num">6</div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="kicker">Dane i wiarygodność</div>
+  <h2>10 publicznych źródeł, liczone na żywo</h2>
+  <table>
+    <tr><th>Dane</th><th>Źródło</th><th>Szczegółowość</th></tr>
+    <tr><td>Działki, teren LIDAR, ortofotomapa</td><td>GUGiK: ULDK, NMT, KIEG</td><td>1 m</td></tr>
+    <tr><td>Pogoda i ET0, 10 lat</td><td>Open-Meteo (ERA5), zapasowo NASA POWER</td><td>dziennie</td></tr>
+    <tr><td>Stan roślin NDVI/NDMI</td><td>Copernicus Sentinel-2</td><td>10–20 m, od 2017</td></tr>
+    <tr><td>Gleba</td><td>ISRIC SoilGrids</td><td>250 m, 0–100 cm</td></tr>
+    <tr><td>Susza hydrologiczna</td><td>IMGW-PIB</td><td>bieżące ostrzeżenia</td></tr>
+    <tr><td>Pokrycie terenu (czy to pole?)</td><td>ESA WorldCover</td><td>10 m</td></tr>
+  </table>
+  <p style="font-size:26px;margin-top:28px">W raporcie każde źródło ma licencję i datę pobrania. Brakujące dane są nazwane wprost, nic nie jest zgadywane. Wynik liczy się bez AI: deterministyczne, opisane metody (FAO-56, IUNG).</p>
+  <div class="num">7</div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <div class="kicker">Prototyp</div>
+  <h2>Działa dla każdej działki w Polsce</h2>
+  <div class="cols">
+    <div>
+      <div class="stat"><div class="big">&lt; 30 s</div><span>raport; teren dużych działek dochodzi sam w tle</span></div>
+      <div class="stat"><div class="big">0 zł</div><span>hosting (Oracle Always Free) i wszystkie dane</span></div>
+    </div>
+    <ul>
+      <li>Awaria źródła nie psuje raportu: zapasowe źródła pogody i rowów, czytelny komunikat.</li>
+      <li>Cache danych: szybko i bez przekraczania limitów darmowych API.</li>
+      <li>52 testy automatyczne, HTTPS, bez danych osobowych.</li>
+      <li>Skala kraju: teren liczony z góry dla wszystkich pól, bilans wody na siatce raz dziennie.</li>
+    </ul>
+  </div>
+  <div class="num">8</div>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div class="kicker">Wartość dla rolnika</div>
+  <h2>Z monitoringu suszy do decyzji na własnym polu</h2>
+  <p class="quote">„Na Twoim polu cztery zastawki zatrzymają 2–6 tys. m³ wody na sezon, a zagłębienia przy każdej ulewie do 700 m³. Zamknij je pod koniec marca.”</p>
+  <p class="muted" style="margin-top:40px">Konkretne miejsce, ilość wody i termin, uzasadnione danymi, a nie ogólna porada.</p>
+  <div class="num">9</div>
+</section>
+
+<!-- 10 -->
+<section class="slide title-slide">
+  <div class="kicker" style="color:#cfe3ff">Sprawdź sami</div>
+  <h1 style="font-size:84px">woda.kodlab.pl</h1>
+  <p>Wpisz numer działki, wybierz uprawę i datę. Raport w 30 sekund, do druku lub PDF.</p>
+  <p style="font-size:30px;margin-top:40px;color:#cfe3ff">Dalej: kalibracja z danymi IUNG, scenariusze „co jeśli”, eksport do wniosków o dofinansowanie.</p>
+  <div class="num" style="color:#cfe3ff">10</div>
+</section>
+
+</body>
+</html>

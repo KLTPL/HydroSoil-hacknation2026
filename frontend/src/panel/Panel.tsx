@@ -106,13 +106,13 @@ function Analysis(props: Props) {
         <section className="intro" aria-label="Jak to działa">
           <ol>
             <li>
-              <strong>Wskaż działkę</strong> numerem albo kliknij ją na mapie.
+              <span><strong>Wskaż działkę</strong> numerem albo kliknij ją na mapie.</span>
             </li>
             <li>
-              <strong>Wybierz uprawę i datę</strong>, dziś albo do 10 lat wstecz.
+              <span><strong>Wybierz uprawę i datę</strong>, dziś albo do 10 lat wstecz.</span>
             </li>
             <li>
-              <strong>Dostaniesz ocenę</strong> z 7 źródeł danych i plan, jak zatrzymać wodę.
+              <span><strong>Dostaniesz ocenę</strong> z 7 źródeł danych i plan, jak zatrzymać wodę.</span>
             </li>
           </ol>
         </section>

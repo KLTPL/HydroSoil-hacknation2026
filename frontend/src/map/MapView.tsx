@@ -149,7 +149,10 @@ export function MapView(props: Props) {
 
   useEffect(() => {
     if (!map || !place) return
-    map.flyTo({ center: [place.lon, place.lat], zoom: place.zoom, padding: viewPadding() })
+    // An offset, not `padding`: flyTo keeps its padding, and later fitBounds calls add theirs to it.
+    const pad = viewPadding()
+    const offset: [number, number] = [(pad.left - pad.right) / 2, (pad.top - pad.bottom) / 2]
+    map.flyTo({ center: [place.lon, place.lat], zoom: place.zoom, offset })
   }, [map, place])
 
   // Once terrain results arrive, reframe the parcel clear of the rain card and legend.

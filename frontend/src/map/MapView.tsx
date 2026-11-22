@@ -14,7 +14,7 @@ import type { Parcel, RetentionAnalysis } from '../model'
 import { PRINT_EVENT } from '../print'
 import { frameClear } from './framing'
 import { bounds, viewPadding } from './geometry'
-import { LayerSwitch, Legend, type BaseLayer } from './MapChrome'
+import { LayerSwitch, Legend, View3dToggle, type BaseLayer } from './MapChrome'
 import { RainControl } from './RainControl'
 import {
   DITCHES_LINE_LAYER,
@@ -24,6 +24,7 @@ import {
   SITES_FILL_LAYER,
   WEIRS_LAYER,
 } from './style'
+import { useTerrain3d } from './useTerrain3d'
 import { useMapFocus, type MapFocus } from './useMapFocus'
 import { useOrthoLoading } from './useOrthoLoading'
 import { useParcelHover } from './useParcelHover'
@@ -70,6 +71,8 @@ export function MapView(props: Props) {
   const [map, setMap] = useState<MapLibreMap | null>(null)
   const [base, setBase] = useState<BaseLayer>('photo')
   const [raining, setRaining] = useState(false)
+  // The parcel shown in 3D; another parcel starts flat again.
+  const [view3dParcel, setView3dParcel] = useState<string | null>(null)
   // Handlers change every render; the map listeners read the latest through refs.
   const handlers = useRef({ onPick, onSelectSite, onSelectDitch })
   useLayoutEffect(() => {
@@ -122,6 +125,7 @@ export function MapView(props: Props) {
     const capture = () => setSnapshot(map.getCanvas().toDataURL('image/png'))
     const onPrint = () => {
       const target = printParcel.current
+      map.jumpTo({ pitch: 0, bearing: 0 }) // the printed map is always a plan view
       if (target) map.fitBounds(bounds(target.geometry), { padding: 40, maxZoom: 18, duration: 0 })
       map.once('idle', () => {
         capture()
@@ -167,6 +171,10 @@ export function MapView(props: Props) {
   useMapFocus(map, terrain, focus)
   useParcelHover(map, parcel?.id ?? null)
   const orthoLoading = useOrthoLoading(map)
+  const view3d = parcel !== null && view3dParcel === parcel.id
+  // 3D needs the analysed terrain.
+  const show3d = view3d && terrain !== null
+  const exaggeration = useTerrain3d(map, show3d ? parcel.id : null, show3d)
 
   return (
     <div className="map-stage">
@@ -178,7 +186,14 @@ export function MapView(props: Props) {
       )}
       {terrain && parcel && (
         <div className="map-overlay">
-          <LayerSwitch value={base} onChange={setBase} hasRelief={terrain.relief !== null} />
+          <div className="map-tools">
+            <LayerSwitch value={base} onChange={setBase} hasRelief={terrain.relief !== null} />
+            <View3dToggle
+              on={view3d}
+              exaggeration={exaggeration}
+              onChange={(on) => setView3dParcel(on ? parcel.id : null)}
+            />
+          </div>
           <Legend terrain={terrain} base={base} />
           {map && terrain.flow.length > 0 && (
             <RainControl

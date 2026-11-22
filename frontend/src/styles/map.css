@@ -100,10 +100,17 @@
   }
 }
 
-.layer-switch {
+.map-tools {
   grid-area: switch;
   justify-self: start;
   align-self: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.layer-switch {
   background: var(--glass);
   backdrop-filter: var(--glass-blur);
 }
@@ -324,4 +331,31 @@
 .maplibregl-ctrl-group {
   border-radius: 12px !important;
   box-shadow: var(--shadow) !important;
+}
+
+.view3d {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  button {
+    padding: 7px 14px;
+    font-weight: 600;
+    border-radius: 999px;
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+
+    &[aria-pressed='true'] {
+      color: var(--on-accent);
+      background: var(--accent);
+    }
+  }
+}
+
+.view3d-note {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
 }

@@ -2,7 +2,7 @@
 .facts {
   width: 100%;
   margin-block: 0.5rem;
-  font-size: 0.86rem;
+  font-size: var(--text-sm);
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
 
@@ -29,7 +29,7 @@
     margin: 4px 0 0;
     padding: 0;
     list-style: none;
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
   }
 
@@ -76,7 +76,7 @@
 
 .risk-calendar {
   margin: 0.75rem 0;
-  font-size: 0.84rem;
+  font-size: var(--text-sm);
 
   ol {
     display: grid;
@@ -138,12 +138,12 @@
 }
 
 .site-headline {
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 
   small {
-    font-size: 0.8rem;
+    font-size: var(--text-sm);
     font-weight: 400;
     color: var(--muted);
   }
@@ -154,7 +154,7 @@
   grid-template-columns: repeat(4, auto);
   gap: 2px 12px;
   margin: 0;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
 
   /* label above value, one column per stat */
   > span {
@@ -172,37 +172,87 @@
 
 .site-advice,
 .site-note {
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
 }
 
 .site-note {
   color: var(--muted);
 }
 
-/* What-if scenarios */
-.scenarios {
+/* What-if scenarios: water left after 30 days, against the stress line */
+.scenario-bars {
   display: grid;
-  gap: 6px;
-  margin: 0.5rem 0;
+  gap: 10px;
+  margin: 6px 0;
   padding: 0;
-  font-size: 0.88rem;
   list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 3.2em;
+    gap: 2px 10px;
+    align-items: center;
+  }
 }
 
-.scenarios li {
-  display: grid;
-  padding: 6px 8px;
-  border-inline-start: 3px solid var(--border);
+.scenario-label {
+  grid-column: 1 / -1;
+  font-size: var(--text-md);
+  font-weight: 600;
 }
 
-.scenarios span {
-  color: var(--muted);
+.scenario-track {
+  position: relative;
+  height: 10px;
+  background: var(--card-strong);
+  border-radius: 5px;
+}
+
+.scenario-fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: calc(var(--end) * 100%);
+  min-width: 3px;
+  background: var(--water);
+  border-radius: inherit;
+
+  .below & {
+    background: var(--moderate);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: width 0.8s var(--ease-out);
+
+    @starting-style {
+      width: 0;
+    }
+  }
+}
+
+.scenario-stress {
+  position: absolute;
+  inset-block: -3px;
+  inset-inline-start: calc(var(--stress) * 100%);
+  border-inline-start: 2px dashed var(--severe);
+}
+
+.scenario-value {
+  font-size: var(--text-md);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  text-align: end;
+
+  .below & {
+    color: var(--moderate);
+  }
 }
 
-.scenarios .scenario-irrigated,
-.scenarios .scenario-more_humus {
-  border-inline-start-color: var(--accent);
+.scenario-note {
+  grid-column: 1 / -1;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
 }
 
 /* EDO cross-check */

@@ -1,0 +1,144 @@
+/* Dane tab: one row per data source, opened one at a time */
+.data-rows {
+  display: grid;
+}
+
+.data-row {
+  border-block-start: 1px solid var(--hairline);
+
+  &:last-child {
+    border-block-end: 1px solid var(--hairline);
+  }
+}
+
+.data-row-heading {
+  font: inherit;
+
+  button {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 12px;
+    gap: 2px 12px;
+    align-items: center;
+    width: 100%;
+    padding: 12px 4px;
+    font-weight: inherit;
+    text-align: start;
+    background: none;
+    border-radius: 0;
+
+    &:hover {
+      background: none;
+
+      .data-row-title {
+        color: var(--accent);
+      }
+    }
+
+    &:active:not(:disabled) {
+      scale: 1;
+    }
+
+    /* Chevron: points down when closed, up when open */
+    &::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border: solid var(--muted);
+      border-width: 0 2px 2px 0;
+      rotate: 45deg;
+      translate: 0 -2px;
+
+      @media (prefers-reduced-motion: no-preference) {
+        transition: rotate 0.2s var(--ease-out), translate 0.2s var(--ease-out);
+      }
+    }
+
+    &[aria-expanded='true']::after {
+      rotate: 225deg;
+      translate: 0 2px;
+    }
+  }
+}
+
+.data-row-title {
+  font-weight: 650;
+  transition: color 0.15s;
+}
+
+.data-row-summary {
+  max-width: 30ch;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  text-align: end;
+}
+
+.data-row-body {
+  display: grid;
+  gap: 8px;
+  padding: 0 4px 16px;
+
+  &[hidden] {
+    display: none;
+  }
+
+  > p {
+    margin: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: rise 0.3s var(--ease-out) both;
+  }
+}
+
+/* Source "votes": each data source's reading against 10 years */
+/* ul.votes outranks the `.tab-panel-data ul` list indent */
+ul.votes {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vote {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  gap: 2px 10px;
+  align-items: center;
+  padding-block: 4px;
+  font-size: var(--text-sm);
+}
+
+.vote-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+
+  .vote-dry & { background: var(--moderate); }
+  .vote-normal & { background: var(--ok); }
+  .vote-wet & { background: var(--water); }
+  .vote-missing & { border: 1.5px solid var(--muted); }
+}
+
+.vote-source {
+  font-weight: 600;
+}
+
+.vote-verdict {
+  font-weight: 600;
+  white-space: nowrap;
+
+  .vote-dry & { color: var(--moderate); }
+  .vote-wet & { color: var(--water-deep); }
+  .vote-missing &,
+  .vote-normal & { color: var(--muted); }
+}
+
+.vote-detail {
+  grid-column: 2 / -1;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+

@@ -43,7 +43,7 @@ export function SaveParcelButton({ account, parcel, crop }: SaveProps) {
   return (
     <div className="save-parcel no-print" aria-live="polite">
       {saved ? (
-        <p className="muted fine">✓ Zapisana w Moich działkach</p>
+        <p className="muted fine">Zapisana w Moich działkach</p>
       ) : (
         <button type="button" className="chip" disabled={busy || !crop} onClick={() => void save()}>
           {crop ? 'Zapisz w Moich działkach' : 'Wybierz uprawę, aby zapisać działkę'}

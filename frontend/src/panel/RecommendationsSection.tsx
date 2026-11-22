@@ -20,7 +20,7 @@ export function RecommendationsSection({
   const [open, setOpen] = useState<string | null>(null)
   return (
     <section className="report-section" aria-labelledby="recs-heading">
-      <p className="eyebrow">3 · Plan działań</p>
+      <p className="eyebrow print-only">3 · Plan działań</p>
       <h3 id="recs-heading">Co zrobić na tej działce</h3>
       <p className="section-lead">
         Najpierw zatrzymaj wodę, która spada na pole, potem popraw glebę. Nawadniaj na końcu.
@@ -124,7 +124,7 @@ function IrrigationNote({ estimate }: { estimate: IrrigationEstimate }) {
       </span>{' '}
       {over_limit && (
         <span className="rec-warning">
-          ⚠ {fmt.m3(water_m3)} to więcej niż {fmt.m3(yearly_limit_m3)} rocznie (średnio 5 m³ na dobę), które można
+          {fmt.m3(water_m3)} to więcej niż {fmt.m3(yearly_limit_m3)} rocznie (średnio 5 m³ na dobę), które można
           pobrać bez pozwolenia wodnoprawnego.
         </span>
       )}

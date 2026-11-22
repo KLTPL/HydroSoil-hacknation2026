@@ -45,7 +45,12 @@ function RiskCalendar({ months, stage }: { months: RiskMonth[]; stage: string })
 
 export function WaterSection({ water, year }: { water: ModuleResult<WaterBalance>; year: number }) {
   return (
-    <ModuleSection id="water" title="Bilans wodny: pogoda i woda w glebie" module={water}>
+    <ModuleSection
+      id="water"
+      title="Bilans wodny 60 dni"
+      module={water}
+      summary={(w) => `${fmt.mmSigned(w.window.kbw_mm.value)}, zwykle ${fmt.mmSigned(w.window.kbw_mm.normal)}`}
+    >
       {(w) => (
         <>
           <p className="muted">

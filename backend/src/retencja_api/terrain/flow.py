@@ -21,7 +21,6 @@ MIN_FLOW_AREA_M2 = 800.0  # a cell draining at least this area carries visible r
 MAX_FLOW_LINES = 600  # largest segments kept (map payload)
 POOL_DEPTH_M = 0.1  # filled deeper than this = water pools; shallower pits are LIDAR noise
 RELIEF_WINDOW_M = 80.0  # detrending window: shows hollows and ridges, not the regional slope
-Z_FACTOR = 3.0  # vertical exaggeration of the hillshade
 
 FlowEnd = Literal["pool", "exit", "join"]
 
@@ -99,42 +98,34 @@ def flow_lines(dem: Dem) -> list[FlowLine]:
     return out
 
 
-def _hillshade(z: np.ndarray, res: float) -> np.ndarray:
-    """Multidirectional hillshade (0–1), so relief reads the same in every orientation."""
-    dz_dy, dz_dx = np.gradient(np.nan_to_num(z, nan=float(np.nanmean(z))) * Z_FACTOR, res)
-    slope = np.arctan(np.hypot(dz_dx, dz_dy))
-    aspect = np.arctan2(-dz_dx, dz_dy)
-    altitude = np.radians(45)
-    shade = np.zeros_like(z)
-    for azimuth_deg, weight in ((315, 0.4), (270, 0.2), (225, 0.2), (360, 0.2)):
-        azimuth = np.radians(azimuth_deg)
-        shade += weight * (
-            np.sin(altitude) * np.cos(slope)
-            + np.cos(altitude) * np.sin(slope) * np.cos(azimuth - aspect)
-        )
-    return np.clip(shade, 0, 1)
+# Hollows (water collects) in water blue; higher ground stays clear over the hillshade base map.
+HOLLOW_RGB = (24, 96, 200)
+HOLLOW_MAX_ALPHA = 190
+EDGE_FEATHER_M = 60.0  # the image fades out towards its edges, so no rectangle shows
 
 
-# Low (water collects) → high (dries first): deep blue, teal, pale, sand, ochre.
-_RAMP = np.array(
-    [[18, 64, 160], [41, 148, 196], [233, 238, 224], [226, 196, 128], [176, 112, 52]],
-    dtype=float,
-)
+def _edge_fade(shape: tuple[int, int], res: float) -> np.ndarray:
+    """1 inside, falling smoothly to 0 at the image border over EDGE_FEATHER_M."""
+    h, w = shape
+    cells = max(1.0, EDGE_FEATHER_M / res)
+    rows = np.minimum(np.arange(h), np.arange(h)[::-1]) + 0.5
+    cols = np.minimum(np.arange(w), np.arange(w)[::-1]) + 0.5
+    dist = np.minimum.outer(rows, cols) / cells
+    t = np.clip(dist, 0, 1)
+    return t * t * (3 - 2 * t)
 
 
 def relief_rgba(dem: Dem) -> tuple[np.ndarray, float]:
-    """Colour shaded micro-relief; returns RGBA and the half-range (m) of the colour scale."""
+    """Translucent overlay of hollows (below their surroundings); returns RGBA and the
+    depth (m) at which the tint is fully saturated."""
     z = dem.elevation
     valid = np.isfinite(z)
-    relief = local_relief(z, max(3, int(RELIEF_WINDOW_M / dem.resolution) | 1))
+    relief = np.nan_to_num(local_relief(z, max(3, int(RELIEF_WINDOW_M / dem.resolution) | 1)))
     spread = float(np.nanpercentile(np.abs(relief), 97)) or 0.1
-    t = np.clip((np.nan_to_num(relief) / spread + 1) / 2, 0, 1) * (len(_RAMP) - 1)
-    lo = np.floor(t).astype(int).clip(0, len(_RAMP) - 2)
-    frac = (t - lo)[..., None]
-    rgb = _RAMP[lo] * (1 - frac) + _RAMP[lo + 1] * frac
-    rgb *= (0.45 + 0.75 * _hillshade(z, dem.resolution))[..., None]
-    alpha = np.where(valid, 255, 0)[..., None]
-    rgba = np.concatenate([np.clip(rgb, 0, 255), alpha], axis=2).astype(np.uint8)
+    depth = np.clip(-relief / spread, 0, 1) ** 0.8
+    alpha = HOLLOW_MAX_ALPHA * depth * _edge_fade(z.shape, dem.resolution) * valid
+    rgb = np.broadcast_to(np.array(HOLLOW_RGB, dtype=float), (*z.shape, 3))
+    rgba = np.concatenate([rgb, alpha[..., None]], axis=2).round().astype(np.uint8)
     return rgba, spread
 
 

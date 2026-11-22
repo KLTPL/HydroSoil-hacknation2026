@@ -8,8 +8,10 @@ import {
   DITCHES_SOURCE,
   FLOW_LAYER,
   FLOW_SOURCE,
+  PHOTO_LAYERS,
   RELIEF_BEFORE,
   RELIEF_SOURCE,
+  SHADED_LAYER,
   SITES_SOURCE,
 } from './style'
 
@@ -81,7 +83,7 @@ export function useTerrainLayers(
     return () => markers.forEach((m) => m.remove())
   }, [map, terrain])
 
-  // LIDAR micro-relief image under the parcel outline.
+  // LIDAR hollows tint (transparent elsewhere, feathered edges) under the parcel outline.
   useEffect(() => {
     if (!map || !terrain?.relief) return
     map.addSource(RELIEF_SOURCE, {
@@ -100,7 +102,7 @@ export function useTerrainLayers(
         type: 'raster',
         source: RELIEF_SOURCE,
         layout: { visibility: 'none' },
-        paint: { 'raster-opacity': 0.92, 'raster-fade-duration': 0, 'raster-resampling': 'linear' },
+        paint: { 'raster-fade-duration': 0, 'raster-resampling': 'linear' },
       },
       RELIEF_BEFORE,
     )
@@ -113,8 +115,13 @@ export function useTerrainLayers(
   useEffect(() => {
     if (!map) return
     const relief = base === 'relief' && map.getLayer(RELIEF_LAYER) !== undefined
-    if (relief) map.setLayoutProperty(RELIEF_LAYER, 'visibility', 'visible')
-    else if (map.getLayer(RELIEF_LAYER)) map.setLayoutProperty(RELIEF_LAYER, 'visibility', 'none')
+    const show = (on: boolean) => (on ? 'visible' : 'none')
+    if (map.getLayer(RELIEF_LAYER)) map.setLayoutProperty(RELIEF_LAYER, 'visibility', show(relief))
+    // The whole map switches: hillshade in place of the photo, hollows tinted on top.
+    map.setLayoutProperty(SHADED_LAYER, 'visibility', show(relief))
+    for (const id of PHOTO_LAYERS) map.setLayoutProperty(id, 'visibility', show(!relief))
+    // Cadastral lines are blue too; keep them faint so they don't read as water.
+    map.setPaintProperty(RELIEF_BEFORE, 'raster-opacity', relief ? 0.3 : 0.85)
     map.setLayoutProperty(FLOW_LAYER, 'visibility', relief || raining ? 'visible' : 'none')
     map.setPaintProperty(FLOW_LAYER, 'line-opacity', raining ? 0.5 : 0.8)
     // White reads on the photo, deep blue on the pale relief.

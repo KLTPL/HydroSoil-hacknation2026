@@ -1,6 +1,7 @@
 import type { ExpressionSpecification, StyleSpecification } from 'maplibre-gl'
 
 export const GEOPORTAL = 'https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution'
+const SHADED_RELIEF = 'https://mapy.geoportal.gov.pl/wss/service/PZGIK/NMT/GRID1/WMS/ShadedRelief'
 const KIEG = 'https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow'
 
 function wmsTiles(base: string, layers: string, format: string, transparent: boolean): string[] {
@@ -38,6 +39,9 @@ export const WEIRS_LAYER = 'weirs'
 export const FLOW_SOURCE = 'flow'
 export const FLOW_LAYER = 'flow-line'
 export const RELIEF_SOURCE = 'relief'
+/** Nationwide LIDAR hillshade replacing the orthophoto in the relief view. */
+export const SHADED_LAYER = 'shaded'
+export const PHOTO_LAYERS = ['osm', 'orto']
 /** The relief image is inserted below this layer (above the orthophoto). */
 export const RELIEF_BEFORE = 'kieg'
 
@@ -75,6 +79,12 @@ export const mapStyle: StyleSpecification = {
       tileSize: 512,
       attribution: 'Ortofotomapa © GUGiK',
     },
+    [SHADED_LAYER]: {
+      type: 'raster',
+      tiles: wmsTiles(SHADED_RELIEF, 'Raster', 'image/jpeg', false),
+      tileSize: 512,
+      attribution: 'NMT © GUGiK',
+    },
     kieg: {
       type: 'raster',
       tiles: wmsTiles(KIEG, 'dzialki,numery_dzialek', 'image/png', true),
@@ -94,6 +104,14 @@ export const mapStyle: StyleSpecification = {
     { id: 'ground', type: 'background', paint: { 'background-color': '#c9cfc6' } },
     { id: 'osm', type: 'raster', source: 'osm', maxzoom: STREET_MAP_MAX_ZOOM },
     { id: 'orto', type: 'raster', source: ORTHO_SOURCE, minzoom: 12 },
+    {
+      id: SHADED_LAYER,
+      type: 'raster',
+      source: SHADED_LAYER,
+      minzoom: 12,
+      layout: { visibility: 'none' },
+      paint: { 'raster-fade-duration': 0 },
+    },
     { id: 'kieg', type: 'raster', source: 'kieg', minzoom: PARCELS_MIN_ZOOM, paint: { 'raster-opacity': 0.85 } },
     {
       id: 'hover-fill',

@@ -76,11 +76,11 @@ export function Legend({ terrain, base }: { terrain: RetentionAnalysis; base: Ba
         <div className="relief-scale">
           <span className="relief-ramp" aria-hidden="true" />
           <span className="relief-labels">
-            <span>niżej, zbiera wodę</span>
-            <span>wyżej, schnie</span>
+            <span>niecka, zbiera wodę</span>
+            <span>teren wyżej</span>
           </span>
           <span className="muted">
-            ±{fmt.num(terrain.relief.spread_m * 100)} cm względem otoczenia · LIDAR GUGiK
+            do {fmt.num(terrain.relief.spread_m * 100)} cm poniżej otoczenia · LIDAR GUGiK
           </span>
         </div>
       )}

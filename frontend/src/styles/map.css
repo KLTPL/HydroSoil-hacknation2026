@@ -312,6 +312,13 @@
   &:hover {
     background: #0b5bc4;
   }
+
+  transition: filter 0.3s;
+
+  /* Not part of the open plan step. A filter, since MapLibre sets the marker's opacity inline. */
+  &.faded {
+    filter: opacity(0.3);
+  }
 }
 
 .maplibregl-ctrl-group {

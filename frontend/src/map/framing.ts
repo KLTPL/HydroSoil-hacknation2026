@@ -1,6 +1,5 @@
-import type { Map as MapLibreMap, PaddingOptions } from 'maplibre-gl'
-import type { Geometry } from '../model'
-import { bounds, viewPadding } from './geometry'
+import type { LngLatBoundsLike, Map as MapLibreMap, PaddingOptions } from 'maplibre-gl'
+import { viewPadding } from './geometry'
 
 /** Cards anchored to the bottom of the map that the parcel should not sit under. */
 const BOTTOM_CARDS = ['.rain-control', '.legend']
@@ -30,14 +29,13 @@ function candidates(map: MapLibreMap, base: Required<PaddingOptions>, extra: num
   return options
 }
 
-/** Fits the geometry into the free part of the map that shows it largest. */
-export function frameClear(map: MapLibreMap, geometry: Geometry, maxZoom: number, extra = 60) {
+/** Fits the box into the free part of the map that shows it largest. */
+export function frameClear(map: MapLibreMap, box: LngLatBoundsLike, maxZoom: number, extra = 60) {
   const base = viewPadding(extra)
   // On phones the cards stack inside the bottom sheet, which the base padding already clears.
   const options = window.matchMedia('(width < 720px)').matches
     ? [base]
     : candidates(map, base, extra)
-  const box = bounds(geometry)
   const zoomFor = (padding: PaddingOptions) =>
     map.cameraForBounds(box, { padding, maxZoom })?.zoom ?? -Infinity
   const best = options.reduce((a, b) => (zoomFor(b) > zoomFor(a) ? b : a))

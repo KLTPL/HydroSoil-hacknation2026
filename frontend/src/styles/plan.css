@@ -8,6 +8,8 @@ ol.recs {
 
 .rec {
   --cat: var(--water);
+  /* Clear of the sticky tab bar when scrolled to from the map */
+  scroll-margin-top: 56px;
   border-block-start: 1px solid var(--hairline);
 
   &:last-child {

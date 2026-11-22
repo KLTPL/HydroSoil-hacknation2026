@@ -1,4 +1,4 @@
-import type { StyleSpecification } from 'maplibre-gl'
+import type { ExpressionSpecification, StyleSpecification } from 'maplibre-gl'
 
 export const GEOPORTAL = 'https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution'
 const KIEG = 'https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow'
@@ -31,7 +31,10 @@ export const HOVER_SOURCE = 'hover'
 export const HOVER_LAYERS = ['hover-fill', 'hover-line']
 export const SITES_SOURCE = 'sites'
 export const SITES_FILL_LAYER = 'sites-fill'
+export const SITES_LINE_LAYER = 'sites-line'
 export const DITCHES_SOURCE = 'ditches'
+export const DITCHES_LINE_LAYER = 'ditches-line'
+export const WEIRS_LAYER = 'weirs'
 export const FLOW_SOURCE = 'flow'
 export const FLOW_LAYER = 'flow-line'
 export const RELIEF_SOURCE = 'relief'
@@ -50,6 +53,11 @@ export const COLORS = {
 }
 
 const EMPTY = { type: 'FeatureCollection' as const, features: [] }
+
+export const SELECTED: ExpressionSpecification = ['boolean', ['feature-state', 'selected'], false]
+/** Not used by the open plan step (feature state set by useMapFocus). */
+export const FADED: ExpressionSpecification = ['boolean', ['feature-state', 'faded'], false]
+const fade = (faded: number): ExpressionSpecification => ['case', FADED, faded, 1]
 
 export const mapStyle: StyleSpecification = {
   version: 8,
@@ -76,7 +84,8 @@ export const mapStyle: StyleSpecification = {
     [PARCEL_SOURCE]: { type: 'geojson', data: EMPTY },
     [HOVER_SOURCE]: { type: 'geojson', data: EMPTY },
     [SITES_SOURCE]: { type: 'geojson', data: EMPTY, promoteId: 'id' },
-    [DITCHES_SOURCE]: { type: 'geojson', data: EMPTY },
+    // A ditch line and its weir points share the ditch id, so they fade together.
+    [DITCHES_SOURCE]: { type: 'geojson', data: EMPTY, promoteId: 'id' },
     [FLOW_SOURCE]: { type: 'geojson', data: EMPTY },
   },
   layers: [
@@ -135,15 +144,16 @@ export const mapStyle: StyleSpecification = {
           COLORS.pond,
           COLORS.wetDepression,
         ],
-        'fill-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.85, 0.55],
+        'fill-opacity': ['case', FADED, 0.12, SELECTED, 0.85, 0.55],
         'fill-opacity-transition': { duration: 600 },
       },
     },
     {
-      id: 'sites-line',
+      id: SITES_LINE_LAYER,
       type: 'line',
       source: SITES_SOURCE,
       paint: {
+        'line-opacity': fade(0.25),
         'line-color': [
           'case',
           ['boolean', ['feature-state', 'selected'], false],
@@ -154,11 +164,16 @@ export const mapStyle: StyleSpecification = {
       },
     },
     {
-      id: 'ditches-line',
+      id: DITCHES_LINE_LAYER,
       type: 'line',
       source: DITCHES_SOURCE,
       filter: ['==', ['geometry-type'], 'LineString'],
-      paint: { 'line-color': COLORS.ditch, 'line-width': 3, 'line-dasharray': [2, 1] },
+      paint: {
+        'line-color': COLORS.ditch,
+        'line-width': 3,
+        'line-dasharray': [2, 1],
+        'line-opacity': fade(0.2),
+      },
     },
     {
       id: 'parcel-line',
@@ -167,11 +182,13 @@ export const mapStyle: StyleSpecification = {
       paint: { 'line-color': COLORS.parcel, 'line-width': 3 },
     },
     {
-      id: 'weirs',
+      id: WEIRS_LAYER,
       type: 'circle',
       source: DITCHES_SOURCE,
       filter: ['==', ['geometry-type'], 'Point'],
       paint: {
+        'circle-opacity': fade(0.15),
+        'circle-stroke-opacity': fade(0.15),
         'circle-radius': 6,
         'circle-color': COLORS.weir,
         'circle-stroke-color': '#ffffff',

@@ -5,6 +5,7 @@ import { requestPrint } from '../print'
 import { DataTab } from './DataTab'
 import { CausesSection } from './DiagnosisSection'
 import { RecommendationsSection } from './RecommendationsSection'
+import { useReportView } from './reportView'
 import { ReportTabs } from './ReportTabs'
 import { ScenariosSection } from './ScenariosSection'
 import { Verdict } from './Verdict'
@@ -18,6 +19,7 @@ interface Props {
 /** Framing the map and waiting for its tiles takes a few seconds before the print dialog. */
 function PrintButton() {
   const [preparing, setPreparing] = useState(false)
+  const view = useReportView()
   useEffect(() => {
     const done = () => setPreparing(false)
     window.addEventListener('afterprint', done)
@@ -31,6 +33,8 @@ function PrintButton() {
       onClick={() => {
         if (preparing) return
         setPreparing(true)
+        // The printed map shows every place, not only the open step's.
+        view.setStep(null)
         requestPrint()
       }}
     >
@@ -40,11 +44,9 @@ function PrintButton() {
   )
 }
 
-type TabId = 'assessment' | 'plan' | 'data'
-
 export function Report({ report, selectedSiteId, onSelectSite }: Props) {
   const { diagnosis, recommendations } = report
-  const [tab, setTab] = useState<TabId>('assessment')
+  const { tab, setTab } = useReportView()
   const [dataRow, setDataRow] = useState<string | null>(null)
   const steps = recommendations.length
   return (

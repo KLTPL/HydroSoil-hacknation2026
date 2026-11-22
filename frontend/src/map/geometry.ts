@@ -1,15 +1,19 @@
 import type { LngLatBoundsLike, PaddingOptions } from 'maplibre-gl'
 import type { Geometry } from '../model'
 
-function points(geometry: Geometry): number[][] {
+export function points(geometry: Geometry): number[][] {
   return geometry.coordinates.flat(geometry.type === 'Polygon' ? 1 : 2) as number[][]
 }
 
-export function bounds(geometry: Geometry): LngLatBoundsLike {
-  const pts = points(geometry)
+/** West, south, east, north around the points. */
+export function boxAround(pts: number[][]): [number, number, number, number] {
   const lons = pts.map((p) => p[0])
   const lats = pts.map((p) => p[1])
   return [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]
+}
+
+export function bounds(geometry: Geometry): LngLatBoundsLike {
+  return boxAround(points(geometry))
 }
 
 /** Label position: the vertex average of the outer ring (good enough for compact hollows). */

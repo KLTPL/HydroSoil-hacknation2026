@@ -1,6 +1,7 @@
-import { useId, useState, type CSSProperties } from 'react'
+import { useEffect, useId, useRef, type CSSProperties } from 'react'
 import * as fmt from '../format'
 import type { IrrigationEstimate, Recommendation } from '../model'
+import { useReportView } from './reportView'
 
 const CATEGORY = {
   retention: 'Retencja',
@@ -16,8 +17,9 @@ export function RecommendationsSection({
   recommendations: Recommendation[]
   onSelectSite: (id: number) => void
 }) {
-  // One step open at a time keeps the list short enough to compare steps at a glance.
-  const [open, setOpen] = useState<string | null>(null)
+  // One step open at a time keeps the list short enough to compare steps at a glance;
+  // the map highlights the places of the open step.
+  const { step: open, setStep } = useReportView()
   return (
     <section className="report-section" aria-labelledby="recs-heading">
       <p className="eyebrow print-only">3 · Plan działań</p>
@@ -35,7 +37,7 @@ export function RecommendationsSection({
               rec={r}
               step={i + 1}
               open={open === r.key}
-              onToggle={() => setOpen(open === r.key ? null : r.key)}
+              onToggle={() => setStep(open === r.key ? null : r.key)}
               onSelectSite={onSelectSite}
             />
           ))}
@@ -56,8 +58,16 @@ interface StepProps {
 /** Closed: number, title, effect and cost. Open: what to do, where, why and when. */
 function Step({ rec: r, step, open, onToggle, onSelectSite }: StepProps) {
   const bodyId = useId()
+  const item = useRef<HTMLLIElement>(null)
+  // A step opened from the map may sit below the fold. After a frame, so the tab switch
+  // (which scrolls to the top of the tab) has run first.
+  useEffect(() => {
+    if (!open) return
+    const frame = requestAnimationFrame(() => item.current?.scrollIntoView({ block: 'nearest' }))
+    return () => cancelAnimationFrame(frame)
+  }, [open])
   return (
-    <li className={`rec rec-${r.category}`} style={{ '--i': step - 1 } as CSSProperties}>
+    <li ref={item} className={`rec rec-${r.category}`} style={{ '--i': step - 1 } as CSSProperties}>
       <h4 className="rec-heading">
         <button type="button" className="rec-toggle" aria-expanded={open} aria-controls={bodyId} onClick={onToggle}>
           <span className="rec-step" aria-hidden="true">

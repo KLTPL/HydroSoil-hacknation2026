@@ -10,6 +10,9 @@ type Phase = 'idle' | 'raining' | 'done'
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const ease = (t: number) => 1 - (1 - t) ** 3
+// The first report of a visit plays the storm by itself, once the map has framed the parcel.
+const AUTOPLAY_DELAY_MS = 1500
+let autoplayed = false
 
 function scale({ low, high }: Range, t: number): Range {
   return { low: low * t, high: high * t }
@@ -54,6 +57,17 @@ export function RainControl({ map, terrain, areaHa, onRainingChange }: Props) {
       setPhase('idle')
     }
   }, [map, terrain])
+
+  useEffect(() => {
+    if (autoplayed) return
+    const timer = window.setTimeout(() => {
+      autoplayed = true
+      play()
+    }, AUTOPLAY_DELAY_MS)
+    return () => window.clearTimeout(timer)
+    // play() reads only refs and state setters; run once per terrain.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [terrain])
 
   useEffect(() => {
     onRainingChange(phase !== 'idle')

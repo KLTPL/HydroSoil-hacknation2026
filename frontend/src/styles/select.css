@@ -1,0 +1,107 @@
+/* Customizable <select>: animated in-page picker where supported,
+   native OS dropdown elsewhere (base.css styles stay as the fallback). */
+@supports (appearance: base-select) {
+  select,
+  select::picker(select) {
+    appearance: base-select;
+  }
+
+  select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-inline-end: 12px;
+    background-image: none;
+  }
+
+  select::picker-icon {
+    content: '';
+    width: 12px;
+    height: 8px;
+    background: var(--muted);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+    transition: rotate 0.3s var(--ease-out);
+  }
+
+  select:open::picker-icon {
+    rotate: 180deg;
+  }
+
+  select:open {
+    border-color: color-mix(in oklab, var(--hairline), var(--text) 25%);
+  }
+
+  select::picker(select) {
+    margin-block: 6px;
+    padding: 4px;
+    width: anchor-size(width);
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    transform-origin: top center;
+
+    opacity: 0;
+    translate: 0 -6px;
+    scale: 0.97;
+    transition:
+      display 0.18s,
+      overlay 0.18s,
+      opacity 0.18s var(--ease-out),
+      translate 0.18s var(--ease-out),
+      scale 0.18s var(--ease-out);
+    transition-behavior: allow-discrete;
+  }
+
+  select:open::picker(select) {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+    transition-duration: 0.32s;
+    transition-timing-function: var(--spring);
+  }
+
+  @starting-style {
+    select:open::picker(select) {
+      opacity: 0;
+      translate: 0 -6px;
+      scale: 0.97;
+    }
+  }
+
+  option {
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.12s;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--card-strong);
+      outline: none;
+    }
+
+    &:checked {
+      font-weight: 600;
+    }
+
+    /* Placeholder belongs on the button only, not in the list */
+    &[value='']:disabled {
+      display: none;
+    }
+
+    &::checkmark {
+      color: var(--accent);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    select::picker(select),
+    select::picker-icon {
+      transition: none;
+    }
+  }
+}

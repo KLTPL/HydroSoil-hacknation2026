@@ -142,6 +142,7 @@ i nie wyczerpywały darmowych limitów. Każdy raport podaje przy każdym źród
 |---|---|
 | Działka (ULDK) | Zapisywana według identyfikatora działki. |
 | Analiza terenu (NMT) | Zapisywana dla działki i wersji algorytmu; teren nie zależy od daty analizy. |
+| Widok 3D | Wysokości z tego samego NMT LIDAR, zapisywane dla działki; kafle wysokości liczone z nich na żądanie. Rzeźba jest przewyższona (do ×12, wartość podana na mapie), a wysokości są względne i wygaszone przy krawędzi obszaru analizy. |
 | Historia pogody | Open-Meteo: jedna historia od 2005 r. dla komórki 0,1°, odświeżana co miesiąc i wspólna dla wszystkich dat analizy; dni od końca ostatniego zamkniętego miesiąca zawsze pobierane na bieżąco. Po odmowie z powodu limitu (HTTP 429) aplikacja przez godzinę od razu korzysta z NASA POWER. |
 | Wskaźnik CDI (EDO) | Mapy starsze niż 60 dni zapisywane dla punktu i dekady; nowsze pobierane na bieżąco. |
 | Gleba, pokrycie terenu | Zapisywane według obszaru działki (dane się nie zmieniają). |

@@ -40,6 +40,7 @@ from retencja_api.terrain.ditches import (
     osm_lines,
     plan_ditches,
 )
+from retencja_api.terrain.elevation import Elevation, load_elevation, save_elevation
 from retencja_api.terrain.flow import encode_png, flow_lines, relief_rgba
 from retencja_api.terrain.nmt import Dem, load_dem
 from retencja_api.terrain.nmt_sheets import load_sheet_dem
@@ -132,6 +133,7 @@ async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> Retention
         log.warning("Ditch map unavailable: %r", exc)
         ways = None
     dem = await dem_task
+    await asyncio.to_thread(save_elevation, _cache_key(parcel_id), dem)
     sites = await asyncio.to_thread(find_sites, dem, parcel_geom)
     models = [_to_model(i, s) for i, s in enumerate(sites, start=1)]
     channels = await asyncio.to_thread(detect_channels, dem)
@@ -175,3 +177,21 @@ async def analyze_parcel(parcel_id: str, parcel_geom: BaseGeometry) -> Retention
     )
     cache.write_json("retention", _cache_key(parcel_id), result.model_dump(mode="json"))
     return result
+
+
+async def parcel_elevation(parcel_id: str, parcel_geom: BaseGeometry) -> Elevation:
+    """Terrain heights for the 3D view; parcels analysed before it existed load them now
+    (the NMT sheets are cached, so this takes seconds)."""
+    key = _cache_key(parcel_id)
+    if (found := load_elevation(key)) is not None:
+        return found
+    dem = await _load_dem(parcel_geom.buffer(PARCEL_BUFFER_M).bounds)
+    await asyncio.to_thread(save_elevation, key, dem)
+    load_elevation.cache_clear()
+    elevation = load_elevation(key)
+    assert elevation is not None
+    return elevation
+
+
+def elevation_for_tiles(parcel_id: str) -> Elevation | None:
+    return load_elevation(_cache_key(parcel_id))

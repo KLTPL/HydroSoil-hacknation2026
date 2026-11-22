@@ -43,6 +43,28 @@ export function LayerSwitch({
   )
 }
 
+/** Tilts the camera over the LIDAR terrain; shows how much heights are exaggerated. */
+export function View3dToggle({
+  on,
+  exaggeration,
+  onChange,
+}: {
+  on: boolean
+  exaggeration: number | null
+  onChange: (on: boolean) => void
+}) {
+  return (
+    <div className="view3d">
+      <button type="button" className="glass" aria-pressed={on} onClick={() => onChange(!on)}>
+        {on ? 'Widok z góry' : 'Teren w 3D'}
+      </button>
+      {on && exaggeration !== null && (
+        <span className="glass view3d-note">LIDAR GUGiK, wysokości ×{exaggeration}</span>
+      )}
+    </div>
+  )
+}
+
 export function Legend({ terrain, base }: { terrain: RetentionAnalysis; base: BaseLayer }) {
   const weirs = terrain.ditches.reduce((n, d) => n + d.weir_count, 0)
   return (

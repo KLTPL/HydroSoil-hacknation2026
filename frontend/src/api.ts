@@ -43,6 +43,18 @@ export const fetchAnalysis = (
     signal,
   )
 
+/** Prepares the 3D view: west, south, east, north of the elevation tiles, and the terrain's
+ * height range (m). */
+export const fetchElevation = (parcelId: string, signal?: AbortSignal) =>
+  getJson<{ bounds: [number, number, number, number]; relief_m: number }>(
+    `/api/terrain/elevation?${query({ parcel_id: parcelId })}`,
+    signal,
+  )
+
+/** Absolute: MapLibre resolves tile URLs outside the page. `{z}/{x}/{y}` must stay unencoded. */
+export const elevationTiles = (parcelId: string) =>
+  `${window.location.origin}/api/terrain/elevation/{z}/{x}/{y}.png?${query({ parcel_id: parcelId })}`
+
 export const reliefUrl = (parcelId: string, version: string) =>
   `/api/terrain/relief.png?${query({ parcel_id: parcelId, v: version })}`
 

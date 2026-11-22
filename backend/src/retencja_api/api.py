@@ -5,8 +5,9 @@ from collections.abc import AsyncIterator
 from datetime import date
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse
+import numpy as np
+from fastapi import Depends, FastAPI, HTTPException, Path, Query
+from fastapi.responses import FileResponse, Response
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 from shapely.geometry.base import BaseGeometry
 
@@ -23,7 +24,8 @@ from retencja_api.parcel.uldk import (
 )
 from retencja_api.progress import ModuleProgress, module_progress
 from retencja_api.report import build_report, terrain_module
-from retencja_api.terrain.service import relief_path
+from retencja_api.terrain.elevation import render_tile
+from retencja_api.terrain.service import elevation_for_tiles, parcel_elevation, relief_path
 
 app = FastAPI(title="Retencja API")
 app.include_router(routes.router)
@@ -137,6 +139,36 @@ async def terrain(
     except ParcelNotFound:
         raise HTTPException(404, "Nie znaleziono działki") from None
     return await terrain_module(parcel_id, geom, POLL_BUDGET_S)
+
+
+@app.get("/api/terrain/elevation")
+async def terrain_elevation(
+    parcel_id: str = Query(min_length=5, max_length=64),
+) -> dict[str, list[float] | float]:
+    """Prepares the 3D view: the area its elevation tiles cover (west, south, east, north)
+    and the height range of the terrain in it (m), to pick the vertical exaggeration."""
+    try:
+        _, geom = await get_parcel_by_id(parcel_id)
+    except ParcelNotFound:
+        raise HTTPException(404, "Nie znaleziono działki") from None
+    elevation = await parcel_elevation(parcel_id, geom)
+    low, high = np.percentile(elevation.heights, [2, 98])
+    return {
+        "bounds": [round(v, 6) for v in elevation.wgs84_bounds()],
+        "relief_m": round(float(high - low), 2),
+    }
+
+
+@app.get("/api/terrain/elevation/{z}/{x}/{y}.png")
+async def terrain_elevation_tile(
+    z: Annotated[int, Path(ge=0, le=20)],
+    x: Annotated[int, Path(ge=0)],
+    y: Annotated[int, Path(ge=0)],
+    parcel_id: str = Query(min_length=5, max_length=64),
+) -> Response:
+    """Terrarium-encoded LIDAR heights; flat outside the analysed area."""
+    png = await asyncio.to_thread(render_tile, elevation_for_tiles(parcel_id), z, x, y)
+    return Response(png, media_type="image/png", headers={"Cache-Control": "max-age=86400"})
 
 
 @app.get("/api/terrain/relief.png", response_class=FileResponse)

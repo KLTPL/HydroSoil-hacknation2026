@@ -49,18 +49,23 @@ def test_confluences_split_segments_and_link_downstream():
             assert downstream.line.coords[0] == f.line.coords[-1]
 
 
-def test_relief_png_is_a_valid_rgba_image():
-    z = _valley(40)
+def test_relief_tints_hollows_and_fades_at_the_edges():
+    z = _valley(80)
     z[5, 5] = np.nan
 
     rgba, spread = relief_rgba(_dem(z))
     png = encode_png(rgba)
 
-    assert rgba.shape == (40, 40, 4)
-    assert rgba[5, 5, 3] == 0 and rgba[10, 10, 3] == 255
+    assert rgba.shape == (80, 80, 4)
+    alpha = rgba[..., 3]
+    assert alpha[5, 5] == 0, "no data stays transparent"
+    assert alpha[40, 40] > 100, "the valley floor is tinted"
+    ridge, _ = relief_rgba(_dem(200.0 - _valley(80)))
+    assert ridge[40, 40, 3] == 0, "a ridge stays clear"
+    assert alpha[40, 0] == 0 and alpha[40, -1] == 0, "the image edge fades out"
     assert spread > 0
     width, height = struct.unpack(">II", png[16:24])
-    assert (width, height) == (40, 40)
+    assert (width, height) == (80, 80)
     idat_len = struct.unpack(">I", png[33:37])[0]
     raw = zlib.decompress(png[41 : 41 + idat_len])
-    assert len(raw) == 40 * (1 + 40 * 4)
+    assert len(raw) == 80 * (1 + 80 * 4)

@@ -177,7 +177,7 @@
 
 .relief-ramp {
   height: 8px;
-  background: linear-gradient(90deg, #1240a0, #2994c4, #e9eee0, #e2c480, #b07034);
+  background: linear-gradient(90deg, rgb(24 96 200 / 0.75), rgb(24 96 200 / 0));
   border-radius: 4px;
 }
 

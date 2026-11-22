@@ -5,6 +5,7 @@ import type { Parcel } from '../model'
 import type { Lookup, ReportState } from '../useParcelReport'
 import { AnalysisForm } from './AnalysisForm'
 import { Busy } from './Busy'
+import { Examples, type Example } from './Examples'
 import { ParcelSearch } from './ParcelSearch'
 import { Progress } from './Progress'
 import { Report } from './Report'
@@ -22,6 +23,8 @@ interface Props {
   onCropChange: (crop: string) => void
   onDateChange: (date: string) => void
   onAnalyze: () => void
+  /** One of the ready example parcels on the start screen. */
+  onExample: (example: Example) => void
   onSelectSite: (id: number) => void
   /** Optional account slots: header control, parcel card action, and a view that
    * temporarily replaces the analysis (account pages, archived report). */
@@ -132,6 +135,7 @@ function Analysis(props: Props) {
               <span><strong>Dostaniesz ocenę</strong> z 7 źródeł danych i plan, jak zatrzymać wodę.</span>
             </li>
           </ol>
+          <Examples onPick={props.onExample} />
         </section>
       )}
     </>

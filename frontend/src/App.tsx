@@ -110,6 +110,14 @@ export default function App() {
             setSelectedSiteId(null)
             void analyze(parcel, crop, date)
           }}
+          onExample={({ parcelId, crop: exampleCrop, date: exampleDate }) => {
+            setSelectedSiteId(null)
+            setCrop(exampleCrop)
+            setDate(exampleDate)
+            void loadById(parcelId).then((found) => {
+              if (found) void analyze(found, exampleCrop, exampleDate)
+            })
+          }}
           onSelectSite={setSelectedSiteId}
           {...account.slots}
         />

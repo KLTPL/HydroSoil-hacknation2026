@@ -426,3 +426,45 @@
 .step-wait .step-label {
   color: var(--muted);
 }
+
+/* Ready example parcels on the start screen */
+.examples {
+  margin-block-start: 24px;
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  ul {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  button {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 12px;
+    text-align: start;
+    background: var(--card);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+
+    &:hover {
+      background: var(--card-strong);
+    }
+
+    span {
+      font-size: var(--text-sm);
+      color: var(--muted);
+    }
+  }
+}

@@ -1,20 +1,14 @@
 import { useId } from 'react'
 import * as fmt from '../format'
-import type { Diagnosis, SourceSignal, WaterBalance } from '../model'
+import type { Diagnosis, WaterBalance } from '../model'
 import { useCountUp } from '../useCountUp'
 import { LEVEL } from './levels'
+import { VoteSummary } from './SourceVotes'
 
 const CONFIDENCE = {
   high: 'Pewność oceny: wysoka. Źródła są zgodne.',
   medium: 'Pewność oceny: średnia. Część danych brakuje albo źródła się różnią.',
   low: 'Pewność oceny: niska. Brakuje kluczowych danych.',
-} as const
-
-const VERDICT = {
-  dry: 'suszej niż zwykle',
-  normal: 'typowo',
-  wet: 'wilgotniej niż zwykle',
-  missing: 'brak danych',
 } as const
 
 /** Root-zone water as a tank: level now, the crop's stress line and the usual level. */
@@ -47,37 +41,14 @@ function SoilTank({ pct, threshold, normal }: { pct: number; threshold: number; 
   )
 }
 
-// The IUNG criterion is a threshold, not a comparison with earlier years.
-const CRITERION: Record<SourceSignal['verdict'], string> = {
-  dry: 'susza',
-  normal: 'bez suszy',
-  wet: 'bez suszy',
-  missing: 'brak danych',
+interface Props {
+  diagnosis: Diagnosis
+  water: WaterBalance | null
+  /** Opens the Dane tab, where each source's reading is listed. */
+  onShowData: () => void
 }
 
-function SourceVotes({ signals }: { signals: SourceSignal[] }) {
-  return (
-    <ul className="votes" aria-label="Co mówią źródła danych na tle 10 lat">
-      {signals.map((s) => (
-        <li key={s.key} className={`vote vote-${s.verdict}`}>
-          <span className="vote-dot" aria-hidden="true" />
-          <span className="vote-source">{s.source}</span>
-          <span className="vote-verdict">
-            {s.key === 'smsr' ? CRITERION[s.verdict] : VERDICT[s.verdict]}
-          </span>
-          {s.verdict !== 'missing' && (
-            <span className="vote-detail">
-              {s.value}
-              {s.note && ` · ${s.note}`}
-            </span>
-          )}
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-export function Verdict({ diagnosis, water }: { diagnosis: Diagnosis; water: WaterBalance | null }) {
+export function Verdict({ diagnosis, water, onShowData }: Props) {
   const level = LEVEL[diagnosis.level]
   const pct = useCountUp(water?.available_pct.value ?? 0)
   return (
@@ -87,7 +58,7 @@ export function Verdict({ diagnosis, water }: { diagnosis: Diagnosis; water: Wat
           {warning}
         </p>
       ))}
-      <p className="eyebrow">1 · Ocena sytuacji wodnej</p>
+      <p className="eyebrow print-only">1 · Ocena sytuacji wodnej</p>
       <h3 id="verdict-heading" className="verdict-level">
         <span className="level-dot" aria-hidden="true" />
         {level.label}
@@ -115,7 +86,7 @@ export function Verdict({ diagnosis, water }: { diagnosis: Diagnosis; water: Wat
         </div>
       )}
       <p className="verdict-headline">{diagnosis.headline}</p>
-      {diagnosis.signals.length > 0 && <SourceVotes signals={diagnosis.signals} />}
+      {diagnosis.signals.length > 0 && <VoteSummary signals={diagnosis.signals} onDetails={onShowData} />}
       <p className="confidence">{CONFIDENCE[diagnosis.confidence]}</p>
     </section>
   )

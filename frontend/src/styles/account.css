@@ -5,7 +5,7 @@
   min-height: 36px;
   margin-inline-start: auto;
   padding: 6px 12px;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   color: var(--water-deep);
   background: color-mix(in oklab, var(--water) 12%, transparent);
   border-radius: 999px;

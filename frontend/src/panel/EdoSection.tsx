@@ -15,7 +15,12 @@ function agreement(edo: EdoDrought): string {
 /** Independent cross-check against the European Drought Observatory's CDI map. */
 export function EdoSection({ edo }: { edo: ModuleResult<EdoDrought> }) {
   return (
-    <ModuleSection id="edo" title="Porównanie z Europejskim Obserwatorium Suszy" module={edo}>
+    <ModuleSection
+      id="edo"
+      title="Europejskie Obserwatorium Suszy"
+      module={edo}
+      summary={(e) => `CDI: ${e.label}`}
+    >
       {(e) => (
         <>
           <p className={`edo-level tone-${CLASS_TONE[e.cdi_class] ?? 'ok'}`}>

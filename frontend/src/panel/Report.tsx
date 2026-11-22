@@ -5,6 +5,7 @@ import { requestPrint } from '../print'
 import { DataTab } from './DataTab'
 import { CausesSection } from './DiagnosisSection'
 import { RecommendationsSection } from './RecommendationsSection'
+import { useReportView } from './reportView'
 import { ReportTabs } from './ReportTabs'
 import { ScenariosSection } from './ScenariosSection'
 import { Verdict } from './Verdict'
@@ -18,6 +19,7 @@ interface Props {
 /** Framing the map and waiting for its tiles takes a few seconds before the print dialog. */
 function PrintButton() {
   const [preparing, setPreparing] = useState(false)
+  const view = useReportView()
   useEffect(() => {
     const done = () => setPreparing(false)
     window.addEventListener('afterprint', done)
@@ -31,6 +33,8 @@ function PrintButton() {
       onClick={() => {
         if (preparing) return
         setPreparing(true)
+        // The printed map shows every place, not only the open step's.
+        view.setStep(null)
         requestPrint()
       }}
     >
@@ -42,6 +46,9 @@ function PrintButton() {
 
 export function Report({ report, selectedSiteId, onSelectSite }: Props) {
   const { diagnosis, recommendations } = report
+  const { tab, setTab } = useReportView()
+  const [dataRow, setDataRow] = useState<string | null>(null)
+  const steps = recommendations.length
   return (
     <article className="report" aria-label="Raport">
       <header className="report-header print-only">
@@ -59,6 +66,8 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
         </p>
       </header>
       <ReportTabs
+        active={tab}
+        onSelect={setTab}
         actions={<PrintButton />}
         tabs={[
           {
@@ -66,9 +75,18 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
             label: 'Ocena',
             content: (
               <>
-                <Verdict diagnosis={diagnosis} water={report.water.data} />
+                <Verdict diagnosis={diagnosis} water={report.water.data} onShowData={() => {
+                    setDataRow('basis')
+                    setTab('data')
+                  }}
+                />
                 <CausesSection diagnosis={diagnosis} />
-                <ScenariosSection water={report.water} />
+                <ScenariosSection water={report.water} threshold={diagnosis.stress_threshold_pct} />
+                {steps > 0 && (
+                  <button type="button" className="next-tab no-print" onClick={() => setTab('plan')}>
+                    Co z tym zrobić: plan działań, {steps} {fmt.plural(steps, 'krok', 'kroki', 'kroków')}
+                  </button>
+                )}
               </>
             ),
           },
@@ -76,7 +94,7 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
             id: 'plan',
             label: (
               <>
-                Plan <span className="tab-count">{recommendations.length}</span>
+                Plan <span className="tab-count">{steps}</span>
               </>
             ),
             content: (
@@ -94,7 +112,15 @@ export function Report({ report, selectedSiteId, onSelectSite }: Props) {
           {
             id: 'data',
             label: 'Dane',
-            content: <DataTab report={report} selectedSiteId={selectedSiteId} onSelectSite={onSelectSite} />,
+            content: (
+              <DataTab
+                report={report}
+                openRow={dataRow}
+                onOpenRow={setDataRow}
+                selectedSiteId={selectedSiteId}
+                onSelectSite={onSelectSite}
+              />
+            ),
           },
         ]}
       />

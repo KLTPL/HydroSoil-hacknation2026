@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import * as fmt from '../format'
 import type { Range, RetentionAnalysis } from '../model'
 import { FlowAnimation, RAIN_MS, type RainFrame } from './FlowAnimation'
-import { SITES_FILL_LAYER } from './style'
+import { FADED, SELECTED, SITES_FILL_LAYER } from './style'
 
 type Mode = 'today' | 'plan'
 type Phase = 'idle' | 'raining' | 'done'
@@ -19,12 +19,7 @@ function scale({ low, high }: Range, t: number): Range {
 function paintSites(map: MapLibreMap, phase: Phase, mode: Mode, fill: number) {
   const full = mode === 'plan' ? 0.92 : 0.4
   const filled = phase === 'idle' ? 0.55 : 0.04 + (full - 0.04) * fill
-  map.setPaintProperty(SITES_FILL_LAYER, 'fill-opacity', [
-    'case',
-    ['boolean', ['feature-state', 'selected'], false],
-    0.95,
-    filled,
-  ])
+  map.setPaintProperty(SITES_FILL_LAYER, 'fill-opacity', ['case', FADED, 0.12, SELECTED, 0.95, filled])
   map.setPaintProperty('weirs', 'circle-radius', phase !== 'idle' && mode === 'plan' ? 9 : 6)
 }
 

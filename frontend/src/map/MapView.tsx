@@ -16,7 +16,15 @@ import { frameClear } from './framing'
 import { bounds, viewPadding } from './geometry'
 import { LayerSwitch, Legend, type BaseLayer } from './MapChrome'
 import { RainControl } from './RainControl'
-import { mapStyle, PARCEL_SOURCE, PARCELS_MIN_ZOOM, SITES_FILL_LAYER } from './style'
+import {
+  DITCHES_LINE_LAYER,
+  mapStyle,
+  PARCEL_SOURCE,
+  PARCELS_MIN_ZOOM,
+  SITES_FILL_LAYER,
+  WEIRS_LAYER,
+} from './style'
+import { useMapFocus, type MapFocus } from './useMapFocus'
 import { useOrthoLoading } from './useOrthoLoading'
 import { useParcelHover } from './useParcelHover'
 import { useTerrainLayers } from './useTerrainLayers'
@@ -27,9 +35,14 @@ interface Props {
   selectedSiteId: number | null
   /** A searched town or address; each new object flies the map there. */
   place: Place | null
+  /** The open plan step's places and ditches; the rest of the terrain fades. */
+  focus: MapFocus | null
   onPick: (lon: number, lat: number) => void
   onSelectSite: (id: number) => void
+  onSelectDitch: (id: number) => void
 }
+
+const CLICKABLE = [SITES_FILL_LAYER, DITCHES_LINE_LAYER, WEIRS_LAYER]
 
 type SourceData = Parameters<GeoJSONSource['setData']>[0]
 
@@ -51,15 +64,16 @@ const LOCALE = {
   'LogoControl.Title': 'Logo MapLibre',
 }
 
-export function MapView({ parcel, terrain, selectedSiteId, place, onPick, onSelectSite }: Props) {
+export function MapView(props: Props) {
+  const { parcel, terrain, selectedSiteId, place, focus, onPick, onSelectSite, onSelectDitch } = props
   const container = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<MapLibreMap | null>(null)
   const [base, setBase] = useState<BaseLayer>('photo')
   const [raining, setRaining] = useState(false)
   // Handlers change every render; the map listeners read the latest through refs.
-  const handlers = useRef({ onPick, onSelectSite })
+  const handlers = useRef({ onPick, onSelectSite, onSelectDitch })
   useLayoutEffect(() => {
-    handlers.current = { onPick, onSelectSite }
+    handlers.current = { onPick, onSelectSite, onSelectDitch }
   })
 
   useEffect(() => {
@@ -83,15 +97,16 @@ export function MapView({ parcel, terrain, selectedSiteId, place, onPick, onSele
       handlers.current.onPick(position.coords.longitude, position.coords.latitude),
     )
     instance.on('click', (event) => {
-      const hit = instance.queryRenderedFeatures(event.point, { layers: [SITES_FILL_LAYER] })[0]
-      if (hit?.id != null) handlers.current.onSelectSite(Number(hit.id))
+      const [hit] = instance.queryRenderedFeatures(event.point, { layers: CLICKABLE })
+      if (hit?.layer.id === SITES_FILL_LAYER) handlers.current.onSelectSite(Number(hit.id))
+      else if (hit) handlers.current.onSelectDitch(Number(hit.properties.id))
       // Zoomed out, a click cannot aim at one parcel: zoom in until parcel borders show.
       else if (instance.getZoom() < PARCELS_MIN_ZOOM)
         instance.flyTo({ center: event.lngLat, zoom: PARCELS_MIN_ZOOM + 1 })
       else handlers.current.onPick(event.lngLat.lng, event.lngLat.lat)
     })
-    instance.on('mouseenter', SITES_FILL_LAYER, () => (instance.getCanvas().style.cursor = 'pointer'))
-    instance.on('mouseleave', SITES_FILL_LAYER, () => (instance.getCanvas().style.cursor = ''))
+    instance.on('mouseenter', CLICKABLE, () => (instance.getCanvas().style.cursor = 'pointer'))
+    instance.on('mouseleave', CLICKABLE, () => (instance.getCanvas().style.cursor = ''))
     instance.once('load', () => setMap(instance))
     return () => instance.remove()
   }, [])
@@ -141,10 +156,12 @@ export function MapView({ parcel, terrain, selectedSiteId, place, onPick, onSele
   const hasTerrain = terrain !== null
   useEffect(() => {
     if (!map || !hasTerrain || !printParcel.current) return
-    frameClear(map, printParcel.current.geometry, 17)
+    frameClear(map, bounds(printParcel.current.geometry), 17)
   }, [map, hasTerrain])
 
   useTerrainLayers(map, terrain, selectedSiteId, base, raining, onSelectSite)
+  // After the terrain layers: framing the step wins over framing a single selected place.
+  useMapFocus(map, terrain, focus)
   useParcelHover(map, parcel?.id ?? null)
   const orthoLoading = useOrthoLoading(map)
 

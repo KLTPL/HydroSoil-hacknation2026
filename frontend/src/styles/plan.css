@@ -8,6 +8,8 @@ ol.recs {
 
 .rec {
   --cat: var(--water);
+  /* Clear of the sticky tab bar when scrolled to from the map */
+  scroll-margin-top: 56px;
   border-block-start: 1px solid var(--hairline);
 
   &:last-child {
@@ -79,7 +81,7 @@ ol.recs {
   place-items: center;
   width: 28px;
   height: 28px;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   font-weight: 750;
   color: #fff;
   background: var(--cat);
@@ -101,7 +103,7 @@ ol.recs {
   display: flex;
   flex-wrap: wrap;
   gap: 0 10px;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   color: var(--muted);
 }
 
@@ -125,7 +127,7 @@ ol.recs {
   display: grid;
   gap: 8px;
   padding: 0 4px 14px 44px;
-  font-size: 0.9rem;
+  font-size: var(--text-md);
 
   &[hidden] {
     display: none;
@@ -138,13 +140,17 @@ ol.recs {
 
 .rec-effect-note,
 .rec-irrigation-note {
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   color: var(--muted);
 }
 
 .rec-warning {
   display: block;
-  margin-top: 2px;
+  margin-top: 4px;
+  padding-inline-start: 8px;
+  font-weight: 600;
+  color: var(--text);
+  border-inline-start: 3px solid var(--moderate);
 }
 
 .rec-sites {
@@ -159,7 +165,7 @@ ol.recs {
   grid-template-columns: auto 1fr;
   gap: 4px 10px;
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
 
   dt {
     font-weight: 600;

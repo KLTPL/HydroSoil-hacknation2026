@@ -70,6 +70,7 @@ export function useTerrainLayers(
       pin.type = 'button'
       pin.className = `site-pin kind-${site.kind}`
       pin.textContent = String(site.id)
+      pin.dataset.site = String(site.id)
       pin.setAttribute('aria-label', `Miejsce na wodę nr ${site.id}`)
       pin.addEventListener('click', (event) => {
         event.stopPropagation()
@@ -122,9 +123,10 @@ export function useTerrainLayers(
 
   useEffect(() => {
     if (!map) return
-    map.removeFeatureState({ source: SITES_SOURCE })
+    // Per key, so the plan step's fading (another key) stays.
+    for (const s of terrain?.sites ?? [])
+      map.setFeatureState({ source: SITES_SOURCE, id: s.id }, { selected: s.id === selectedSiteId })
     if (selectedSiteId == null) return
-    map.setFeatureState({ source: SITES_SOURCE, id: selectedSiteId }, { selected: true })
     const site = terrain?.sites.find((s) => s.id === selectedSiteId)
     if (site) map.fitBounds(bounds(site.geometry), { padding: viewPadding(120), maxZoom: 18 })
   }, [map, selectedSiteId, terrain])

@@ -77,7 +77,7 @@ function Analysis(props: Props) {
       </div>
 
       {parcel && (
-        <section className="parcel card" aria-label="Wybrana działka">
+        <section className="parcel" aria-label="Wybrana działka">
           <div className="parcel-head">
             <h2>
               {parcel.number} <span className="muted">· {parcel.region}</span>

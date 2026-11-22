@@ -12,6 +12,8 @@ type SearchState =
   | { status: 'placed'; place: Place }
 
 interface Props {
+  /** A parcel is chosen: the label and the how-to hint give way to it. */
+  compact: boolean
   onChoose: (parcel: Parcel) => void
   onPlace: (place: Place) => void
 }
@@ -19,7 +21,7 @@ interface Props {
 /** Full parcel ids ("040706_5.0016.51/1") are never place names. */
 const PARCEL_ID = /^\d{6}_\d/
 
-export function ParcelSearch({ onChoose, onPlace }: Props) {
+export function ParcelSearch({ compact, onChoose, onPlace }: Props) {
   const inputId = useId()
   const hintId = useId()
   const listId = useId()
@@ -86,7 +88,9 @@ export function ParcelSearch({ onChoose, onPlace }: Props) {
 
   return (
     <form className="search" onSubmit={submit} role="search">
-      <label htmlFor={inputId}>Działka, miejscowość lub adres</label>
+      <label htmlFor={inputId} className={compact ? 'visually-hidden' : undefined}>
+        Działka, miejscowość lub adres
+      </label>
       <div className="search-row">
         <input
           id={inputId}
@@ -131,7 +135,7 @@ export function ParcelSearch({ onChoose, onPlace }: Props) {
           </li>
         ))}
       </ul>
-      <p id={hintId} className="muted">
+      <p id={hintId} className={compact ? 'visually-hidden' : 'muted'}>
         Nie znasz numeru? Wpisz miejscowość lub adres, a potem kliknij działkę na mapie. Możesz też
         użyć lokalizacji (◎).
       </p>
